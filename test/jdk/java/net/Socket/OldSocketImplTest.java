@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,37 +23,27 @@
 
 /*
  * @test
- * @bug 4326250
- * @summary Test Socket.setReceiveBufferSize() throwin IllegalArgumentException
- *
+ * @bug 8216978
+ * @summary Drop support for pre JDK 1.4 SocketImpl implementations
+ * @library OldSocketImpl.jar
+ * @run main/othervm OldSocketImplTest
  */
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.ServerSocket;
+import java.net.*;
 
-public class SetReceiveBufferSize {
+public class OldSocketImplTest {
     public static void main(String[] args) throws Exception {
-        SetReceiveBufferSize s = new SetReceiveBufferSize();
-    }
-
-    public SetReceiveBufferSize() throws Exception {
-        ServerSocket ss = new ServerSocket();
-        InetAddress loopback = InetAddress.getLoopbackAddress();
-        ss.bind(new InetSocketAddress(loopback, 0));
-        Socket s = new Socket(loopback, ss.getLocalPort());
-        Socket accepted = ss.accept();
+        Socket.setSocketImplFactory(new SocketImplFactory() {
+                public SocketImpl createSocketImpl() {
+                    return new OldSocketImpl();
+                }
+        });
         try {
-            s.setReceiveBufferSize(0);
-        } catch (IllegalArgumentException e) {
-            return;
-        } catch (Exception ex) {
-        } finally {
-            ss.close();
-            s.close();
-            accepted.close();
+            Socket socket = new Socket("localhost", 23);
+            throw new RuntimeException("error test failed");
+        } catch (AbstractMethodError error) {
+            error.printStackTrace();
+            System.out.println("Old impl no longer accepted: OK");
         }
-        throw new RuntimeException("IllegalArgumentException not thrown!");
     }
 }
