@@ -21,23 +21,17 @@
  * questions.
  */
 
-#include <stdlib.h>
-#include <string.h>
+/*
+ * @test
+ * @bug 8255968
+ * @summary Confusing error message for inaccessible constructor
+ * @run compile/fail/ref=T8255968_2.out -XDrawDiagnostics T8255968_2.java
+ */
 
-#ifdef _WIN32
-
-#include "jni.h"
-#include <windows.h>
-
-JNIEXPORT jlong JNICALL Java_CheckHandles_getProcessHandleCount(JNIEnv *env)
-{
-    DWORD handleCount;
-    HANDLE handle = GetCurrentProcess();
-    if (GetProcessHandleCount(handle, &handleCount)) {
-        return (jlong)handleCount;
-    } else {
-        return -1L;
-    }
+class T8255968_2 {
+    T8255968_2_Test c = new T8255968_2_Test(0);
 }
 
-#endif  /*  _WIN32 */
+class T8255968_2_Test {
+    T8255968_2_Test(String x) {}  // If this method is private, compiler will output the same error message.
+}
