@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,37 +19,35 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
-
-package gc.epsilon;
 
 /**
- * @test TestAlwaysPretouch
- * @requires vm.gc.Epsilon
- * @summary Basic sanity test for Epsilon
- * @library /test/lib
+ * @test
+ * @bug 8272570
+ * @summary crash in PhaseCFG::global_code_motion
+ * @requires vm.compiler2.enabled
  *
- * @run main/othervm -Xmx256m
- *                   -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC
- *                   gc.epsilon.TestEpsilonEnabled
+ * @run main/othervm -Xbatch TestGCMRecalcPressureNodes
  */
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-
-public class TestEpsilonEnabled {
-  public static void main(String[] args) throws Exception {
-    if (!isEpsilonEnabled()) {
-      throw new IllegalStateException("Debug builds should have Epsilon enabled");
+public class TestGCMRecalcPressureNodes {
+    public boolean bo0;
+    public boolean bo1;
+    public void foo() {
+        int sh12 = 61;
+        for (int i = 0; i < 50; i++) {
+            sh12 *= 34;
+        }
+        Math.tan(1.0);
+        bo0 = true;
+        bo1 = true;
     }
-  }
-
-  public static boolean isEpsilonEnabled() {
-    for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
-      if (bean.getName().contains("Epsilon")) {
-        return true;
-      }
+    public static void main(String[] args) {
+        TestGCMRecalcPressureNodes instance = new TestGCMRecalcPressureNodes();
+        for (int i = 0; i < 50000; i++) {
+            instance.foo();
+        }
     }
-    return false;
-  }
 }
+
