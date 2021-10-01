@@ -44,13 +44,20 @@ hotspot_gc = \
 
 # By design this group should include ALL tests under runtime sub-directory
 hotspot_runtime = \
-  runtime
+  runtime \
 
 hotspot_handshake = \
   runtime/handshake
 
 hotspot_serviceability = \
   serviceability
+
+hotspot_valhalla = \
+  runtime/valhalla \
+  compiler/valhalla
+
+hotspot_valhalla_runtime = \
+  runtime/valhalla
 
 hotspot_resourcehogs = \
   resourcehogs
@@ -113,8 +120,8 @@ hotspot_not_fast_compiler = \
   -:hotspot_slow_compiler
 
 hotspot_slow_compiler = \
-  compiler/codegen/aes \
   compiler/codecache/stress \
+  compiler/codegen/aes \
   compiler/gcbarriers/PreserveFPRegistersTest.java
 
 tier1_compiler_1 = \
@@ -164,6 +171,7 @@ tier1_compiler_3 = \
   compiler/types/ \
   compiler/uncommontrap/ \
   compiler/unsafe/ \
+  compiler/valhalla/ \
   compiler/vectorization/ \
   -compiler/intrinsics/bmi \
   -compiler/intrinsics/mathexact \
@@ -175,6 +183,13 @@ tier1_compiler_3 = \
 
 tier1_compiler_not_xcomp = \
   compiler/profiling
+
+tier1_compiler_no_valhalla = \
+  :tier1_compiler_1 \
+  :tier1_compiler_2 \
+  :tier1_compiler_3 \
+  :tier1_compiler_not_xcomp \
+  -compiler/valhalla
 
 ctw_1 = \
   applications/ctw/modules/ \
@@ -328,6 +343,10 @@ tier1_runtime = \
   sanity/ \
  -:tier1_runtime_appcds_exclude \
  -runtime/signal
+
+tier1_runtime_no_valhalla = \
+  :tier1_runtime \
+  -runtime/valhalla
 
 hotspot_cds = \
   runtime/cds/ \

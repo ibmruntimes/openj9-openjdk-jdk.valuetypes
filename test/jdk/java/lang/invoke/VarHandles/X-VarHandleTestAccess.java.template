@@ -21,6 +21,8 @@
  * questions.
  */
 
+#warn
+
 /*
  * @test
  * @run testng/othervm -Diters=10    -Xint                   VarHandleTestAccess$Type$
@@ -42,6 +44,12 @@ import java.util.List;
 import static org.testng.Assert.*;
 
 public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
+#if[Point]
+    static final Class<?> type = $type$.class.asValueType();
+#else[Point]
+    static final Class<?> type = $type$.class;
+#end[Point]
+
     static final $type$ static_final_v = $value1$;
 
     static $type$ static_v;
@@ -68,9 +76,12 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
 
     VarHandle vhArray;
 
-#if[String]
+#if[Object]
     VarHandle vhArrayObject;
-#end[String]
+#end[Object]
+#if[Value]
+    VarHandle vhValueTypeField;
+#end[Value]
 
     VarHandle[] allocate(boolean same) {
         List<VarHandle> vhs = new ArrayList<>();
@@ -79,19 +90,19 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
         VarHandle vh;
         try {
             vh = MethodHandles.lookup().findVarHandle(
-                    VarHandleTestAccess$Type$.class, "final_v" + postfix, $type$.class);
+                    VarHandleTestAccess$Type$.class, "final_v" + postfix, type);
             vhs.add(vh);
 
             vh = MethodHandles.lookup().findVarHandle(
-                    VarHandleTestAccess$Type$.class, "v" + postfix, $type$.class);
+                    VarHandleTestAccess$Type$.class, "v" + postfix, type);
             vhs.add(vh);
 
             vh = MethodHandles.lookup().findStaticVarHandle(
-                VarHandleTestAccess$Type$.class, "static_final_v" + postfix, $type$.class);
+                VarHandleTestAccess$Type$.class, "static_final_v" + postfix, type);
             vhs.add(vh);
 
             vh = MethodHandles.lookup().findStaticVarHandle(
-                VarHandleTestAccess$Type$.class, "static_v" + postfix, $type$.class);
+                VarHandleTestAccess$Type$.class, "static_v" + postfix, type);
             vhs.add(vh);
 
             if (same) {
@@ -114,21 +125,26 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
     @BeforeClass
     public void setup() throws Exception {
         vhFinalField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccess$Type$.class, "final_v", $type$.class);
+                VarHandleTestAccess$Type$.class, "final_v", type);
 
         vhField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccess$Type$.class, "v", $type$.class);
+                VarHandleTestAccess$Type$.class, "v", type);
 
         vhStaticFinalField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestAccess$Type$.class, "static_final_v", $type$.class);
+            VarHandleTestAccess$Type$.class, "static_final_v", type);
 
         vhStaticField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestAccess$Type$.class, "static_v", $type$.class);
+            VarHandleTestAccess$Type$.class, "static_v", type);
 
         vhArray = MethodHandles.arrayElementVarHandle($type$[].class);
-#if[String]
+#if[Object]
         vhArrayObject = MethodHandles.arrayElementVarHandle(Object[].class);
-#end[String]
+#end[Object]
+
+#if[Value]
+        vhValueTypeField = MethodHandles.lookup().findVarHandle(
+                    Value.class, "$varType$_v", type);
+#end[Value]
     }
 
 
@@ -245,7 +261,7 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
 
     @Test(dataProvider = "typesProvider")
     public void testTypes(VarHandle vh, List<Class<?>> pts) {
-        assertEquals(vh.varType(), $type$.class);
+        assertEquals(vh.varType(), type);
 
         assertEquals(vh.coordinateTypes(), pts);
 
@@ -257,12 +273,12 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
     public void testLookupInstanceToStatic() {
         checkIAE("Lookup of static final field to instance final field", () -> {
             MethodHandles.lookup().findStaticVarHandle(
-                    VarHandleTestAccess$Type$.class, "final_v", $type$.class);
+                    VarHandleTestAccess$Type$.class, "final_v", type);
         });
 
         checkIAE("Lookup of static field to instance field", () -> {
             MethodHandles.lookup().findStaticVarHandle(
-                    VarHandleTestAccess$Type$.class, "v", $type$.class);
+                    VarHandleTestAccess$Type$.class, "v", type);
         });
     }
 
@@ -270,12 +286,12 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
     public void testLookupStaticToInstance() {
         checkIAE("Lookup of instance final field to static final field", () -> {
             MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccess$Type$.class, "static_final_v", $type$.class);
+                VarHandleTestAccess$Type$.class, "static_final_v", type);
         });
 
         checkIAE("Lookup of instance field to static field", () -> {
             vhStaticField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccess$Type$.class, "static_v", $type$.class);
+                VarHandleTestAccess$Type$.class, "static_v", type);
         });
     }
 
@@ -310,21 +326,28 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
 
         cases.add(new VarHandleAccessTestCase("Array",
                                               vhArray, VarHandleTestAccess$Type$::testArray));
-#if[String]
+#if[Object]
         cases.add(new VarHandleAccessTestCase("Array Object[]",
                                               vhArrayObject, VarHandleTestAccess$Type$::testArray));
-#end[String]
+#end[Object]
         cases.add(new VarHandleAccessTestCase("Array unsupported",
                                               vhArray, VarHandleTestAccess$Type$::testArrayUnsupported,
                                               false));
         cases.add(new VarHandleAccessTestCase("Array index out of bounds",
                                               vhArray, VarHandleTestAccess$Type$::testArrayIndexOutOfBounds,
                                               false));
-#if[String]
+#if[Object]
         cases.add(new VarHandleAccessTestCase("Array store exception",
                                               vhArrayObject, VarHandleTestAccess$Type$::testArrayStoreException,
                                               false));
-#end[String]
+#end[Object]
+#if[Value]
+        cases.add(new VarHandleAccessTestCase("Value type field",
+                                              vhValueTypeField, vh -> testValueTypeField(Value.getInstance(), vh)));
+        cases.add(new VarHandleAccessTestCase("Value type field unsupported",
+                                              vhValueTypeField, vh -> testValueTypeFieldUnsupported(Value.getInstance(), vh),
+                                              false));
+#end[Value]
         // Work around issue with jtreg summary reporting which truncates
         // the String result of Object.toString to 30 characters, hence
         // the first dummy argument
@@ -486,6 +509,21 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
 #end[Bitwise]
     }
 
+#if[Value]
+    static void testValueTypeField(Value recv, VarHandle vh) {
+        // Plain
+        {
+            $type$ x = ($type$) vh.get(recv);
+            assertEquals(x, $value1$, "get $type$ value");
+        }
+    }
+
+    static void testValueTypeFieldUnsupported(Value recv, VarHandle vh) {
+        checkUOE(() -> {
+            vh.set(recv, $value2$);
+        });
+    }
+#end[Value]
 
     static void testStaticFinalField(VarHandle vh) {
         // Plain
@@ -1906,7 +1944,7 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
         }
     }
 
-#if[String]
+#if[Object]
     static void testArrayStoreException(VarHandle vh) throws Throwable {
         Object[] array = new $type$[10];
         Arrays.fill(array, $value1$);
@@ -1987,6 +2025,6 @@ public class VarHandleTestAccess$Type$ extends VarHandleBaseTest {
             $type$ x = ($type$) vh.getAndSetRelease(array, 0, value);
         });
     }
-#end[String]
+#end[Object]
 }
 

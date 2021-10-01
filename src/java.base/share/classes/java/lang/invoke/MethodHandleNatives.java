@@ -114,17 +114,17 @@ class MethodHandleNatives {
         Constants() { } // static only
 
         static final int
-            MN_IS_METHOD           = 0x00010000, // method (not constructor)
-            MN_IS_CONSTRUCTOR      = 0x00020000, // constructor
-            MN_IS_FIELD            = 0x00040000, // field
-            MN_IS_TYPE             = 0x00080000, // nested type
-            MN_CALLER_SENSITIVE    = 0x00100000, // @CallerSensitive annotation detected
-            MN_TRUSTED_FINAL       = 0x00200000, // trusted final field
-            MN_REFERENCE_KIND_SHIFT = 24, // refKind
-            MN_REFERENCE_KIND_MASK = 0x0F000000 >> MN_REFERENCE_KIND_SHIFT,
+            MN_IS_METHOD             = 0x00010000, // method (not object constructor)
+            MN_IS_OBJECT_CONSTRUCTOR = 0x00020000, // object constructor
+            MN_IS_FIELD              = 0x00040000, // field
+            MN_IS_TYPE               = 0x00080000, // nested type
+            MN_CALLER_SENSITIVE      = 0x00100000, // @CallerSensitive annotation detected
+            MN_TRUSTED_FINAL         = 0x00200000, // trusted final field
+            MN_REFERENCE_KIND_SHIFT  = 24, // refKind
+            MN_REFERENCE_KIND_MASK   = 0x0F000000 >> MN_REFERENCE_KIND_SHIFT,
             // The SEARCH_* bits are not for MN.flags but for the matchFlags argument of MHN.getMembers:
-            MN_SEARCH_SUPERCLASSES = 0x00100000,
-            MN_SEARCH_INTERFACES   = 0x00200000;
+            MN_SEARCH_SUPERCLASSES   = 0x00100000,
+            MN_SEARCH_INTERFACES     = 0x00200000;
 
         /**
          * Constant pool reference-kind codes, as used by CONSTANT_MethodHandle CP entries.
@@ -178,7 +178,7 @@ class MethodHandleNatives {
     static boolean refKindIsMethod(byte refKind) {
         return !refKindIsField(refKind) && (refKind != REF_newInvokeSpecial);
     }
-    static boolean refKindIsConstructor(byte refKind) {
+    static boolean refKindIsObjectConstructor(byte refKind) {
         return (refKind == REF_newInvokeSpecial);
     }
     static boolean refKindHasReceiver(byte refKind) {
@@ -587,12 +587,12 @@ class MethodHandleNatives {
         sb.append(prefix);
         for (int i = 1; i < guardType.parameterCount() - 1; i++) {
             Class<?> pt = guardType.parameterType(i);
-            sb.append(getCharType(pt));
+            sb.append(getCharErasedType(pt));
         }
-        sb.append('_').append(getCharType(guardType.returnType()));
+        sb.append('_').append(getCharErasedType(guardType.returnType()));
         return sb.toString();
     }
-    static char getCharType(Class<?> pt) {
+    static char getCharErasedType(Class<?> pt) {
         return Wrapper.forBasicType(pt).basicTypeChar();
     }
     static NoSuchMethodError newNoSuchMethodErrorOnVarHandle(String name, MethodType mtype) {

@@ -44,6 +44,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Source.Feature;
+import com.sun.tools.javac.code.Type.ClassType.Flavor;
 import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.comp.Annotate.AnnotationTypeCompleter;
 import com.sun.tools.javac.code.*;
@@ -104,6 +105,10 @@ public class ClassReader {
     /** Switch: allow modules.
      */
     boolean allowModules;
+
+    /** Switch: allow primitive classes.
+     */
+    boolean allowPrimitiveClasses;
 
     /** Switch: allow sealed
      */
@@ -277,6 +282,7 @@ public class ClassReader {
         Source source = Source.instance(context);
         preview = Preview.instance(context);
         allowModules     = Feature.MODULES.allowedInSource(source);
+        allowPrimitiveClasses = Feature.PRIMITIVE_CLASSES.allowedInSource(source);
         allowRecords = Feature.RECORDS.allowedInSource(source);
         allowSealedTypes = Feature.SEALED_CLASSES.allowedInSource(source);
 
@@ -472,6 +478,7 @@ public class ClassReader {
         case 'J':
             sigp++;
             return syms.longType;
+        case 'Q':
         case 'L':
             {
                 // int oldsigp = sigp;
@@ -533,11 +540,14 @@ public class ClassReader {
     /** Convert class signature to type, where signature is implicit.
      */
     Type classSigToType() {
-        if (signature[sigp] != 'L')
+        byte prefix = signature[sigp];
+        if (prefix != 'L' && prefix != 'Q')
             throw badClassFile("bad.class.signature",
                                Convert.utf2string(signature, sigp, 10));
         sigp++;
         Type outer = Type.noType;
+        Name name;
+        ClassType.Flavor flavor;
         int startSbp = sbp;
 
         while (true) {
@@ -549,10 +559,15 @@ public class ClassReader {
                                                          startSbp,
                                                          sbp - startSbp));
 
+                // We are seeing QFoo; or LFoo; The name itself does not shine any light on default val-refness
+                flavor = prefix == 'L' ? Flavor.L_TypeOf_X : Flavor.Q_TypeOf_X;
                 try {
-                    return (outer == Type.noType) ?
-                            t.erasure(types) :
-                        new ClassType(outer, List.nil(), t);
+                    if (outer == Type.noType) {
+                        ClassType et = (ClassType) t.erasure(types);
+                        // Todo: This spews out more objects than before, i.e no reuse with identical flavor
+                        return new ClassType(et.getEnclosingType(), List.nil(), et.tsym, et.getMetadata(), flavor);
+                    }
+                    return new ClassType(outer, List.nil(), t, TypeMetadata.EMPTY, flavor);
                 } finally {
                     sbp = startSbp;
                 }
@@ -562,7 +577,9 @@ public class ClassReader {
                 ClassSymbol t = enterClass(names.fromUtf(signatureBuffer,
                                                          startSbp,
                                                          sbp - startSbp));
-                outer = new ClassType(outer, sigToTypes('>'), t) {
+                // We are seeing QFoo; or LFoo; The name itself does not shine any light on default val-refness
+                flavor = prefix == 'L' ? Flavor.L_TypeOf_X : Flavor.Q_TypeOf_X;
+                outer = new ClassType(outer, sigToTypes('>'), t, TypeMetadata.EMPTY, flavor) {
                         boolean completed = false;
                         @Override @DefinedBy(Api.LANGUAGE_MODEL)
                         public Type getEnclosingType() {
@@ -625,7 +642,9 @@ public class ClassReader {
                     t = enterClass(names.fromUtf(signatureBuffer,
                                                  startSbp,
                                                  sbp - startSbp));
-                    outer = new ClassType(outer, List.nil(), t);
+                    // We are seeing QFoo; or LFoo; The name itself does not shine any light on default val-refness
+                    flavor = prefix == 'L' ? Flavor.L_TypeOf_X : Flavor.Q_TypeOf_X;
+                    outer = new ClassType(outer, List.nil(), t, TypeMetadata.EMPTY, flavor);
                 }
                 signatureBuffer[sbp++] = (byte)'$';
                 continue;
@@ -790,6 +809,17 @@ public class ClassReader {
 
             new AttributeReader(names.Code, V45_3, MEMBER_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
+                    if (allowPrimitiveClasses) {
+                        if (sym.isConstructor()  && ((MethodSymbol) sym).type.getParameterTypes().size() == 0) {
+                            int code_length = buf.getInt(bp + 4);
+                            if ((code_length == 1 && buf.getByte( bp + 8) == (byte) ByteCodes.return_) ||
+                                    (code_length == 5 && buf.getByte(bp + 8) == ByteCodes.aload_0 &&
+                                        buf.getByte( bp + 9) == (byte) ByteCodes.invokespecial &&
+                                                buf.getByte( bp + 12) == (byte) ByteCodes.return_)) {
+                                    sym.flags_field |= EMPTYNOARGCONSTR;
+                            }
+                        }
+                    }
                     if (saveParameterNames)
                         ((MethodSymbol)sym).code = readCode(sym);
                     else
@@ -970,6 +1000,12 @@ public class ClassReader {
                         //- System.err.println(" # " + sym.type);
                         if (sym.kind == MTH && sym.type.getThrownTypes().isEmpty())
                             sym.type.asMethodType().thrown = thrown;
+                        if (sym.kind == MTH  && sym.name == names.init && sym.owner.isPrimitiveClass()) {
+                            sym.type = new MethodType(sym.type.getParameterTypes(),
+                                    syms.voidType,
+                                    sym.type.getThrownTypes(),
+                                    syms.methodClass);
+                        }
 
                     }
                 }
@@ -1240,6 +1276,19 @@ public class ClassReader {
                     }
                 }
             },
+            new AttributeReader(names.JavaFlags, V61, CLASS_ATTRIBUTE) {
+                @Override
+                protected boolean accepts(AttributeKind kind) {
+                    return super.accepts(kind) && allowPrimitiveClasses;
+                }
+                protected void read(Symbol sym, int attrLen) {
+                    if (sym.kind == TYP) {
+                        int extendedFlags = nextChar();
+                        if ((extendedFlags & ACC_REF_DEFAULT) != 0)
+                        ((ClassSymbol)sym).flags_field |= REFERENCE_FAVORING;
+                    }
+                }
+            }
         };
 
         for (AttributeReader r: readers)
@@ -2228,6 +2277,13 @@ public class ClassReader {
                                    Integer.toString(minorVersion));
             }
         }
+        if (name == names.init && ((flags & STATIC) != 0)) {
+            flags &= ~STATIC;
+            type = new MethodType(type.getParameterTypes(),
+                    syms.voidType,
+                    type.getThrownTypes(),
+                    syms.methodClass);
+        }
         validateMethodType(name, type);
         if (name == names.init && currentOwner.hasOuterInstance()) {
             // Sometimes anonymous classes don't have an outer
@@ -2739,6 +2795,12 @@ public class ClassReader {
         if ((flags & ACC_MODULE) != 0) {
             flags &= ~ACC_MODULE;
             flags |= MODULE;
+        }
+        if ((flags & ACC_PRIMITIVE) != 0) {
+            flags &= ~ACC_PRIMITIVE;
+            if (allowPrimitiveClasses) {
+                flags |= PRIMITIVE_CLASS;
+            }
         }
         return flags & ~ACC_SUPER; // SUPER and SYNCHRONIZED bits overloaded
     }

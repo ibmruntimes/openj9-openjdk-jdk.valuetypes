@@ -369,10 +369,42 @@ import static sun.invoke.util.Wrapper.isWrapperType;
                     return !strict;
                 }
             } else {
-                // both are reference types: fromType should be a superclass of toType.
-                return !strict || toType.isAssignableFrom(fromType);
+                // primitive types: fromType and toType are types of the same primitive class
+                // identity types: fromType should be a superclass of toType.
+                return !strict || canConvert(fromType, toType);
             }
         }
+    }
+
+    /**
+     * Tests if {@code fromType} can be converted to {@code toType}
+     * via an identity conversion, via a widening reference conversion or
+     * via primitive class narrowing and widening conversions.
+     * <p>
+     * If {@code fromType} represents a class or interface, this method
+     * returns {@code true} if {@code toType} is the same as,
+     * or is a superclass or superinterface of, {@code fromType}.
+     * <p>
+     * If {@code fromType} and {@code toType} is of the same primitive class,
+     * this method returns {@code true}.
+     * <p>
+     * Otherwise, this method returns {@code false}.
+     *
+     * @param     fromType the {@code Class} object to be converted from
+     * @param     toType the {@code Class} object to be converted to
+     * @return    {@code true} if {@code fromType} can be converted to {@code toType}
+     */
+    private boolean canConvert(Class<?> fromType, Class<?> toType) {
+        if (toType.isAssignableFrom(fromType)) {
+            return true;
+        }
+
+        if (fromType.isPrimitiveClass() && toType.isPrimitiveClass()) {
+            // val projection can be converted to ref projection; or vice verse
+            return fromType.asPrimaryType() == toType.asPrimaryType();
+        }
+
+        return false;
     }
 
     /**

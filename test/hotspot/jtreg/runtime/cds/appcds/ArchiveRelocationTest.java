@@ -68,12 +68,12 @@ public class ArchiveRelocationTest {
         String nmtArg = "-XX:NativeMemoryTracking=detail";
 
         OutputAnalyzer out = TestCommon.dump(appJar,
-                                             TestCommon.list(mainClass),
-                                             unlockArg, logArg, nmtArg);
+                TestCommon.list(mainClass),
+                unlockArg, logArg, nmtArg);
         out.shouldContain("Relocating archive from");
 
         TestCommon.run("-cp", appJar, unlockArg, runRelocArg, logArg,  mainClass)
-            .assertNormalExit(output -> {
+                .assertNormalExit(output -> {
                     if (run_reloc) {
                         output.shouldContain("Try to map archive(s) at an alternative address");
                     }

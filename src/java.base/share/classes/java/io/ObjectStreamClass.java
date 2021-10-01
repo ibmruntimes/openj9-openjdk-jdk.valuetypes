@@ -34,6 +34,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -503,6 +504,7 @@ public class ObjectStreamClass implements Serializable {
         name = cl.getName();
         isProxy = Proxy.isProxyClass(cl);
         isEnum = Enum.class.isAssignableFrom(cl);
+        boolean isPrimitiveClass = cl.isPrimitiveClass();
         isRecord = cl.isRecord();
         serializable = Serializable.class.isAssignableFrom(cl);
         externalizable = Externalizable.class.isAssignableFrom(cl);
@@ -574,6 +576,8 @@ public class ObjectStreamClass implements Serializable {
         if (deserializeEx == null) {
             if (isEnum) {
                 deserializeEx = new ExceptionInfo(name, "enum type");
+            } else if (isPrimitiveClass && writeReplaceMethod == null) {
+                deserializeEx = new ExceptionInfo(name, "primitive class");
             } else if (cons == null && !isRecord) {
                 deserializeEx = new ExceptionInfo(name, "no valid constructor");
             }
@@ -1560,7 +1564,7 @@ public class ObjectStreamClass implements Serializable {
             cons.setAccessible(true);
             return ((cons.getModifiers() & Modifier.PUBLIC) != 0) ?
                 cons : null;
-        } catch (NoSuchMethodException ex) {
+        } catch (NoSuchMethodException | InaccessibleObjectException ex) {
             return null;
         }
     }
@@ -1891,8 +1895,10 @@ public class ObjectStreamClass implements Serializable {
                     ifaceNames[i] = interfaces[i].getName();
                 }
                 Arrays.sort(ifaceNames);
+                // Skip IdentityObject to keep the computed SVUID the same.
                 for (int i = 0; i < ifaceNames.length; i++) {
-                    dout.writeUTF(ifaceNames[i]);
+                    if (!"java.lang.IdentityObject".equals(ifaceNames[i]))
+                        dout.writeUTF(ifaceNames[i]);
                 }
             }
 

@@ -1427,6 +1427,7 @@ var versionArgs = function(input, common) {
                           + common.build_number + "." + ciBuildNumber);
         }
     } else {
+        args = concat(args, "--with-version-pre=" + version_numbers.get("DEFAULT_PROMOTED_VERSION_PRE"));
         args = concat(args, "--with-version-opt=" + common.build_id);
     }
     return args;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,13 +84,14 @@ public class BytecodeDescriptor {
     private static Class<?> parseSig(String str, int[] i, int end, ClassLoader loader) {
         if (i[0] == end)  return null;
         char c = str.charAt(i[0]++);
-        if (c == 'L') {
+        if (c == 'L' || c == 'Q') {
             int begc = i[0], endc = str.indexOf(';', begc);
             if (endc < 0)  return null;
             i[0] = endc+1;
             String name = str.substring(begc, endc).replace('/', '.');
             try {
-                return Class.forName(name, false, loader);
+                Class<?> clz = Class.forName(name, false, loader);
+                return c == 'Q' ? clz.asValueType() : clz.asPrimaryType();
             } catch (ClassNotFoundException ex) {
                 throw new TypeNotPresentException(name, ex);
             }

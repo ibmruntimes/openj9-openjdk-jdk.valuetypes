@@ -41,6 +41,7 @@ import com.sun.tools.javac.code.Scope.StarImportScope;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.comp.Annotate.AnnotationTypeMetadata;
+import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
@@ -690,6 +691,7 @@ public class TypeEnter implements Completer {
             // Determine supertype.
             Type supertype;
             JCExpression extending;
+            final boolean isPrimitiveClass = (tree.mods.flags & Flags.PRIMITIVE_CLASS) != 0;
 
             if (tree.extending != null) {
                 extending = clearTypeParams(tree.extending);
@@ -719,6 +721,9 @@ public class TypeEnter implements Completer {
                 iface = clearTypeParams(iface);
                 Type it = attr.attribBase(iface, baseEnv, false, true, true);
                 if (it.hasTag(CLASS)) {
+                    if (isPrimitiveClass && it.tsym == syms.cloneableType.tsym) {
+                        log.error(tree, Errors.PrimitiveClassMustNotImplementCloneable(ct));
+                    }
                     interfaces.append(it);
                     if (all_interfaces != null) all_interfaces.append(it);
                 } else {
@@ -744,7 +749,6 @@ public class TypeEnter implements Completer {
                 ct.all_interfaces_field = (all_interfaces == null)
                         ? ct.interfaces_field : all_interfaces.toList();
             }
-
             /* it could be that there are already some symbols in the permitted list, for the case
              * where there are subtypes in the same compilation unit but the permits list is empty
              * so don't overwrite the permitted list if it is not empty

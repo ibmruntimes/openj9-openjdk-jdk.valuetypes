@@ -21,6 +21,8 @@
  * questions.
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 /*
  * @test
  * @bug 8156486
@@ -45,6 +47,8 @@ import static org.testng.Assert.*;
 import static java.lang.invoke.MethodType.*;
 
 public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
+    static final Class<?> type = byte.class;
+
     static final byte static_final_v = (byte)0x01;
 
     static byte static_v = (byte)0x01;
@@ -66,16 +70,16 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
     @BeforeClass
     public void setup() throws Exception {
         vhFinalField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodTypeByte.class, "final_v", byte.class);
+                VarHandleTestMethodTypeByte.class, "final_v", type);
 
         vhField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodTypeByte.class, "v", byte.class);
+                VarHandleTestMethodTypeByte.class, "v", type);
 
         vhStaticFinalField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodTypeByte.class, "static_final_v", byte.class);
+            VarHandleTestMethodTypeByte.class, "static_final_v", type);
 
         vhStaticField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodTypeByte.class, "static_v", byte.class);
+            VarHandleTestMethodTypeByte.class, "static_v", type);
 
         vhArray = MethodHandles.arrayElementVarHandle(byte[].class);
     }
@@ -1003,15 +1007,15 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET)) {
             // Incorrect argument types
             checkNPE(() -> { // null receiver
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class)).
                     invokeExact((VarHandleTestMethodTypeByte) null);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class)).
                     invokeExact(Void.class);
             });
             checkWMTE(() -> { // receiver primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class)).
                     invokeExact(0);
             });
             // Incorrect return type
@@ -1025,11 +1029,11 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, Class.class)).
                     invokeExact(recv, Void.class);
             });
         }
@@ -1037,11 +1041,11 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.SET)) {
             // Incorrect argument types
             checkNPE(() -> { // null receiver
-                hs.get(am, methodType(void.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                hs.get(am, methodType(void.class, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact((VarHandleTestMethodTypeByte) null, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                hs.get(am, methodType(void.class, Class.class, byte.class)).
+                hs.get(am, methodType(void.class, Class.class, type)).
                     invokeExact(Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
@@ -1049,7 +1053,7 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
                     invokeExact(recv, Void.class);
             });
             checkWMTE(() -> { // receiver primitive class
-                hs.get(am, methodType(void.class, int.class, byte.class)).
+                hs.get(am, methodType(void.class, int.class, type)).
                     invokeExact(0, (byte)0x01);
             });
             // Incorrect arity
@@ -1058,7 +1062,7 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                hs.get(am, methodType(void.class, VarHandleTestMethodTypeByte.class, byte.class, Class.class)).
+                hs.get(am, methodType(void.class, VarHandleTestMethodTypeByte.class, type, Class.class)).
                     invokeExact(recv, (byte)0x01, Void.class);
             });
         }
@@ -1066,23 +1070,23 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
             // Incorrect argument types
             checkNPE(() -> { // null receiver
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, byte.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, type, type)).
                     invokeExact((VarHandleTestMethodTypeByte) null, (byte)0x01, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, Class.class, byte.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, Class.class, type, type)).
                     invokeExact(Void.class, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // expected reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, Class.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, Class.class, type)).
                     invokeExact(recv, Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // actual reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, byte.class, Class.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, type, Class.class)).
                     invokeExact(recv, (byte)0x01, Void.class);
             });
             checkWMTE(() -> { // receiver primitive class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, int.class , byte.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, int.class , type, type)).
                     invokeExact(0, (byte)0x01, (byte)0x01);
             });
             // Incorrect arity
@@ -1091,159 +1095,159 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, byte.class, byte.class, Class.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, type, type, Class.class)).
                     invokeExact(recv, (byte)0x01, (byte)0x01, Void.class);
             });
         }
 
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
             checkNPE(() -> { // null receiver
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type, type)).
                     invokeExact((VarHandleTestMethodTypeByte) null, (byte)0x01, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, byte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, type, type)).
                     invokeExact(Void.class, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // expected reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, Class.class, type)).
                     invokeExact(recv, Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // actual reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type, Class.class)).
                     invokeExact(recv, (byte)0x01, Void.class);
             });
             checkWMTE(() -> { // reciever primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class , byte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class , type, type)).
                     invokeExact(0, (byte)0x01, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class , byte.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class , type, type)).
                     invokeExact(recv, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class , byte.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class , type, type)).
                     invokeExact(recv, (byte)0x01, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type, type, Class.class)).
                     invokeExact(recv, (byte)0x01, (byte)0x01, Void.class);
             });
         }
 
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
             checkNPE(() -> { // null receiver
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact((VarHandleTestMethodTypeByte) null, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, type)).
                     invokeExact(Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, Class.class)).
                     invokeExact(recv, Void.class);
             });
             checkWMTE(() -> { // reciever primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, type)).
                     invokeExact(0, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01, Void.class);
             });
         }
 
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
             checkNPE(() -> { // null receiver
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact((VarHandleTestMethodTypeByte) null, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, type)).
                     invokeExact(Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, Class.class)).
                     invokeExact(recv, Void.class);
             });
             checkWMTE(() -> { // reciever primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, type)).
                     invokeExact(0, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01, Void.class);
             });
         }
 
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
             checkNPE(() -> { // null receiver
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact((VarHandleTestMethodTypeByte) null, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, type)).
                     invokeExact(Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, Class.class)).
                     invokeExact(recv, Void.class);
             });
             checkWMTE(() -> { // reciever primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, type)).
                     invokeExact(0, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, VarHandleTestMethodTypeByte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, VarHandleTestMethodTypeByte.class, type)).
                     invokeExact(recv, (byte)0x01, Void.class);
             });
         }
@@ -1861,18 +1865,18 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                hs.get(am, methodType(void.class, byte.class, Class.class)).
+                hs.get(am, methodType(void.class, type, Class.class)).
                     invokeExact((byte)0x01, Void.class);
             });
         }
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
             // Incorrect argument types
             checkWMTE(() -> { // expected reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, Class.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, Class.class, type)).
                     invokeExact(Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // actual reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte.class, Class.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, type, Class.class)).
                     invokeExact((byte)0x01, Void.class);
             });
             // Incorrect arity
@@ -1881,7 +1885,7 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte.class, byte.class, Class.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, type, type, Class.class)).
                     invokeExact((byte)0x01, (byte)0x01, Void.class);
             });
         }
@@ -1889,29 +1893,29 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
             // Incorrect argument types
             checkWMTE(() -> { // expected reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, type)).
                     invokeExact(Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // actual reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, type, Class.class)).
                     invokeExact((byte)0x01, Void.class);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, type, type)).
                     invokeExact((byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, type, type)).
                     invokeExact((byte)0x01, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, type, type, Class.class)).
                     invokeExact((byte)0x01, (byte)0x01, Void.class);
             });
         }
@@ -1919,25 +1923,25 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
             // Incorrect argument types
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class)).
                     invokeExact(Void.class);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, type)).
                     invokeExact((byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, type)).
                     invokeExact((byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, type, Class.class)).
                     invokeExact((byte)0x01, Void.class);
             });
         }
@@ -1945,25 +1949,25 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
             // Incorrect argument types
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class)).
                     invokeExact(Void.class);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, type)).
                     invokeExact((byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, type)).
                     invokeExact((byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, type, Class.class)).
                     invokeExact((byte)0x01, Void.class);
             });
         }
@@ -1971,25 +1975,25 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
             // Incorrect argument types
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class)).
                     invokeExact(Void.class);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, type)).
                     invokeExact((byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, type)).
                     invokeExact((byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, type, Class.class)).
                     invokeExact((byte)0x01, Void.class);
             });
         }
@@ -2977,19 +2981,19 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET)) {
             // Incorrect argument types
             checkNPE(() -> { // null array
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class)).
                     invokeExact((byte[]) null, 0);
             });
             hs.checkWMTEOrCCE(() -> { // array reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, int.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, int.class)).
                     invokeExact(Void.class, 0);
             });
             checkWMTE(() -> { // array primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, int.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, int.class)).
                     invokeExact(0, 0);
             });
             checkWMTE(() -> { // index reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, Class.class)).
                     invokeExact(array, Void.class);
             });
             // Incorrect return type
@@ -3003,11 +3007,11 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, Class.class)).
                     invokeExact(array, 0, Void.class);
             });
         }
@@ -3015,11 +3019,11 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.SET)) {
             // Incorrect argument types
             checkNPE(() -> { // null array
-                hs.get(am, methodType(void.class, byte[].class, int.class, byte.class)).
+                hs.get(am, methodType(void.class, byte[].class, int.class, type)).
                     invokeExact((byte[]) null, 0, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // array reference class
-                hs.get(am, methodType(void.class, Class.class, int.class, byte.class)).
+                hs.get(am, methodType(void.class, Class.class, int.class, type)).
                     invokeExact(Void.class, 0, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
@@ -3027,11 +3031,11 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
                     invokeExact(array, 0, Void.class);
             });
             checkWMTE(() -> { // receiver primitive class
-                hs.get(am, methodType(void.class, int.class, int.class, byte.class)).
+                hs.get(am, methodType(void.class, int.class, int.class, type)).
                     invokeExact(0, 0, (byte)0x01);
             });
             checkWMTE(() -> { // index reference class
-                hs.get(am, methodType(void.class, byte[].class, Class.class, byte.class)).
+                hs.get(am, methodType(void.class, byte[].class, Class.class, type)).
                     invokeExact(array, Void.class, (byte)0x01);
             });
             // Incorrect arity
@@ -3047,27 +3051,27 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
             // Incorrect argument types
             checkNPE(() -> { // null receiver
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, byte.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, type, type)).
                     invokeExact((byte[]) null, 0, (byte)0x01, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // receiver reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, Class.class, int.class, byte.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, Class.class, int.class, type, type)).
                     invokeExact(Void.class, 0, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // expected reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, Class.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, Class.class, type)).
                     invokeExact(array, 0, Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // actual reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, byte.class, Class.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, type, Class.class)).
                     invokeExact(array, 0, (byte)0x01, Void.class);
             });
             checkWMTE(() -> { // receiver primitive class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, int.class, int.class, byte.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, int.class, int.class, type, type)).
                     invokeExact(0, 0, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // index reference class
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, Class.class, byte.class, byte.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, Class.class, type, type)).
                     invokeExact(array, Void.class, (byte)0x01, (byte)0x01);
             });
             // Incorrect arity
@@ -3076,7 +3080,7 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, byte.class, byte.class, Class.class)).
+                boolean r = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, type, type, Class.class)).
                     invokeExact(array, 0, (byte)0x01, (byte)0x01, Void.class);
             });
         }
@@ -3084,45 +3088,45 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
             // Incorrect argument types
             checkNPE(() -> { // null receiver
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type, type)).
                     invokeExact((byte[]) null, 0, (byte)0x01, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // array reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, int.class, byte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, int.class, type, type)).
                     invokeExact(Void.class, 0, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // expected reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, Class.class, type)).
                     invokeExact(array, 0, Void.class, (byte)0x01);
             });
             checkWMTE(() -> { // actual reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type, Class.class)).
                     invokeExact(array, 0, (byte)0x01, Void.class);
             });
             checkWMTE(() -> { // array primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, int.class, byte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, int.class, type, type)).
                     invokeExact(0, 0, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // index reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, Class.class, byte.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, Class.class, type, type)).
                     invokeExact(array, Void.class, (byte)0x01, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, byte.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, type, type)).
                     invokeExact(array, 0, (byte)0x01, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, byte.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, type, type)).
                     invokeExact(array, 0, (byte)0x01, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type, type, Class.class)).
                     invokeExact(array, 0, (byte)0x01, (byte)0x01, Void.class);
             });
         }
@@ -3130,41 +3134,41 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
             // Incorrect argument types
             checkNPE(() -> { // null array
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type)).
                     invokeExact((byte[]) null, 0, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // array reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, int.class, type)).
                     invokeExact(Void.class, 0, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, Class.class)).
                     invokeExact(array, 0, Void.class);
             });
             checkWMTE(() -> { // array primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, int.class, type)).
                     invokeExact(0, 0, (byte)0x01);
             });
             checkWMTE(() -> { // index reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, Class.class, type)).
                     invokeExact(array, Void.class, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, type)).
                     invokeExact(array, 0, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, type)).
                     invokeExact(array, 0, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type, Class.class)).
                     invokeExact(array, 0, (byte)0x01, Void.class);
             });
         }
@@ -3172,41 +3176,41 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
             // Incorrect argument types
             checkNPE(() -> { // null array
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type)).
                     invokeExact((byte[]) null, 0, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // array reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, int.class, type)).
                     invokeExact(Void.class, 0, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, Class.class)).
                     invokeExact(array, 0, Void.class);
             });
             checkWMTE(() -> { // array primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, int.class, type)).
                     invokeExact(0, 0, (byte)0x01);
             });
             checkWMTE(() -> { // index reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, Class.class, type)).
                     invokeExact(array, Void.class, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, type)).
                     invokeExact(array, 0, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, type)).
                     invokeExact(array, 0, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type, Class.class)).
                     invokeExact(array, 0, (byte)0x01, Void.class);
             });
         }
@@ -3214,41 +3218,41 @@ public class VarHandleTestMethodTypeByte extends VarHandleBaseTest {
         for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
             // Incorrect argument types
             checkNPE(() -> { // null array
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type)).
                     invokeExact((byte[]) null, 0, (byte)0x01);
             });
             hs.checkWMTEOrCCE(() -> { // array reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, Class.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, Class.class, int.class, type)).
                     invokeExact(Void.class, 0, (byte)0x01);
             });
             checkWMTE(() -> { // value reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, Class.class)).
                     invokeExact(array, 0, Void.class);
             });
             checkWMTE(() -> { // array primitive class
-                byte x = (byte) hs.get(am, methodType(byte.class, int.class, int.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, int.class, int.class, type)).
                     invokeExact(0, 0, (byte)0x01);
             });
             checkWMTE(() -> { // index reference class
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, Class.class, byte.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, Class.class, type)).
                     invokeExact(array, Void.class, (byte)0x01);
             });
             // Incorrect return type
             checkWMTE(() -> { // reference class
-                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, byte.class)).
+                Void r = (Void) hs.get(am, methodType(Void.class, byte[].class, int.class, type)).
                     invokeExact(array, 0, (byte)0x01);
             });
             checkWMTE(() -> { // primitive class
-                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, byte.class)).
+                boolean x = (boolean) hs.get(am, methodType(boolean.class, byte[].class, int.class, type)).
                     invokeExact(array, 0, (byte)0x01);
             });
             // Incorrect arity
             checkWMTE(() -> { // 0
-                byte x = (byte) hs.get(am, methodType(byte.class)).
+                byte x = (byte) hs.get(am, methodType(type)).
                     invokeExact();
             });
             checkWMTE(() -> { // >
-                byte x = (byte) hs.get(am, methodType(byte.class, byte[].class, int.class, byte.class, Class.class)).
+                byte x = (byte) hs.get(am, methodType(type, byte[].class, int.class, type, Class.class)).
                     invokeExact(array, 0, (byte)0x01, Void.class);
             });
         }

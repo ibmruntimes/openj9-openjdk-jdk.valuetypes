@@ -217,7 +217,7 @@ public class MemberEnter extends JCTree.Visitor {
 
         localEnv.info.scope.leave();
         if (chk.checkUnique(tree.pos(), m, enclScope)) {
-        enclScope.enter(m);
+            enclScope.enter(m);
         }
 
         annotate.annotateLater(tree.mods.annotations, localEnv, m, tree.pos());
@@ -287,9 +287,12 @@ public class MemberEnter extends JCTree.Visitor {
         VarSymbol v = new VarSymbol(0, tree.name, vartype, enclScope.owner);
         v.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, v, tree);
         tree.sym = v;
+        /* Don't want constant propagation/folding for instance fields of primitive classes,
+           as these can undergo updates via copy on write.
+        */
         if (tree.init != null) {
             v.flags_field |= HASINIT;
-            if ((v.flags_field & FINAL) != 0 &&
+            if ((v.flags_field & FINAL) != 0 && ((v.flags_field & STATIC) != 0 || !v.owner.isPrimitiveClass()) &&
                 needsLazyConstValue(tree.init)) {
                 Env<AttrContext> initEnv = getInitEnv(tree, env);
                 initEnv.info.enclVar = v;

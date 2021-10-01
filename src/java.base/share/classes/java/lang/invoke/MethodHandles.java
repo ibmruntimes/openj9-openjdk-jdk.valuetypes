@@ -1613,6 +1613,7 @@ public class MethodHandles {
         }
 
         private Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int allowedModes) {
+            assert lookupClass.isPrimaryType();
             assert prevLookupClass == null || ((allowedModes & MODULE) == 0
                     && prevLookupClass.getModule() != lookupClass.getModule());
             assert !lookupClass.isArray() && !lookupClass.isPrimitive();
@@ -2583,6 +2584,12 @@ assertEquals("[x, y]", MH_asList.invoke("x", "y").toString());
          */
         public MethodHandle findStatic(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             MemberName method = resolveOrFail(REF_invokeStatic, refc, name, type);
+            // resolveOrFail could return a non-static <init> method if present
+            // detect and throw NSME before producing a MethodHandle
+            if (!method.isStatic() && name.equals("<init>")) {
+                throw new NoSuchMethodException("illegal method name: " + name);
+            }
+
             return getDirectMethod(REF_invokeStatic, refc, method, findBoundCallerLookup(method));
         }
 
@@ -2728,6 +2735,13 @@ ProcessBuilder pb = (ProcessBuilder)
   MH_newProcessBuilder.invoke("x", "y", "z");
 assertEquals("[x, y, z]", pb.command().toString());
          * }</pre></blockquote>
+         *
+         * @apiNote
+         * This method does not find a static {@code <init>} factory method as it is invoked
+         * via {@code invokestatic} bytecode as opposed to {@code invokespecial} for an
+         * object constructor.  To look up static {@code <init>} factory method, use
+         * the {@link #findStatic(Class, String, MethodType) findStatic} method.
+         *
          * @param refc the class or interface from which the method is accessed
          * @param type the type of the method, with the receiver argument omitted, and a void return type
          * @return the desired method handle
@@ -2742,6 +2756,9 @@ assertEquals("[x, y, z]", pb.command().toString());
         public MethodHandle findConstructor(Class<?> refc, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             if (refc.isArray()) {
                 throw new NoSuchMethodException("no constructor for array class: " + refc.getName());
+            }
+            if (type.returnType() != void.class) {
+                throw new NoSuchMethodException("Constructors must have void return type: " + refc.getName());
             }
             String name = "<init>";
             MemberName ctor = resolveOrFail(REF_newInvokeSpecial, refc, name, type);
@@ -3429,10 +3446,19 @@ return mh1;
          */
         public MethodHandle unreflectConstructor(Constructor<?> c) throws IllegalAccessException {
             MemberName ctor = new MemberName(c);
-            assert(ctor.isConstructor());
+            assert(ctor.isObjectConstructorOrStaticInitMethod());
             @SuppressWarnings("deprecation")
             Lookup lookup = c.isAccessible() ? IMPL_LOOKUP : this;
-            return lookup.getDirectConstructorNoSecurityManager(ctor.getDeclaringClass(), ctor);
+            Class<?> defc = c.getDeclaringClass();
+            if (ctor.isObjectConstructor()) {
+                assert(ctor.getReturnType() == void.class);
+                return lookup.getDirectConstructorNoSecurityManager(defc, ctor);
+            } else {
+                // static init factory is a static method
+                assert(ctor.isMethod() && ctor.getReturnType() == defc && ctor.getReferenceKind() == REF_invokeStatic) : ctor.toString();
+                assert(!MethodHandleNatives.isCallerSensitive(ctor));  // must not be caller-sensitive
+                return lookup.getDirectMethodNoSecurityManager(ctor.getReferenceKind(), defc, ctor, lookup);
+            }
         }
 
         /**
@@ -3701,8 +3727,11 @@ return mh1;
 
         /** Check name for an illegal leading "&lt;" character. */
         void checkMethodName(byte refKind, String name) throws NoSuchMethodException {
-            if (name.startsWith("<") && refKind != REF_newInvokeSpecial)
-                throw new NoSuchMethodException("illegal method name: "+name);
+            // "<init>" can only be invoked via invokespecial or it's a static init factory
+            if (name.startsWith("<") && refKind != REF_newInvokeSpecial &&
+                    !(refKind == REF_invokeStatic && name.equals("<init>"))) {
+                    throw new NoSuchMethodException("illegal method name: " + name);
+            }
         }
 
         /**
@@ -3806,7 +3835,7 @@ return mh1;
 
             // Step 3:
             Class<?> defc = m.getDeclaringClass();
-            if (!fullPrivilegeLookup && defc != refc) {
+            if (!fullPrivilegeLookup && defc.asPrimaryType() != refc.asPrimaryType()) {
                 ReflectUtil.checkPackageAccess(defc);
             }
         }
@@ -3814,7 +3843,7 @@ return mh1;
         void checkMethod(byte refKind, Class<?> refc, MemberName m) throws IllegalAccessException {
             boolean wantStatic = (refKind == REF_invokeStatic);
             String message;
-            if (m.isConstructor())
+            if (m.isObjectConstructor())
                 message = "expected a method, not a constructor";
             else if (!m.isMethod())
                 message = "expected a method";
@@ -3889,12 +3918,12 @@ return mh1;
             int mods = m.getModifiers();
             // check the class first:
             boolean classOK = (Modifier.isPublic(defc.getModifiers()) &&
-                               (defc == refc ||
+                               (defc.asPrimaryType() == refc.asPrimaryType() ||
                                 Modifier.isPublic(refc.getModifiers())));
             if (!classOK && (allowedModes & PACKAGE) != 0) {
                 // ignore previous lookup class to check if default package access
                 classOK = (VerifyAccess.isClassAccessible(defc, lookupClass(), null, FULL_POWER_MODES) &&
-                           (defc == refc ||
+                           (defc.asPrimaryType() == refc.asPrimaryType() ||
                             VerifyAccess.isClassAccessible(refc, lookupClass(), null, FULL_POWER_MODES)));
             }
             if (!classOK)
@@ -3971,7 +4000,6 @@ return mh1;
             if (checkSecurity)
                 checkSecurityManager(refc, method);
             assert(!method.isMethodHandleInvoke());
-
             if (refKind == REF_invokeSpecial &&
                 refc != lookupClass() &&
                 !refc.isInterface() &&
@@ -4115,7 +4143,7 @@ return mh1;
         /** Common code for all constructors; do not call directly except from immediately above. */
         private MethodHandle getDirectConstructorCommon(Class<?> refc, MemberName ctor,
                                                   boolean checkSecurity) throws IllegalAccessException {
-            assert(ctor.isConstructor());
+            assert(ctor.isObjectConstructor());
             checkAccess(REF_newInvokeSpecial, refc, ctor);
             // Optionally check with the security manager; this isn't needed for unreflect* calls.
             if (checkSecurity)
@@ -4294,7 +4322,9 @@ return mh1;
      * <p> When the returned method handle is invoked,
      * the array reference and array index are checked.
      * A {@code NullPointerException} will be thrown if the array reference
-     * is {@code null} and an {@code ArrayIndexOutOfBoundsException} will be
+     * is {@code null} or if the array's element type is a {@link Class#isValueType()
+     * a primitive value type} and attempts to set {@code null} in the
+     * array element.  An {@code ArrayIndexOutOfBoundsException} will be
      * thrown if the index is negative or if it is greater than or equal to
      * the length of the array.
      *
@@ -5066,7 +5096,13 @@ assert((int)twice.invokeExact(21) == 42);
      */
     public static MethodHandle zero(Class<?> type) {
         Objects.requireNonNull(type);
-        return type.isPrimitive() ?  zero(Wrapper.forPrimitiveType(type), type) : zero(Wrapper.OBJECT, type);
+        if (type.isPrimitive()) {
+            return zero(Wrapper.forPrimitiveType(type), type);
+        } else if (type.isPrimitiveClass()) {
+            throw new UnsupportedOperationException();
+        } else {
+            return zero(Wrapper.OBJECT, type);
+        }
     }
 
     private static MethodHandle identityOrVoid(Class<?> type) {
@@ -5096,7 +5132,7 @@ assert((int)twice.invokeExact(21) == 42);
 
     private static final MethodHandle[] IDENTITY_MHS = new MethodHandle[Wrapper.COUNT];
     private static MethodHandle makeIdentity(Class<?> ptype) {
-        MethodType mtype = methodType(ptype, ptype);
+        MethodType mtype = MethodType.methodType(ptype, ptype);
         LambdaForm lform = LambdaForm.identityForm(BasicType.basicType(ptype));
         return MethodHandleImpl.makeIntrinsic(mtype, lform, Intrinsic.IDENTITY);
     }

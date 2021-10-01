@@ -98,6 +98,9 @@ public class Flags {
     /** Added in SE8, represents constructs implicitly declared in source. */
     public static final int MANDATED     = 1<<15;
 
+    /** Marks a type as a primitive class */
+    public static final int PRIMITIVE_CLASS  = 1<<16;
+
     public static final int StandardFlags = 0x0fff;
 
     // Because the following access flags are overloaded with other
@@ -107,6 +110,7 @@ public class Flags {
     public static final int ACC_SUPER    = 0x0020;
     public static final int ACC_BRIDGE   = 0x0040;
     public static final int ACC_VARARGS  = 0x0080;
+    public static final int ACC_PRIMITIVE = 0x0100;
     public static final int ACC_MODULE   = 0x8000;
 
     /*****************************************
@@ -121,6 +125,24 @@ public class Flags {
      *  has an initializer part.
      */
     public static final int HASINIT          = 1<<18;
+
+    /** Flag is set for a class symbol if it defines one or more non-empty
+     *  instance initializer block(s). This is relevenat only for class symbols
+     *  that originate from source types. For binary types the instance initializer
+     *  blocks are "normalized" into the constructors.
+     */
+    public static final int HASINITBLOCK         = 1<<18;
+
+    /** Flag is set for a method symbol if it is an empty no-arg ctor.
+     *  i.e one that simply returns (jlO) or merely chains to a super's
+     *  EMPTYNOARGCONSTR
+     */
+    public static final int EMPTYNOARGCONSTR         = 1<<18;
+
+    /**
+     * Flag is set for a reference favoring primitive class.
+     */
+    public static final int REFERENCE_FAVORING          = 1<<19;
 
     /** Flag is set for compiler-generated anonymous method symbols
      *  that `own' an initializer block.
@@ -390,12 +412,17 @@ public class Flags {
      */
     public static final long NON_SEALED = 1L<<63; // ClassSymbols
 
+    // Encodings for extended flags stored using attributes
+    /**
+     * Flag to indicate that the primitive class is reference default.
+     */
+    public static final int ACC_REF_DEFAULT = 1;
 
     /** Modifier masks.
      */
     public static final int
         AccessFlags                       = PUBLIC | PROTECTED | PRIVATE,
-        LocalClassFlags                   = FINAL | ABSTRACT | STRICTFP | ENUM | SYNTHETIC,
+        LocalClassFlags                   = FINAL | ABSTRACT | STRICTFP | ENUM | SYNTHETIC  | PRIMITIVE_CLASS,
         StaticLocalFlags                  = LocalClassFlags | STATIC | INTERFACE,
         MemberClassFlags                  = LocalClassFlags | INTERFACE | AccessFlags,
         MemberStaticClassFlags            = MemberClassFlags | STATIC,
@@ -410,7 +437,7 @@ public class Flags {
         RecordMethodFlags                 = AccessFlags | ABSTRACT | STATIC |
                                             SYNCHRONIZED | FINAL | STRICTFP;
     public static final long
-        ExtendedStandardFlags             = (long)StandardFlags | DEFAULT | SEALED | NON_SEALED,
+        ExtendedStandardFlags             = (long)StandardFlags | DEFAULT | SEALED | NON_SEALED | PRIMITIVE_CLASS,
         ExtendedMemberClassFlags          = (long)MemberClassFlags | SEALED | NON_SEALED,
         ExtendedMemberStaticClassFlags    = (long) MemberStaticClassFlags | SEALED | NON_SEALED,
         ExtendedClassFlags                = (long)ClassFlags | SEALED | NON_SEALED,
@@ -440,6 +467,7 @@ public class Flags {
             if (0 != (flags & NATIVE))    modifiers.add(Modifier.NATIVE);
             if (0 != (flags & STRICTFP))  modifiers.add(Modifier.STRICTFP);
             if (0 != (flags & DEFAULT))   modifiers.add(Modifier.DEFAULT);
+            if (0 != (flags & PRIMITIVE_CLASS))     modifiers.add(Modifier.PRIMITIVE);
             modifiers = Collections.unmodifiableSet(modifiers);
             modifierSets.put(flags, modifiers);
         }
@@ -481,9 +509,13 @@ public class Flags {
         ANNOTATION(Flags.ANNOTATION),
         DEPRECATED(Flags.DEPRECATED),
         HASINIT(Flags.HASINIT),
+        HASINITBLOCK(Flags.HASINITBLOCK),
+        EMPTYNOARGCONSTR(Flags.EMPTYNOARGCONSTR),
+        REFERENCE_FAVORING(Flags.REFERENCE_FAVORING),
         BLOCK(Flags.BLOCK),
         ENUM(Flags.ENUM),
         MANDATED(Flags.MANDATED),
+        PRIMITIVE(Flags.PRIMITIVE_CLASS),
         NOOUTERTHIS(Flags.NOOUTERTHIS),
         EXISTS(Flags.EXISTS),
         COMPOUND(Flags.COMPOUND),
