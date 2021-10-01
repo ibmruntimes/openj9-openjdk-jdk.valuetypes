@@ -33,7 +33,8 @@ class UnsafeStaticObjectFieldAccessorImpl extends UnsafeStaticFieldAccessorImpl 
     }
 
     public Object get(Object obj) throws IllegalArgumentException {
-        return unsafe.getReference(base, fieldOffset);
+        return isFlattened() ? unsafe.getValue(base, fieldOffset, field.getType())
+                             : unsafe.getReference(base, fieldOffset, field.getType());
     }
 
     public boolean getBoolean(Object obj) throws IllegalArgumentException {
@@ -74,12 +75,12 @@ class UnsafeStaticObjectFieldAccessorImpl extends UnsafeStaticFieldAccessorImpl 
         if (isFinal) {
             throwFinalFieldIllegalAccessException(value);
         }
-        if (value != null) {
-            if (!field.getType().isAssignableFrom(value.getClass())) {
-                throwSetIllegalArgumentException(value);
-            }
+        checkValue(value);
+        if (isFlattened()) {
+            unsafe.putValue(obj, fieldOffset, field.getType(), value);
+        } else {
+            unsafe.putReference(base, fieldOffset, value);
         }
-        unsafe.putReference(base, fieldOffset, value);
     }
 
     public void setBoolean(Object obj, boolean z)

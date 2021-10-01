@@ -26,6 +26,9 @@
 package java.lang;
 
 import jdk.internal.vm.annotation.IntrinsicCandidate;
+import jdk.internal.access.SharedSecrets;
+
+import java.util.Objects;
 
 /**
  * Class {@code Object} is the root of the class hierarchy.
@@ -39,6 +42,9 @@ public class Object {
 
     /**
      * Constructs a new object.
+     *
+     * @apiNote {@link Objects#newIdentity java.util.Objects.newIdentity()}
+     * should be used instead of {@code new Object()}.
      */
     @IntrinsicCandidate
     public Object() {}
@@ -239,7 +245,8 @@ public class Object {
      * The string output is not necessarily stable over time or across
      * JVM invocations.
      * @implSpec
-     * The {@code toString} method for class {@code Object}
+     * If this object is an instance of an identity class, then
+     * the {@code toString} method for class {@code Object}
      * returns a string consisting of the name of the class of which the
      * object is an instance, the at-sign character `{@code @}', and
      * the unsigned hexadecimal representation of the hash code of the
@@ -249,6 +256,12 @@ public class Object {
      * <pre>
      * getClass().getName() + '@' + Integer.toHexString(hashCode())
      * </pre></blockquote>
+     * <p>
+     * If this object is an instance of a primitive class, then
+     * the {@code toString} method returns a string which contains
+     * the name of the primitive class, and string representations of
+     * all its fields.  The precise format produced by this method
+     * is unspecified and subject to change.
      *
      * @return  a string representation of the object.
      */

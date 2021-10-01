@@ -46,10 +46,10 @@ abstract class UnsafeFieldAccessorImpl extends FieldAccessorImpl {
     UnsafeFieldAccessorImpl(Field field) {
         this.field = field;
         if (Modifier.isStatic(field.getModifiers()))
-            fieldOffset = unsafe.staticFieldOffset(field);
+            this.fieldOffset = unsafe.staticFieldOffset(field);
         else
-            fieldOffset = unsafe.objectFieldOffset(field);
-        isFinal = Modifier.isFinal(field.getModifiers());
+            this.fieldOffset = unsafe.objectFieldOffset(field);
+        this.isFinal = Modifier.isFinal(field.getModifiers());
     }
 
     protected void ensureObj(Object o) {
@@ -57,6 +57,30 @@ abstract class UnsafeFieldAccessorImpl extends FieldAccessorImpl {
         if (!field.getDeclaringClass().isAssignableFrom(o.getClass())) {
             throwSetIllegalArgumentException(o);
         }
+    }
+
+    protected boolean isFlattened() {
+        return unsafe.isFlattened(field);
+    }
+
+    protected boolean canBeNull() {
+        return !field.getType().isPrimitiveClass() || field.getType().isPrimaryType();
+    }
+
+    protected Object checkValue(Object value) {
+        if (!canBeNull() && value == null)
+            throw new NullPointerException(field + " cannot be set to null");
+
+        if (value != null) {
+            Class<?> type = value.getClass();
+            if (type.isPrimitiveClass()) {
+                type = type.asValueType();
+            }
+            if (!field.getType().isAssignableFrom(type)) {
+                throwSetIllegalArgumentException(value);
+            }
+        }
+        return value;
     }
 
     private String getQualifiedFieldName() {

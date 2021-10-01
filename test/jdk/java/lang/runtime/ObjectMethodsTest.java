@@ -152,22 +152,26 @@ public class ObjectMethodsTest {
         assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "hashCode", C.TO_STRING_DESC, C.class, "x;y", C.ACCESSORS));
         assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "equals",   C.HASHCODE_DESC,  C.class, "x;y", C.ACCESSORS));
 
-        record NamePlusType(String mn, MethodType mt) {}
-        List<NamePlusType> namePlusTypeList = List.of(
-                new NamePlusType("toString", C.TO_STRING_DESC),
-                new NamePlusType("equals", C.EQUALS_DESC),
-                new NamePlusType("hashCode", C.HASHCODE_DESC)
-        );
+        assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", C.TO_STRING_DESC, C.class, "x;y", null)       );
+        assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", C.TO_STRING_DESC, C.class, null,  C.ACCESSORS));
+        assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", C.TO_STRING_DESC, null,    "x;y", C.ACCESSORS));
+        assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, "equals",   C.EQUALS_DESC,    null,    "x;y", C.ACCESSORS));
+        assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, "hashCode", C.HASHCODE_DESC,  null,    "x;y", C.ACCESSORS));
 
-        for (NamePlusType npt : namePlusTypeList) {
-            assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, npt.mn(), npt.mt(), C.class, "x;y", null));
-            assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, npt.mn(), npt.mt(), C.class, "x;y", new MethodHandle[]{null}));
-            assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, npt.mn(), npt.mt(), C.class, null,  C.ACCESSORS));
-            assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, npt.mn(), npt.mt(), null,    "x;y", C.ACCESSORS));
-            assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, npt.mn(), null,     C.class, "x;y", C.ACCESSORS));
-            assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, null,     npt.mt(), C.class, "x;y", C.ACCESSORS));
-        }
+        assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", null,             C.class, "x;y", C.ACCESSORS));
+        assertThrows(NPE, () -> ObjectMethods.bootstrap(LOOKUP, null,       C.TO_STRING_DESC, C.class, "x;y", C.ACCESSORS));
+      //assertThrows(NPE, () -> ObjectMethods.bootstrap(null,   "toString", C.TO_STRING_DESC, C.class, "x;y", C.ACCESSORS));
+
+        assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", methodType(String.class, this.getClass()), C.class, "x;y", C.ACCESSORS));
+        assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", C.TO_STRING_DESC, C.class, "x;y",
+                     new MethodHandle[]{
+                            MethodHandles.lookup().findGetter(C.class, "x", int.class),
+                            MethodHandles.lookup().findGetter(this.getClass(), "y", int.class),
+                     }));
     }
+
+    // same field name and type as C::y
+    private int y;
 
     // Based on the ObjectMethods internal implementation
     private static int hashCombiner(int x, int y) {

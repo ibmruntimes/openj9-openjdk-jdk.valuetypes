@@ -367,7 +367,7 @@ public class LambdaToMethod extends TreeTranslator {
         //create the method declaration hoisting the lambda body
         JCMethodDecl lambdaDecl = make.MethodDef(make.Modifiers(sym.flags_field),
                 sym.name,
-                make.QualIdent(lambdaType.getReturnType().tsym),
+                make.QualIdent(lambdaType.getReturnType().tsym).setType(lambdaType.getReturnType()),
                 List.nil(),
                 localContext.syntheticParams,
                 lambdaType.getThrownTypes() == null ?
@@ -1850,7 +1850,7 @@ public class LambdaToMethod extends TreeTranslator {
                 if (forceSerializable) {
                     return true;
                 }
-                return types.asSuper(tree.target, syms.serializableType.tsym) != null;
+                return types.asSuper(tree.target.referenceProjectionOrSelf(), syms.serializableType.tsym) != null;
             }
 
             /**
@@ -2273,6 +2273,14 @@ public class LambdaToMethod extends TreeTranslator {
                 return tree.ownerAccessible;
             }
 
+            /* Workaround to BootstrapMethodError. This workaround should not be required in the unified
+               class generation model, but seems to be required ...
+               Todo: Investigate to see if a defect should be reported against runtime lambda machinery
+            */
+            boolean receiverIsReferenceProjection() {
+                return tree.getQualifierExpression().type.isPrimitiveReferenceType();
+            }
+
             /**
              * This method should be called only when target release <= 14
              * where LambdaMetaFactory does not spin nestmate classes.
@@ -2325,9 +2333,10 @@ public class LambdaToMethod extends TreeTranslator {
                         (!nestmateLambdas && isPrivateInOtherClass()) ||
                         isProtectedInSuperClassOfEnclosingClassInOtherPackage(tree.sym, owner) ||
                         !receiverAccessible() ||
+                        receiverIsReferenceProjection() ||
                         (tree.getMode() == ReferenceMode.NEW &&
                           tree.kind != ReferenceKind.ARRAY_CTOR &&
-                          (tree.sym.owner.isDirectlyOrIndirectlyLocal() || tree.sym.owner.isInner()));
+                          (tree.sym.owner.isDirectlyOrIndirectlyLocal() || tree.sym.owner.isInner() || tree.sym.owner.isPrimitiveClass()));
             }
 
             Type generatedRefSig() {

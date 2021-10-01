@@ -40,6 +40,7 @@ import javax.tools.JavaFileObject;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.RetentionPolicy;
 import com.sun.tools.javac.code.Directive.*;
+import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
@@ -142,6 +143,8 @@ public class ClassWriter extends ClassFile {
     /** The name table. */
     private final Names names;
 
+    private final Symtab syms;
+
     /** Access to files. */
     private final JavaFileManager fileManager;
 
@@ -175,6 +178,7 @@ public class ClassWriter extends ClassFile {
         check = Check.instance(context);
         fileManager = context.get(JavaFileManager.class);
         poolWriter = Gen.instance(context).poolWriter;
+        syms = Symtab.instance(context);
 
         verbose        = options.isSet(VERBOSE);
         genCrt         = options.isSet(XJCOV);
@@ -345,6 +349,12 @@ public class ClassWriter extends ClassFile {
         int acount = 0;
         if ((flags & DEPRECATED) != 0) {
             int alenIdx = writeAttr(names.Deprecated);
+            endAttr(alenIdx);
+            acount++;
+        }
+        if ((flags & REFERENCE_FAVORING) != 0) {
+            int alenIdx = writeAttr(names.JavaFlags);
+            databuf.appendChar(ACC_REF_DEFAULT);
             endAttr(alenIdx);
             acount++;
         }
@@ -1005,7 +1015,9 @@ public class ClassWriter extends ClassFile {
             endAttr(alenIdx);
             acount++;
         }
-        if (target.hasMethodParameters() && (options.isSet(PARAMETERS) || m.isConstructor() && (m.flags_field & RECORD) != 0)) {
+        if (target.hasMethodParameters() && (
+                options.isSet(PARAMETERS)
+                || ((m.flags_field & RECORD) != 0 && (m.isConstructor() || m.isPrimitiveObjectFactory())))) {
             if (!m.isLambdaMethod()) // Per JDK-8138729, do not emit parameters table for lambda bodies.
                 acount += writeMethodParametersAttr(m);
         }
@@ -1225,6 +1237,10 @@ public class ClassWriter extends ClassFile {
                 break;
             case CLASS:
             case ARRAY:
+                if (debugstackmap) System.out.print("object(" + types.erasure(t).tsym + ")");
+                databuf.appendByte(7);
+                databuf.appendChar(types.isPrimitiveClass(t) ? poolWriter.putClass(new ConstantPoolQType(types.erasure(t), types)) : poolWriter.putClass(types.erasure(t)));
+                break;
             case TYPEVAR:
                 if (debugstackmap) System.out.print("object(" + types.erasure(t).tsym + ")");
                 databuf.appendByte(7);
@@ -1538,7 +1554,7 @@ public class ClassWriter extends ClassFile {
         } else {
             flags = adjustFlags(c.flags() & ~DEFAULT);
             if ((flags & PROTECTED) != 0) flags |= PUBLIC;
-            flags = flags & ClassFlags & ~STRICTFP;
+            flags = flags & (ClassFlags | ACC_PRIMITIVE) & ~STRICTFP;
             if ((flags & INTERFACE) == 0) flags |= ACC_SUPER;
         }
 
@@ -1708,6 +1724,8 @@ public class ClassWriter extends ClassFile {
             result |= ACC_VARARGS;
         if ((flags & DEFAULT) != 0)
             result &= ~ABSTRACT;
+        if ((flags & PRIMITIVE_CLASS) != 0)
+            result |= ACC_PRIMITIVE;
         return result;
     }
 

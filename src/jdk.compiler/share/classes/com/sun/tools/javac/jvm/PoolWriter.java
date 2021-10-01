@@ -33,6 +33,7 @@ import com.sun.tools.javac.code.Symbol.MethodHandleSymbol;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Type.ConstantPoolQType;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.jvm.ClassWriter.PoolOverflow;
 import com.sun.tools.javac.jvm.ClassWriter.StringOverflow;
@@ -115,7 +116,21 @@ public class PoolWriter {
      * or an array type.
      */
     int putClass(Type t) {
+        /* Their is nothing to be gained by having the pair of class types Foo.ref and Foo.val
+           result in two different CONSTANT_Class_info strucures in the pool. These are
+           indistinguishable at the class file level. Hence we coalesce them here.
+        */
+        if (t.tsym.isPrimitiveClass())
+            t = t.asValueType();
         return pool.writeIfNeeded(types.erasure(t));
+    }
+
+    /**
+     * Puts a type into the pool and return its index. The type could be either a class, a type variable
+     * or an array type.
+     */
+    int putClass(ConstantPoolQType t) {
+        return pool.writeIfNeeded(t);
     }
 
     /**
@@ -362,10 +377,10 @@ public class PoolWriter {
             int tag = c.poolTag();
             switch (tag) {
                 case ClassFile.CONSTANT_Class: {
-                    Type ct = (Type)c;
+                    Type ct = c instanceof ConstantPoolQType ? ((ConstantPoolQType)c).type : (Type)c;
                     Name name = ct.hasTag(ARRAY) ?
                             typeSig(ct) :
-                            names.fromUtf(externalize(ct.tsym.flatName()));
+                            c instanceof ConstantPoolQType ? names.fromString("Q" + new String(externalize(ct.tsym.flatName())) + ";") : names.fromUtf(externalize(ct.tsym.flatName()));
                     poolbuf.appendByte(tag);
                     poolbuf.appendChar(putName(name));
                     if (ct.hasTag(CLASS)) {
@@ -502,6 +517,7 @@ public class PoolWriter {
         signatureGen.assembleSig(types.supertype(t));
         for (Type i : types.interfaces(t))
             signatureGen.assembleSig(i);
+
         return signatureGen.toName();
     }
 

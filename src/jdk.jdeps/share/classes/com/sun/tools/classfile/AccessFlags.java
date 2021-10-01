@@ -39,6 +39,7 @@ import java.util.Set;
  */
 public class AccessFlags {
     public static final int ACC_PUBLIC        = 0x0001; // class, inner, field, method
+    public static final int ACC_REF_DEFAULT   = 0x0001; // javac extra
     public static final int ACC_PRIVATE       = 0x0002; //        inner, field, method
     public static final int ACC_PROTECTED     = 0x0004; //        inner, field, method
     public static final int ACC_STATIC        = 0x0008; //        inner, field, method
@@ -49,6 +50,7 @@ public class AccessFlags {
     public static final int ACC_BRIDGE        = 0x0040; //                      method
     public static final int ACC_TRANSIENT     = 0x0080; //               field
     public static final int ACC_VARARGS       = 0x0080; //                      method
+    public static final int ACC_PRIMITIVE     = 0x0100; // class
     public static final int ACC_NATIVE        = 0x0100; //                      method
     public static final int ACC_INTERFACE     = 0x0200; // class, inner
     public static final int ACC_ABSTRACT      = 0x0400; // class, inner,        method
@@ -59,7 +61,7 @@ public class AccessFlags {
     public static final int ACC_MANDATED      = 0x8000; //                          method parameter
     public static final int ACC_MODULE        = 0x8000; // class
 
-    public static enum Kind { Class, InnerClass, Field, Method}
+    public static enum Kind { Class, InnerClass, Field, Method, JavacExtra}
 
     AccessFlags(ClassReader cr) throws IOException {
         this(cr.readUnsignedShort());
@@ -82,12 +84,12 @@ public class AccessFlags {
     }
 
     private static final int[] classModifiers = {
-        ACC_PUBLIC, ACC_FINAL, ACC_ABSTRACT
+        ACC_PUBLIC, ACC_FINAL, ACC_ABSTRACT, ACC_PRIMITIVE
     };
 
     private static final int[] classFlags = {
         ACC_PUBLIC, ACC_FINAL, ACC_SUPER, ACC_INTERFACE, ACC_ABSTRACT,
-        ACC_SYNTHETIC, ACC_ANNOTATION, ACC_ENUM, ACC_MODULE
+        ACC_SYNTHETIC, ACC_ANNOTATION, ACC_ENUM, ACC_MODULE, ACC_PRIMITIVE
     };
 
     public Set<String> getClassModifiers() {
@@ -101,12 +103,12 @@ public class AccessFlags {
 
     private static final int[] innerClassModifiers = {
         ACC_PUBLIC, ACC_PRIVATE, ACC_PROTECTED, ACC_STATIC, ACC_FINAL,
-        ACC_ABSTRACT
+        ACC_ABSTRACT, ACC_PRIMITIVE
     };
 
     private static final int[] innerClassFlags = {
         ACC_PUBLIC, ACC_PRIVATE, ACC_PROTECTED, ACC_STATIC, ACC_FINAL, ACC_SUPER,
-        ACC_INTERFACE, ACC_ABSTRACT, ACC_SYNTHETIC, ACC_ANNOTATION, ACC_ENUM
+        ACC_INTERFACE, ACC_ABSTRACT, ACC_SYNTHETIC, ACC_ANNOTATION, ACC_ENUM, ACC_PRIMITIVE
     };
 
     public Set<String> getInnerClassModifiers() {
@@ -203,8 +205,9 @@ public class AccessFlags {
                 return (t == Kind.Field ? "transient" : null);
             case ACC_VOLATILE:
                 return "volatile";
-            case ACC_NATIVE:
-                return "native";
+            case 0x100:
+                // ACC_NATIVE or ACC_PRIMITIVE
+                return (t == Kind.Class || t == Kind.InnerClass) ? "primitive" : "native";
             case ACC_ABSTRACT:
                 return "abstract";
             case ACC_STRICT:
@@ -234,8 +237,8 @@ public class AccessFlags {
             return (t == Kind.Field ? "ACC_VOLATILE" : "ACC_BRIDGE");
         case 0x80:
             return (t == Kind.Field ? "ACC_TRANSIENT" : "ACC_VARARGS");
-        case ACC_NATIVE:
-            return "ACC_NATIVE";
+        case 0x100:
+            return (t == Kind.Class || t == Kind.InnerClass) ? "ACC_PRIMITIVE" : "ACC_NATIVE";
         case ACC_INTERFACE:
             return "ACC_INTERFACE";
         case ACC_ABSTRACT:

@@ -52,6 +52,7 @@ import com.sun.tools.javac.code.Type.JCPrimitiveType;
 import com.sun.tools.javac.code.Type.JCVoidType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Type.UnknownType;
+import com.sun.tools.javac.code.Type.WildcardType;
 import com.sun.tools.javac.code.Types.UniqueType;
 import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.jvm.Target;
@@ -65,6 +66,7 @@ import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Options;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
@@ -220,6 +222,8 @@ public class Symtab {
     public final Type previewFeatureInternalType;
     public final Type typeDescriptorType;
     public final Type recordType;
+    public final Type identityObjectType;
+    public final Type primitiveObjectType;
     public final Type switchBootstrapsType;
     public final Type valueBasedType;
     public final Type valueBasedInternalType;
@@ -265,8 +269,17 @@ public class Symtab {
         return classFields.computeIfAbsent(
             new UniqueType(type, types), k -> {
                 Type arg = null;
-                if (type.getTag() == ARRAY || type.getTag() == CLASS)
-                    arg = types.erasure(type);
+                if (type.getTag() == ARRAY || type.getTag() == CLASS) {
+                    /* Temporary treatment for primitive class: Given a primitive class V that implements
+                       I1, I2, ... In, V.class is typed to be Class<? extends Object & I1 & I2 .. & In>
+                    */
+                    if (type.isPrimitiveClass()) {
+                        List<Type> bounds = List.of(objectType).appendList(((ClassSymbol) type.tsym).getInterfaces());
+                        arg = new WildcardType(bounds.size() > 1 ? types.makeIntersectionType(bounds) : objectType, BoundKind.EXTENDS, boundClass);
+                    } else {
+                        arg = types.erasure(type);
+                    }
+                }
                 else if (type.isPrimitiveOrVoid())
                     arg = types.boxedClass(type).type;
                 else
@@ -587,6 +600,8 @@ public class Symtab {
         previewFeatureInternalType = enterSyntheticAnnotation("jdk.internal.PreviewFeature+Annotation");
         typeDescriptorType = enterClass("java.lang.invoke.TypeDescriptor");
         recordType = enterClass("java.lang.Record");
+        identityObjectType = enterClass("java.lang.IdentityObject");
+        primitiveObjectType = enterClass("java.lang.PrimitiveObject");
         switchBootstrapsType = enterClass("java.lang.runtime.SwitchBootstraps");
         valueBasedType = enterClass("jdk.internal.ValueBased");
         valueBasedInternalType = enterSyntheticAnnotation("jdk.internal.ValueBased+Annotation");
@@ -597,6 +612,8 @@ public class Symtab {
         synthesizeEmptyInterfaceIfMissing(lambdaMetafactory);
         synthesizeEmptyInterfaceIfMissing(serializedLambdaType);
         synthesizeEmptyInterfaceIfMissing(stringConcatFactory);
+        synthesizeEmptyInterfaceIfMissing(identityObjectType);
+        synthesizeEmptyInterfaceIfMissing(primitiveObjectType);
         synthesizeBoxTypeIfMissing(doubleType);
         synthesizeBoxTypeIfMissing(floatType);
         synthesizeBoxTypeIfMissing(voidType);
@@ -617,7 +634,9 @@ public class Symtab {
         // It has a final length field and a clone method.
         ClassType arrayClassType = (ClassType)arrayClass.type;
         arrayClassType.supertype_field = objectType;
-        arrayClassType.interfaces_field = List.of(cloneableType, serializableType);
+        arrayClassType.interfaces_field =
+                List.of(cloneableType, serializableType, identityObjectType);
+
         arrayClass.members_field = WriteableScope.create(arrayClass);
         lengthVar = new VarSymbol(
             PUBLIC | FINAL,

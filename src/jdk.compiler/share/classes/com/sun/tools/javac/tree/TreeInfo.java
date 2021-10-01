@@ -111,17 +111,20 @@ public class TreeInfo {
     }
 
     /** Is there a constructor invocation in the given list of trees?
+     *  Optionally, check only for no-arg ctor invocation
      */
-    public static Name getConstructorInvocationName(List<? extends JCTree> trees, Names names) {
+    public static Name getConstructorInvocationName(List<? extends JCTree> trees, Names names, boolean argsAllowed) {
         for (JCTree tree : trees) {
             if (tree.hasTag(EXEC)) {
                 JCExpressionStatement stat = (JCExpressionStatement)tree;
                 if (stat.expr.hasTag(APPLY)) {
                     JCMethodInvocation apply = (JCMethodInvocation)stat.expr;
-                    Name methName = TreeInfo.name(apply.meth);
-                    if (methName == names._this ||
-                        methName == names._super) {
-                        return methName;
+                    if (argsAllowed || apply.args.size() == 0) {
+                        Name methName = TreeInfo.name(apply.meth);
+                        if (methName == names._this ||
+                                methName == names._super) {
+                            return methName;
+                        }
                     }
                 }
             }
@@ -485,6 +488,8 @@ public class TreeInfo {
             }
             case CONDEXPR:
                 return getStartPos(((JCConditional) tree).cond);
+            case DEFAULT_VALUE:
+                return getStartPos(((JCDefaultValue) tree).clazz);
             case EXEC:
                 return getStartPos(((JCExpressionStatement) tree).expr);
             case INDEXED:
@@ -636,6 +641,8 @@ public class TreeInfo {
                 return getEndPos(((JCTypeCast) tree).expr, endPosTable);
             case TYPETEST:
                 return getEndPos(((JCInstanceOf) tree).pattern, endPosTable);
+            case WITHFIELD:
+                return getEndPos(((JCWithField) tree).value, endPosTable);
             case WHILELOOP:
                 return getEndPos(((JCWhileLoop) tree).body, endPosTable);
             case ANNOTATED_TYPE:

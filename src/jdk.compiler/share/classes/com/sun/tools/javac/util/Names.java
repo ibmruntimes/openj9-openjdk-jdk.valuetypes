@@ -57,6 +57,7 @@ public class Names {
 
     // keywords
     public final Name _class;
+    public final Name _default;
     public final Name _super;
     public final Name _this;
     public final Name var;
@@ -93,12 +94,14 @@ public class Names {
     public final Name init;
     public final Name iterator;
     public final Name length;
+    public final Name newIdentity;
     public final Name next;
     public final Name ordinal;
     public final Name provider;
     public final Name serialVersionUID;
     public final Name toString;
     public final Name value;
+    public final Name primitive;
     public final Name valueOf;
     public final Name values;
     public final Name readResolve;
@@ -110,6 +113,10 @@ public class Names {
     public final Name java_lang_Cloneable;
     public final Name java_lang_Enum;
     public final Name java_lang_Object;
+    public final Name java_lang_System;
+    public final Name __primitive__;
+    public final Name java_lang___primitive__;
+    public final Name java_lang_IdentityObject;
 
     // names of builtin classes
     public final Name Array;
@@ -138,6 +145,7 @@ public class Names {
     public final Name Enum;
     public final Name Exceptions;
     public final Name InnerClasses;
+    public final Name JavaFlags;
     public final Name LineNumberTable;
     public final Name LocalVariableTable;
     public final Name LocalVariableTypeTable;
@@ -199,6 +207,12 @@ public class Names {
     public final Name makeConcat;
     public final Name makeConcatWithConstants;
 
+    // values
+    public final Name dollarValue;
+    public final Name ref;
+    public final Name val;
+
+
     // record related
     // members of java.lang.runtime.ObjectMethods
     public final Name bootstrap;
@@ -236,6 +250,7 @@ public class Names {
 
         // keywords
         _class = fromString("class");
+        _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
         var = fromString("var");
@@ -273,11 +288,13 @@ public class Names {
         iterator = fromString("iterator");
         length = fromString("length");
         next = fromString("next");
+        newIdentity = fromString("newIdentity");
         ordinal = fromString("ordinal");
         provider = fromString("provider");
         serialVersionUID = fromString("serialVersionUID");
         toString = fromString("toString");
         value = fromString("value");
+        primitive = fromString("primitive");
         valueOf = fromString("valueOf");
         values = fromString("values");
         readResolve = fromString("readResolve");
@@ -290,6 +307,10 @@ public class Names {
         java_lang_Cloneable = fromString("java.lang.Cloneable");
         java_lang_Enum = fromString("java.lang.Enum");
         java_lang_Object = fromString("java.lang.Object");
+        java_lang_System = fromString("java.lang.System");
+        __primitive__ = fromString("__primitive__");
+        java_lang___primitive__ = fromString("java.lang.__primitive__");
+        java_lang_IdentityObject = fromString("java.lang.IdentityObject");
 
         // names of builtin classes
         Array = fromString("Array");
@@ -319,6 +340,7 @@ public class Names {
         Exceptions = fromString("Exceptions");
         InnerClasses = fromString("InnerClasses");
         LineNumberTable = fromString("LineNumberTable");
+        JavaFlags = fromString("JavaFlags");
         LocalVariableTable = fromString("LocalVariableTable");
         LocalVariableTypeTable = fromString("LocalVariableTypeTable");
         MethodParameters = fromString("MethodParameters");
@@ -377,6 +399,11 @@ public class Names {
         // string concat
         makeConcat = fromString("makeConcat");
         makeConcatWithConstants = fromString("makeConcatWithConstants");
+
+        // primitive classes
+        dollarValue = fromString("$value");
+        ref = fromString("ref");
+        val = fromString("val");
 
         bootstrap = fromString("bootstrap");
         record = fromString("record");

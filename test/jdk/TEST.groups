@@ -107,7 +107,14 @@ jdk_lang = \
     jdk/internal/ref \
     jdk/internal/jimage \
     jdk/internal/math \
-    jdk/modules
+    jdk/modules \
+    valhalla
+
+# valhalla lworld tests
+jdk_valhalla = \
+    java/lang/invoke \
+    valhalla
+
 
 # All of the java.util package
 jdk_util = \

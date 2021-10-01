@@ -743,6 +743,15 @@ public class Pretty extends JCTree.Visitor {
         }
     }
 
+    public void visitDefaultValue(JCDefaultValue tree) {
+        try {
+            printExpr(tree.clazz, TreeInfo.postfixPrec);
+            print(".default");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public void visitDoLoop(JCDoWhileLoop tree) {
         try {
             print("do ");
@@ -774,6 +783,18 @@ public class Pretty extends JCTree.Visitor {
             }
             print(" ");
             printStat(tree.body);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void visitWithField(JCWithField tree) {
+        try {
+            print("__WithField(");
+            printExpr(tree.field);
+            print(", ");
+            printExpr(tree.value);
+            print(")");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

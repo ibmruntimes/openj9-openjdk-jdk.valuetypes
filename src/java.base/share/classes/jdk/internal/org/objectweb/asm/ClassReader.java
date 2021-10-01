@@ -1831,6 +1831,8 @@ public class ClassReader {
                 case Opcodes.PUTSTATIC:
                 case Opcodes.GETFIELD:
                 case Opcodes.PUTFIELD:
+                case Opcodes.DEFAULT:
+                case Opcodes.WITHFIELD:
                 case Opcodes.INVOKEVIRTUAL:
                 case Opcodes.INVOKESPECIAL:
                 case Opcodes.INVOKESTATIC:
@@ -2443,18 +2445,19 @@ public class ClassReader {
                 case Opcodes.INVOKESPECIAL:
                 case Opcodes.INVOKESTATIC:
                 case Opcodes.INVOKEINTERFACE:
+                case Opcodes.WITHFIELD:
                     {
                         int cpInfoOffset = cpInfoOffsets[readUnsignedShort(currentOffset + 1)];
                         int nameAndTypeCpInfoOffset = cpInfoOffsets[readUnsignedShort(cpInfoOffset + 2)];
                         String owner = readClass(cpInfoOffset, charBuffer);
                         String name = readUTF8(nameAndTypeCpInfoOffset, charBuffer);
                         String descriptor = readUTF8(nameAndTypeCpInfoOffset + 2, charBuffer);
-                        if (opcode < Opcodes.INVOKEVIRTUAL) {
-                            methodVisitor.visitFieldInsn(opcode, owner, name, descriptor);
-                        } else {
+                        if (opcode >= Opcodes.INVOKEVIRTUAL && opcode <= Opcodes.INVOKEINTERFACE) {
                             boolean isInterface =
                                     classBuffer[cpInfoOffset - 1] == Symbol.CONSTANT_INTERFACE_METHODREF_TAG;
                             methodVisitor.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+                        } else {
+                            methodVisitor.visitFieldInsn(opcode, owner, name, descriptor);
                         }
                         if (opcode == Opcodes.INVOKEINTERFACE) {
                             currentOffset += 5;
@@ -2489,6 +2492,7 @@ public class ClassReader {
                 case Opcodes.ANEWARRAY:
                 case Opcodes.CHECKCAST:
                 case Opcodes.INSTANCEOF:
+                case Opcodes.DEFAULT:
                     methodVisitor.visitTypeInsn(opcode, readClass(currentOffset + 1, charBuffer));
                     currentOffset += 3;
                     break;
@@ -3240,7 +3244,8 @@ public class ClassReader {
                     while (methodDescriptor.charAt(currentMethodDescritorOffset) == '[') {
                         ++currentMethodDescritorOffset;
                     }
-                    if (methodDescriptor.charAt(currentMethodDescritorOffset) == 'L') {
+                    char descType = methodDescriptor.charAt(currentMethodDescritorOffset);
+                    if (descType == 'L' || descType == 'Q') {
                         ++currentMethodDescritorOffset;
                         while (methodDescriptor.charAt(currentMethodDescritorOffset) != ';') {
                             ++currentMethodDescritorOffset;

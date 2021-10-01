@@ -126,6 +126,7 @@ class Field extends AccessibleObject implements Member {
           String signature,
           byte[] annotations)
     {
+        assert declaringClass.isPrimaryType();
         this.clazz = declaringClass;
         this.name = name;
         this.type = type;
@@ -328,13 +329,21 @@ class Field extends AccessibleObject implements Member {
         int mod = getModifiers();
         return (((mod == 0) ? "" : (Modifier.toString(mod) + " "))
             + getType().getTypeName() + " "
-            + getDeclaringClass().getTypeName() + "."
+            + getDeclaringClassTypeName() + "."
             + getName());
     }
 
     @Override
     String toShortString() {
-        return "field " + getDeclaringClass().getTypeName() + "." + getName();
+        return "field " + getDeclaringClassTypeName() + "." + getName();
+    }
+
+    String getDeclaringClassTypeName() {
+        Class<?> c = getDeclaringClass();
+        if (c.isPrimitiveClass()) {
+            c = c.asValueType();
+        }
+        return c.getTypeName();
     }
 
     /**
@@ -362,7 +371,7 @@ class Field extends AccessibleObject implements Member {
         Type fieldType = getGenericType();
         return (((mod == 0) ? "" : (Modifier.toString(mod) + " "))
             + fieldType.getTypeName() + " "
-            + getDeclaringClass().getTypeName() + "."
+            + getDeclaringClassTypeName() + "."
             + getName());
     }
 
@@ -737,7 +746,9 @@ class Field extends AccessibleObject implements Member {
      *     this {@code Field} object;</li>
      * <li>the field is non-static; and</li>
      * <li>the field's declaring class is not a {@linkplain Class#isHidden()
-     *     hidden class}; and</li>
+     *     hidden class};</li>
+     * <li>the field's declaring class is not a {@linkplain Class#isPrimitiveClass()
+     *     primitive class}; and</li>
      * <li>the field's declaring class is not a {@linkplain Class#isRecord()
      *     record class}.</li>
      * </ul>

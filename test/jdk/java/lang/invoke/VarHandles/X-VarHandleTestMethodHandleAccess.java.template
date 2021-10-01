@@ -21,6 +21,8 @@
  * questions.
  */
 
+#warn
+
 /*
  * @test
  * @run testng/othervm -Diters=20000 VarHandleTestMethodHandleAccess$Type$
@@ -39,6 +41,12 @@ import java.util.List;
 import static org.testng.Assert.*;
 
 public class VarHandleTestMethodHandleAccess$Type$ extends VarHandleBaseTest {
+#if[Point]
+    static final Class<?> type = $type$.class.asValueType();
+#else[Point]
+    static final Class<?> type = $type$.class;
+#end[Point]
+
     static final $type$ static_final_v = $value1$;
 
     static $type$ static_v;
@@ -57,21 +65,30 @@ public class VarHandleTestMethodHandleAccess$Type$ extends VarHandleBaseTest {
 
     VarHandle vhArray;
 
+#if[Value]
+    VarHandle vhValueTypeField;
+#end[Value]
+
     @BeforeClass
     public void setup() throws Exception {
         vhFinalField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodHandleAccess$Type$.class, "final_v", $type$.class);
+                VarHandleTestMethodHandleAccess$Type$.class, "final_v", type);
 
         vhField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodHandleAccess$Type$.class, "v", $type$.class);
+                VarHandleTestMethodHandleAccess$Type$.class, "v", type);
 
         vhStaticFinalField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodHandleAccess$Type$.class, "static_final_v", $type$.class);
+            VarHandleTestMethodHandleAccess$Type$.class, "static_final_v", type);
 
         vhStaticField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodHandleAccess$Type$.class, "static_v", $type$.class);
+            VarHandleTestMethodHandleAccess$Type$.class, "static_v", type);
 
         vhArray = MethodHandles.arrayElementVarHandle($type$[].class);
+
+#if[Value]
+        vhValueTypeField = MethodHandles.lookup().findVarHandle(
+                    Value.class, "$varType$_v", type);
+#end[Value]
     }
 
 
@@ -100,6 +117,13 @@ public class VarHandleTestMethodHandleAccess$Type$ extends VarHandleBaseTest {
             cases.add(new MethodHandleAccessTestCase("Array index out of bounds",
                                                      vhArray, f, VarHandleTestMethodHandleAccess$Type$::testArrayIndexOutOfBounds,
                                                      false));
+#if[Value]
+        cases.add(new MethodHandleAccessTestCase("Value type field",
+                                                 vhValueTypeField, f, hs -> testValueTypeField(Value.getInstance(), hs)));
+        cases.add(new MethodHandleAccessTestCase("Value type field unsupported",
+                                                 vhValueTypeField, f, hs -> testValueTypeFieldUnsupported(Value.getInstance(), hs),
+                                                 false));
+#end[Value]
         }
 
         // Work around issue with jtreg summary reporting which truncates
@@ -412,6 +436,59 @@ public class VarHandleTestMethodHandleAccess$Type$ extends VarHandleBaseTest {
 #end[Bitwise]
     }
 
+#if[Value]
+    static void testValueTypeField(Value recv, Handles hs) throws Throwable {
+        // Plain
+        {
+            $type$ x = ($type$) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, $value1$, "get $type$ value");
+        }
+    }
+
+    static void testValueTypeFieldUnsupported(Value recv, Handles hs) throws Throwable {
+        // Plain
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.SET)) {
+            checkUOE(am, () -> {
+                hs.get(am).invokeExact(recv, $value1$);
+            });
+        }
+#if[!CAS]
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
+            checkUOE(am, () -> {
+                boolean r = (boolean) hs.get(am).invokeExact(recv, $value1$, $value2$);
+            });
+        }
+
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
+            checkUOE(am, () -> {
+                $type$ r = ($type$) hs.get(am).invokeExact(recv, $value1$, $value2$);
+            });
+        }
+
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
+            checkUOE(am, () -> {
+                $type$ r = ($type$) hs.get(am).invokeExact(recv, $value1$);
+            });
+        }
+#end[CAS]
+
+#if[!AtomicAdd]
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
+            checkUOE(am, () -> {
+                $type$ r = ($type$) hs.get(am).invokeExact(recv, $value1$);
+            });
+        }
+#end[AtomicAdd]
+
+#if[!Bitwise]
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
+            checkUOE(am, () -> {
+                $type$ r = ($type$) hs.get(am).invokeExact(recv, $value1$);
+            });
+        }
+#end[Bitwise]
+    }
+#end[Value]
 
     static void testStaticField(Handles hs) throws Throwable {
         // Plain

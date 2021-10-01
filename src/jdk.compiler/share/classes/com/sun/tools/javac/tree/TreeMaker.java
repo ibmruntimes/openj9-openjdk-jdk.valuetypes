@@ -263,6 +263,12 @@ public class TreeMaker implements JCTree.Factory {
         return tree;
     }
 
+    public JCWithField WithField(JCExpression field, JCExpression value) {
+        JCWithField tree = new JCWithField(field, value);
+        tree.pos = pos;
+        return tree;
+    }
+
     public JCForLoop ForLoop(List<JCStatement> init,
                            JCExpression cond,
                            List<JCExpressionStatement> step,
@@ -294,6 +300,12 @@ public class TreeMaker implements JCTree.Factory {
     public JCCase Case(CaseTree.CaseKind caseKind, List<JCCaseLabel> labels,
                        List<JCStatement> stats, JCTree body) {
         JCCase tree = new JCCase(caseKind, labels, stats, body);
+        tree.pos = pos;
+        return tree;
+    }
+
+    public JCDefaultValue DefaultValue(JCExpression type) {
+        JCDefaultValue tree = new JCDefaultValue(type);
         tree.pos = pos;
         return tree;
     }
@@ -839,13 +851,41 @@ public class TreeMaker implements JCTree.Factory {
                 break;
             }
             default: {
-                Type outer = t.getEnclosingType();
-                JCExpression clazz = outer.hasTag(CLASS) && t.tsym.owner.kind == TYP
-                        ? Select(Type(outer), t.tsym)
-                        : QualIdent(t.tsym);
-                tp = t.getTypeArguments().isEmpty()
-                        ? clazz
-                        : TypeApply(clazz, Types(t.getTypeArguments()));
+                if (t.isReferenceProjection()) {
+                    // For parameterized types, we want V.ref<A1 ... An> not V<A1 ... An>.ref
+                    JCExpression vp = Type(t.asValueType());
+                    if (vp.hasTag(Tag.TYPEAPPLY)) {
+                        // vp now is V<A1 ... An>, build V.ref<A1 ... An>
+                        JCFieldAccess f = (JCFieldAccess) Select(((JCTypeApply) vp).clazz, t.tsym);
+                        f.name = names.ref;
+                        tp = TypeApply(f, ((JCTypeApply) vp).arguments);
+                    } else {
+                        JCFieldAccess f = (JCFieldAccess) Select(vp, t.tsym);
+                        f.name = names.ref;
+                        tp = f;
+                    }
+                } else if (t.isValueProjection()) {
+                    // For parameterized types, we want V.val<A1 ... An> not V<A1 ... An>.val
+                    JCExpression vp = Type(t.referenceProjection());
+                    if (vp.hasTag(Tag.TYPEAPPLY)) {
+                        // vp now is V<A1 ... An>, build V.val<A1 ... An>
+                        JCFieldAccess f = (JCFieldAccess) Select(((JCTypeApply) vp).clazz, t.tsym);
+                        f.name = names.val;
+                        tp = TypeApply(f, ((JCTypeApply) vp).arguments);
+                    } else {
+                        JCFieldAccess f = (JCFieldAccess) Select(vp, t.tsym);
+                        f.name = names.val;
+                        tp = f;
+                    }
+                } else {
+                    Type outer = t.getEnclosingType();
+                    JCExpression clazz = outer.hasTag(CLASS) && t.tsym.owner.kind == TYP
+                            ? Select(Type(outer), t.tsym)
+                            : QualIdent(t.tsym);
+                    tp = t.getTypeArguments().isEmpty()
+                            ? clazz
+                            : TypeApply(clazz, Types(t.getTypeArguments()));
+                }
                 break;
             }
             }

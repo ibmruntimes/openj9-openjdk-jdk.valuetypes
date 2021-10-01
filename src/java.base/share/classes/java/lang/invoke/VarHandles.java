@@ -31,12 +31,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -46,7 +43,6 @@ import static java.lang.invoke.MethodHandleStatics.UNSAFE;
 import static java.lang.invoke.MethodHandleStatics.VAR_HANDLE_IDENTITY_ADAPT;
 import static java.lang.invoke.MethodHandleStatics.newIllegalArgumentException;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 final class VarHandles {
 
@@ -61,9 +57,15 @@ final class VarHandles {
         if (!f.isStatic()) {
             long foffset = MethodHandleNatives.objectFieldOffset(f);
             if (!type.isPrimitive()) {
-                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
+                if (f.isFlattened()) {
+                    return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
+                        ? new VarHandleValues.FieldInstanceReadOnly(refc, foffset, type)
+                        : new VarHandleValues.FieldInstanceReadWrite(refc, foffset, type));
+                } else {
+                    return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleReferences.FieldInstanceReadOnly(refc, foffset, type)
                        : new VarHandleReferences.FieldInstanceReadWrite(refc, foffset, type));
+                }
             }
             else if (type == boolean.class) {
                 return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
@@ -122,9 +124,15 @@ final class VarHandles {
             Object base = MethodHandleNatives.staticFieldBase(f);
             long foffset = MethodHandleNatives.staticFieldOffset(f);
             if (!type.isPrimitive()) {
-                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
-                       ? new VarHandleReferences.FieldStaticReadOnly(base, foffset, type)
-                       : new VarHandleReferences.FieldStaticReadWrite(base, foffset, type));
+                if (f.isFlattened()) {
+                    return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
+                            ? new VarHandleValues.FieldStaticReadOnly(refc, foffset, type)
+                            : new VarHandleValues.FieldStaticReadWrite(refc, foffset, type));
+                } else {
+                    return f.isFinal() && !isWriteAllowedOnFinalFields
+                            ? new VarHandleReferences.FieldStaticReadOnly(base, foffset, type)
+                            : new VarHandleReferences.FieldStaticReadWrite(base, foffset, type);
+                }
             }
             else if (type == boolean.class) {
                 return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
@@ -215,7 +223,13 @@ final class VarHandles {
         int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
 
         if (!componentType.isPrimitive()) {
-            return maybeAdapt(new VarHandleReferences.Array(aoffset, ashift, arrayClass));
+            // the redundant componentType.isValue() check is there to
+            // minimize the performance impact to non-value array.
+            // It should be removed when Unsafe::isFlattenedArray is intrinsified.
+
+            return maybeAdapt(componentType.isValueType() && UNSAFE.isFlattenedArray(arrayClass)
+                ? new VarHandleValues.Array(aoffset, ashift, arrayClass)
+                : new VarHandleReferences.Array(aoffset, ashift, arrayClass));
         }
         else if (componentType == boolean.class) {
             return maybeAdapt(new VarHandleBooleans.Array(aoffset, ashift));
@@ -617,7 +631,7 @@ final class VarHandles {
                         .getExceptionTypes();
             } else if (MethodHandleNatives.refKindIsField(refKind)) {
                 exceptionTypes = null;
-            } else if (MethodHandleNatives.refKindIsConstructor(refKind)) {
+            } else if (MethodHandleNatives.refKindIsObjectConstructor(refKind)) {
                 exceptionTypes = info.reflectAs(Constructor.class, MethodHandles.Lookup.IMPL_LOOKUP)
                         .getExceptionTypes();
             } else {
