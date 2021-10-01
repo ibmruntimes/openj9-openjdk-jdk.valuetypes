@@ -21,6 +21,8 @@
  * questions.
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 /*
  * @test
  * @run testng/othervm -Diters=20000 VarHandleTestMethodHandleAccessShort
@@ -39,6 +41,8 @@ import java.util.List;
 import static org.testng.Assert.*;
 
 public class VarHandleTestMethodHandleAccessShort extends VarHandleBaseTest {
+    static final Class<?> type = short.class;
+
     static final short static_final_v = (short)0x0123;
 
     static short static_v;
@@ -57,21 +61,26 @@ public class VarHandleTestMethodHandleAccessShort extends VarHandleBaseTest {
 
     VarHandle vhArray;
 
+    VarHandle vhValueTypeField;
+
     @BeforeClass
     public void setup() throws Exception {
         vhFinalField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodHandleAccessShort.class, "final_v", short.class);
+                VarHandleTestMethodHandleAccessShort.class, "final_v", type);
 
         vhField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodHandleAccessShort.class, "v", short.class);
+                VarHandleTestMethodHandleAccessShort.class, "v", type);
 
         vhStaticFinalField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodHandleAccessShort.class, "static_final_v", short.class);
+            VarHandleTestMethodHandleAccessShort.class, "static_final_v", type);
 
         vhStaticField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodHandleAccessShort.class, "static_v", short.class);
+            VarHandleTestMethodHandleAccessShort.class, "static_v", type);
 
         vhArray = MethodHandles.arrayElementVarHandle(short[].class);
+
+        vhValueTypeField = MethodHandles.lookup().findVarHandle(
+                    Value.class, "short_v", type);
     }
 
 
@@ -100,6 +109,11 @@ public class VarHandleTestMethodHandleAccessShort extends VarHandleBaseTest {
             cases.add(new MethodHandleAccessTestCase("Array index out of bounds",
                                                      vhArray, f, VarHandleTestMethodHandleAccessShort::testArrayIndexOutOfBounds,
                                                      false));
+        cases.add(new MethodHandleAccessTestCase("Value type field",
+                                                 vhValueTypeField, f, hs -> testValueTypeField(Value.getInstance(), hs)));
+        cases.add(new MethodHandleAccessTestCase("Value type field unsupported",
+                                                 vhValueTypeField, f, hs -> testValueTypeFieldUnsupported(Value.getInstance(), hs),
+                                                 false));
         }
 
         // Work around issue with jtreg summary reporting which truncates
@@ -373,6 +387,24 @@ public class VarHandleTestMethodHandleAccessShort extends VarHandleBaseTest {
 
     }
 
+    static void testValueTypeField(Value recv, Handles hs) throws Throwable {
+        // Plain
+        {
+            short x = (short) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (short)0x0123, "get short value");
+        }
+    }
+
+    static void testValueTypeFieldUnsupported(Value recv, Handles hs) throws Throwable {
+        // Plain
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.SET)) {
+            checkUOE(am, () -> {
+                hs.get(am).invokeExact(recv, (short)0x0123);
+            });
+        }
+
+
+    }
 
     static void testStaticField(Handles hs) throws Throwable {
         // Plain

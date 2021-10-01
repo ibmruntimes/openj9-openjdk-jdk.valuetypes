@@ -31,6 +31,9 @@ import jdk.internal.vm.annotation.IntrinsicCandidate;
  * Phantom reference objects, which are enqueued after the collector
  * determines that their referents may otherwise be reclaimed.  Phantom
  * references are most often used to schedule post-mortem cleanup actions.
+ * <p>
+ * The referent must not be an instance of a primitive class; such a value
+ * can never have another reference to it and cannot be held in a reference type.
  *
  * <p> Suppose the garbage collector determines at a certain point in time
  * that an object is <a href="package-summary.html#reachability">
@@ -86,6 +89,8 @@ public class PhantomReference<T> extends Reference<T> {
      * @param referent the object the new phantom reference will refer to
      * @param q the queue with which the reference is to be registered,
      *          or {@code null} if registration is not required
+     * @throws IllegalArgumentException if the referent is an instance of an
+     *         {@link Class#isPrimitiveClass() primitive class}
      */
     public PhantomReference(T referent, ReferenceQueue<? super T> q) {
         super(referent, q);

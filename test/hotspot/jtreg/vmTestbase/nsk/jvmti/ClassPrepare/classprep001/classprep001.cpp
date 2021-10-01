@@ -60,7 +60,13 @@ static size_t eventsCount = 0;
 static size_t eventsExpected = 0;
 static class_info classes[] = {
     { "Lnsk/jvmti/ClassPrepare/classprep001$TestInterface;", EXP_STATUS, 2, 1, 0 },
-    { "Lnsk/jvmti/ClassPrepare/classprep001$TestClass;", EXP_STATUS, 3, 2, 1 }
+    { "Lnsk/jvmti/ClassPrepare/classprep001$TestClass;", EXP_STATUS, 3, 2, 2 }
+};
+// These classes are loaded on a different thread.
+// We should not get ClassPrepare events for them.
+static const class_info unexpectedClasses[] = {
+    { "Lnsk/jvmti/ClassPrepare/classprep001$TestInterface2;", 0, 0, 0, 0 },
+    { "Lnsk/jvmti/ClassPrepare/classprep001$TestClass2;", 0, 0, 0, 0}
 };
 // These classes are loaded on a different thread.
 // We should not get ClassPrepare events for them.

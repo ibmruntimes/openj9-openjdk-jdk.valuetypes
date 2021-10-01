@@ -110,7 +110,11 @@ runtime/os/TestTracePageSizes.java#Serial 8267460 linux-aarch64
 
 applications/jcstress/copy.java 8229852 linux-x64
 
-#############################################################################
+# Valhalla
+
+runtime/valhalla/inlinetypes/ClassInitializationFailuresTest.java 8274131 linux-aarch64-debug,macosx-aarch64-debug
+>>>>>>> 0789e052ba99420264473098c5afaac6a3778121
+
 
 # :hotspot_serviceability
 
@@ -124,6 +128,33 @@ serviceability/sa/ClhsdbCDSCore.java 8269982 macosx-aarch64
 serviceability/sa/ClhsdbFindPC.java#xcomp-core 8269982 macosx-aarch64
 serviceability/sa/ClhsdbFindPC.java#no-xcomp-core 8269982 macosx-aarch64
 serviceability/sa/ClhsdbPstack.java#core 8269982 macosx-aarch64
+
+# Valhalla TODO:
+serviceability/sa/ClhsdbCDSCore.java 8190936 generic-all
+serviceability/sa/ClhsdbCDSJstackPrintAll.java 8190936 generic-all
+serviceability/sa/ClhsdbFindPC.java 8190936 generic-all
+serviceability/sa/ClhsdbInspect.java 8190936 generic-all
+serviceability/sa/ClhsdbLongConstant.java 8190936 generic-all
+serviceability/sa/ClhsdbJdis.java 8190936 generic-all
+serviceability/sa/ClhsdbJstack.java 8190936 generic-all
+serviceability/sa/ClhsdbPrintAll.java 8190936 generic-all
+serviceability/sa/ClhsdbPrintAs.java 8190936 generic-all
+serviceability/sa/ClhsdbPrintStatics.java 8190936 generic-all
+serviceability/sa/ClhsdbSource.java 8190936 generic-all
+serviceability/sa/ClhsdbSymbol.java 8190936 generic-all
+serviceability/sa/ClhsdbWhere.java 8190936 generic-all
+serviceability/sa/JhsdbThreadInfoTest.java 8190936 generic-all
+serviceability/sa/TestClassDump.java 8190936 generic-all
+serviceability/sa/TestClhsdbJstackLock.java 8190936 generic-all
+serviceability/sa/TestCpoolForInvokeDynamic.java 8190936 generic-all
+serviceability/sa/TestHeapDumpForInvokeDynamic.java 8190936 generic-all
+serviceability/sa/TestHeapDumpForLargeArray.java 8190936 generic-all
+serviceability/sa/TestIntConstant.java 8190936 generic-all
+serviceability/sa/TestJhsdbJstackLock.java 8190936 generic-all
+serviceability/sa/TestJmapCore.java 8190936 generic-all
+serviceability/sa/TestJmapCoreMetaspace.java 8190936 generic-all
+serviceability/sa/TestPrintMdo.java 8190936 generic-all
+serviceability/sa/jmap-hprof/JMapHProfLargeHeapTest.java 8190936 generic-all
 
 #############################################################################
 

@@ -135,7 +135,6 @@ public class Check {
         source = Source.instance(context);
         target = Target.instance(context);
         warnOnAnyAccessToMembers = options.isSet("warnOnAccessToMembers");
-
         Target target = Target.instance(context);
         syntheticNameChar = target.syntheticNameChar();
 
@@ -500,7 +499,7 @@ public class Check {
         compiled.remove(Pair.of(csym.packge().modle, csym.flatname));
     }
 
-/* *************************************************************************
+    /* *************************************************************************
  * Type Checking
  **************************************************************************/
 
@@ -606,6 +605,11 @@ public class Check {
         if (inferenceContext.free(req) || inferenceContext.free(found)) {
             inferenceContext.addFreeTypeListener(List.of(req, found),
                     solvedContext -> checkType(pos, solvedContext.asInstType(found), solvedContext.asInstType(req), checkContext));
+        } else {
+            if (found.hasTag(CLASS)) {
+                if (inferenceContext != infer.emptyContext)
+                    checkParameterizationByPrimitiveClass(pos, found);
+            }
         }
         if (req.hasTag(ERROR))
             return req;
@@ -736,23 +740,79 @@ public class Check {
                                     : t;
         }
 
+    void checkSuperConstraintsOfPrimitiveClass(DiagnosticPosition pos, ClassSymbol c) {
+        for(Type st = types.supertype(c.type); st != Type.noType; st = types.supertype(st)) {
+            if (st == null || st.tsym == null || st.tsym.kind == ERR)
+                return;
+            if  (st.tsym == syms.objectType.tsym)
+                return;
+            if (!st.tsym.isAbstract()) {
+                log.error(pos, Errors.ConcreteSupertypeForPrimitiveClass(c, st));
+            }
+            if ((st.tsym.flags() & HASINITBLOCK) != 0) {
+                log.error(pos, Errors.SuperClassDeclaresInitBlock(c, st));
+            }
+            // No instance fields and no arged constructors both mean inner classes
+            // cannot be super classes for primitive classes.
+            Type encl = st.getEnclosingType();
+            if (encl != null && encl.hasTag(CLASS)) {
+                log.error(pos, Errors.SuperClassCannotBeInner(c, st));
+            }
+            for (Symbol s : st.tsym.members().getSymbols(NON_RECURSIVE)) {
+                switch (s.kind) {
+                case VAR:
+                    if ((s.flags() & STATIC) == 0) {
+                        log.error(pos, Errors.SuperFieldNotAllowed(s, c, st));
+                    }
+                    break;
+                case MTH:
+                    if ((s.flags() & SYNCHRONIZED) != 0) {
+                        log.error(pos, Errors.SuperMethodCannotBeSynchronized(s, c, st));
+                    } else if (s.isConstructor()) {
+                        MethodSymbol m = (MethodSymbol)s;
+                        if (m.getParameters().size() > 0) {
+                            log.error(pos, Errors.SuperConstructorCannotTakeArguments(m, c, st));
+                        } else {
+                            if ((m.flags() & (GENERATEDCONSTR | EMPTYNOARGCONSTR)) == 0) {
+                                log.error(pos, Errors.SuperNoArgConstructorMustBeEmpty(m, c, st));
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     /** Check that type is a valid qualifier for a constructor reference expression
      */
-    Type checkConstructorRefType(DiagnosticPosition pos, Type t) {
-        t = checkClassOrArrayType(pos, t);
+    Type checkConstructorRefType(JCExpression expr, Type t) {
+        t = checkClassOrArrayType(expr, t);
         if (t.hasTag(CLASS)) {
             if ((t.tsym.flags() & (ABSTRACT | INTERFACE)) != 0) {
-                log.error(pos, Errors.AbstractCantBeInstantiated(t.tsym));
+                log.error(expr, Errors.AbstractCantBeInstantiated(t.tsym));
                 t = types.createErrorType(t);
             } else if ((t.tsym.flags() & ENUM) != 0) {
-                log.error(pos, Errors.EnumCantBeInstantiated);
+                log.error(expr, Errors.EnumCantBeInstantiated);
                 t = types.createErrorType(t);
             } else {
-                t = checkClassType(pos, t, true);
+                // Projection types may not be mentioned in constructor references
+                JCExpression instantiation = expr;
+                if (instantiation.hasTag(TYPEAPPLY))
+                    instantiation = ((JCTypeApply) instantiation).clazz;
+                if (instantiation.hasTag(SELECT)) {
+                    JCFieldAccess fieldAccess = (JCFieldAccess) instantiation;
+                    if (fieldAccess.selected.type.tsym.isPrimitiveClass() &&
+                            (fieldAccess.name == names.ref || fieldAccess.name == names.val)) {
+                        log.error(expr, Errors.ProjectionCantBeInstantiated);
+                        t = types.createErrorType(t);
+                    }
+                }
+                t = checkClassType(expr, t, true);
             }
         } else if (t.hasTag(ARRAY)) {
             if (!types.isReifiable(((ArrayType)t).elemtype)) {
-                log.error(pos, Errors.GenericArrayCreation);
+                log.error(expr, Errors.GenericArrayCreation);
                 t = types.createErrorType(t);
             }
         }
@@ -783,14 +843,47 @@ public class Check {
      *  or a type variable.
      *  @param pos           Position to be used for error reporting.
      *  @param t             The type to be checked.
+     *  @param primitiveClassOK       If false, a primitive class does not qualify
      */
-    Type checkRefType(DiagnosticPosition pos, Type t) {
-        if (t.isReference())
+    Type checkRefType(DiagnosticPosition pos, Type t, boolean primitiveClassOK) {
+        if (t.isReference() && (primitiveClassOK || !types.isPrimitiveClass(t)))
             return t;
         else
             return typeTagError(pos,
                                 diags.fragment(Fragments.TypeReqRef),
                                 t);
+    }
+
+    /** Check that type is an identity type, i.e. not a primitive type
+     *  nor its reference projection. When not discernible statically,
+     *  give it the benefit of doubt and defer to runtime.
+     *
+     *  @param pos           Position to be used for error reporting.
+     *  @param t             The type to be checked.
+     */
+    Type checkIdentityType(DiagnosticPosition pos, Type t) {
+
+        if (t.isPrimitive() || t.tsym.isPrimitiveClass())
+            return typeTagError(pos,
+                    diags.fragment(Fragments.TypeReqIdentity),
+                    t);
+
+        /* Not appropriate to check
+         *     if (types.asSuper(t, syms.identityObjectType.tsym) != null)
+         * since jlO, interface types and abstract types may fail that check
+         * at compile time.
+         */
+
+        return t;
+    }
+
+    /** Check that type is a reference type, i.e. a class, interface or array type
+     *  or a type variable.
+     *  @param pos           Position to be used for error reporting.
+     *  @param t             The type to be checked.
+     */
+    Type checkRefType(DiagnosticPosition pos, Type t) {
+        return checkRefType(pos, t, true);
     }
 
     /** Check that each type is a reference type, i.e. a class, interface or array type
@@ -801,7 +894,7 @@ public class Check {
     List<Type> checkRefTypes(List<JCExpression> trees, List<Type> types) {
         List<JCExpression> tl = trees;
         for (List<Type> l = types; l.nonEmpty(); l = l.tail) {
-            l.head = checkRefType(tl.head.pos(), l.head);
+            l.head = checkRefType(tl.head.pos(), l.head, false);
             tl = tl.tail;
         }
         return types;
@@ -836,6 +929,55 @@ public class Check {
         } else
             return true;
     }
+
+    void checkParameterizationByPrimitiveClass(DiagnosticPosition pos, Type t) {
+        parameterizationByPrimitiveClassChecker.visit(t, pos);
+    }
+
+    /** parameterizationByPrimitiveClassChecker: A type visitor that descends down the given type looking for instances of primitive classes
+     *  being used as type arguments and issues error against those usages.
+     */
+    private final Types.SimpleVisitor<Void, DiagnosticPosition> parameterizationByPrimitiveClassChecker =
+            new Types.SimpleVisitor<Void, DiagnosticPosition>() {
+
+        @Override
+        public Void visitType(Type t, DiagnosticPosition pos) {
+            return null;
+        }
+
+        @Override
+        public Void visitClassType(ClassType t, DiagnosticPosition pos) {
+            for (Type targ : t.allparams()) {
+                if (types.isPrimitiveClass(targ)) {
+                    log.error(pos, Errors.GenericParameterizationWithPrimitiveClass(t));
+                }
+                visit(targ, pos);
+            }
+            return null;
+        }
+
+        @Override
+        public Void visitTypeVar(TypeVar t, DiagnosticPosition pos) {
+             return null;
+        }
+
+        @Override
+        public Void visitCapturedType(CapturedType t, DiagnosticPosition pos) {
+            return null;
+        }
+
+        @Override
+        public Void visitArrayType(ArrayType t, DiagnosticPosition pos) {
+            return visit(t.elemtype, pos);
+        }
+
+        @Override
+        public Void visitWildcardType(WildcardType t, DiagnosticPosition pos) {
+            return visit(t.type, pos);
+        }
+    };
+
+
 
     /** Check that usage of diamond operator is correct (i.e. diamond should not
      * be used with non-generic classes or in anonymous class creation expressions)
@@ -985,7 +1127,44 @@ public class Check {
         }
 
         //upward project the initializer type
-        return types.upward(t, types.captures(t));
+        Type varType = types.upward(t, types.captures(t));
+        if (varType.hasTag(CLASS)) {
+            checkParameterizationByPrimitiveClass(pos, varType);
+        }
+        return varType;
+    }
+
+    public void checkForSuspectClassLiteralComparison(
+            final JCBinary tree,
+            final Type leftType,
+            final Type rightType) {
+
+        if (lint.isEnabled(LintCategory.MIGRATION)) {
+            if (isInvocationOfGetClass(tree.lhs) && isClassOfSomeInterface(rightType) ||
+                    isInvocationOfGetClass(tree.rhs) && isClassOfSomeInterface(leftType)) {
+                log.warning(LintCategory.MIGRATION, tree.pos(), Warnings.GetClassComparedWithInterface);
+            }
+        }
+    }
+    //where
+    private boolean isClassOfSomeInterface(Type someClass) {
+        if (someClass.tsym.flatName() == names.java_lang_Class) {
+            List<Type> arguments = someClass.getTypeArguments();
+            if (arguments.length() == 1) {
+                return arguments.head.isInterface();
+            }
+        }
+        return false;
+    }
+    //where
+    private boolean isInvocationOfGetClass(JCExpression tree) {
+        tree = TreeInfo.skipParens(tree);
+        if (tree.hasTag(APPLY)) {
+            JCMethodInvocation apply = (JCMethodInvocation)tree;
+            MethodSymbol msym = (MethodSymbol)TreeInfo.symbol(apply.meth);
+            return msym.name == names.getClass && msym.implementedIn(syms.objectType.tsym, types) != null;
+        }
+        return false;
     }
 
     Type checkMethod(final Type mtype,
@@ -1183,8 +1362,12 @@ public class Check {
                 mask = LocalVarFlags;
             else if ((sym.owner.flags_field & INTERFACE) != 0)
                 mask = implicit = InterfaceVarFlags;
-            else
+            else {
                 mask = VarFlags;
+                if (sym.owner.isPrimitiveClass() && (flags & STATIC) == 0) {
+                    implicit |= FINAL;
+                }
+            }
             break;
         case MTH:
             if (sym.name == names.init) {
@@ -1212,7 +1395,12 @@ public class Check {
             } else if ((sym.owner.flags_field & RECORD) != 0) {
                 mask = RecordMethodFlags;
             } else {
-                mask = MethodFlags;
+                // instance methods of primitive classes do not have a monitor associated with their `this'
+                mask = ((sym.owner.flags_field & PRIMITIVE_CLASS) != 0 && (flags & Flags.STATIC) == 0) ?
+                        MethodFlags & ~SYNCHRONIZED : MethodFlags;
+            }
+            if ((flags & STRICTFP) != 0) {
+                warnOnExplicitStrictfp(pos);
             }
             if ((flags & STRICTFP) != 0) {
                 warnOnExplicitStrictfp(pos);
@@ -1249,8 +1437,8 @@ public class Check {
             if ((flags & INTERFACE) != 0) implicit |= ABSTRACT;
 
             if ((flags & ENUM) != 0) {
-                // enums can't be declared abstract, final, sealed or non-sealed
-                mask &= ~(ABSTRACT | FINAL | SEALED | NON_SEALED);
+                // enums can't be declared abstract, final, sealed or non-sealed or primitive
+                mask &= ~(ABSTRACT | FINAL | SEALED | NON_SEALED | PRIMITIVE_CLASS);
                 implicit |= implicitEnumFinalFlag(tree);
             }
             if ((flags & RECORD) != 0) {
@@ -1291,7 +1479,7 @@ public class Check {
                  &&
                  checkDisjoint(pos, flags,
                                ABSTRACT | INTERFACE,
-                               FINAL | NATIVE | SYNCHRONIZED)
+                               FINAL | NATIVE | SYNCHRONIZED | PRIMITIVE_CLASS)
                  &&
                  checkDisjoint(pos, flags,
                                PUBLIC,
@@ -1301,7 +1489,7 @@ public class Check {
                                PRIVATE,
                                PUBLIC | PROTECTED)
                  &&
-                 checkDisjoint(pos, flags,
+                 checkDisjoint(pos, (flags | implicit), // complain against volatile & implcitly final entities too.
                                FINAL,
                                VOLATILE)
                  &&
@@ -1490,10 +1678,16 @@ public class Check {
 
         public void visitSelectInternal(JCFieldAccess tree) {
             if (tree.type.tsym.isStatic() &&
-                tree.selected.type.isParameterized()) {
+                tree.selected.type.isParameterized() &&
+                    (!tree.type.tsym.isPrimitiveClass() || (tree.name != names.ref && tree.name != names.val))) {
                 // The enclosing type is not a class, so we are
                 // looking at a static member type.  However, the
                 // qualifying expression is parameterized.
+
+                // Tolerate the pseudo-select V.ref/V.val: V<T>.ref/val will be static if V<T> is and
+                // should not be confused as selecting a static member of a parameterized type. Both
+                // these constructs are illegal anyway & will be more appropriately complained against shortly.
+                // Note: the canonicl form is V.ref<T> and V.val<T> not V<T>.ref and V<T>.val
                 log.error(tree.pos(), Errors.CantSelectStaticClassFromParamType);
             } else {
                 // otherwise validate the rest of the expression
@@ -1820,6 +2014,15 @@ public class Check {
             return;
         }
 
+        if (origin.isPrimitiveClass() && other.owner == syms.objectType.tsym && m.type.getParameterTypes().size() == 0) {
+            if (m.name == names.clone || m.name == names.finalize) {
+                log.error(TreeInfo.diagnosticPositionFor(m, tree),
+                        Errors.PrimitiveClassMayNotOverride(m.name));
+                m.flags_field |= BAD_OVERRIDE;
+                return;
+            }
+        }
+
         Type mt = types.memberType(origin.type, m);
         Type ot = types.memberType(origin.type, other);
         // Error if overriding result type is different
@@ -2132,7 +2335,8 @@ public class Check {
         // or by virtue of being a member of a diamond inferred anonymous class. Latter case is to
         // be treated "as if as they were annotated" with @Override.
         boolean mustOverride = explicitOverride ||
-                (env.info.isAnonymousDiamond && !m.isConstructor() && !m.isPrivate());
+                (env.info.isAnonymousDiamond && !m.isConstructor() && !m.isPrivate() &&
+                        (!m.owner.isPrimitiveClass() || (tree.body.flags & SYNTHETIC) == 0));
         if (mustOverride && !isOverrider(m)) {
             DiagnosticPosition pos = tree.pos();
             for (JCAnnotation a : tree.getModifiers().annotations) {
@@ -2257,6 +2461,44 @@ public class Check {
                       Errors.DoesNotOverrideAbstract(c, undef1, undef1.location()));
         }
     }
+
+    // A primitive class cannot contain a field of its own type either or indirectly.
+    void checkNonCyclicMembership(JCClassDecl tree) {
+        Assert.check((tree.sym.flags_field & LOCKED) == 0);
+        try {
+            tree.sym.flags_field |= LOCKED;
+            for (List<? extends JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+                if (l.head.hasTag(VARDEF)) {
+                    JCVariableDecl field = (JCVariableDecl) l.head;
+                    if (cyclePossible(field.sym)) {
+                        checkNonCyclicMembership((ClassSymbol) field.type.tsym, field.pos());
+                    }
+                }
+            }
+        } finally {
+            tree.sym.flags_field &= ~LOCKED;
+        }
+
+    }
+    // where
+    private void checkNonCyclicMembership(ClassSymbol c, DiagnosticPosition pos) {
+        if ((c.flags_field & LOCKED) != 0) {
+            log.error(pos, Errors.CyclicPrimitiveClassMembership(c));
+            return;
+        }
+        try {
+            c.flags_field |= LOCKED;
+            for (Symbol fld : c.members().getSymbols(s -> s.kind == VAR && cyclePossible((VarSymbol) s), NON_RECURSIVE)) {
+                checkNonCyclicMembership((ClassSymbol) fld.type.tsym, pos);
+            }
+        } finally {
+            c.flags_field &= ~LOCKED;
+        }
+    }
+        // where
+        private boolean cyclePossible(VarSymbol symbol) {
+            return (symbol.flags() & STATIC) == 0 && types.isPrimitiveClass(symbol.type);
+        }
 
     void checkNonCyclicDecl(JCClassDecl tree) {
         CycleChecker cc = new CycleChecker();
@@ -2506,6 +2748,16 @@ public class Check {
                     return;
         }
         checkCompatibleConcretes(pos, c);
+
+        boolean implementsIdentityObject = types.asSuper(c.referenceProjectionOrSelf(), syms.identityObjectType.tsym) != null;
+        boolean implementsPrimitiveObject = types.asSuper(c.referenceProjectionOrSelf(), syms.primitiveObjectType.tsym) != null;
+        if (c.tsym.isPrimitiveClass() && implementsIdentityObject) {
+            log.error(pos, Errors.PrimitiveClassMustNotImplementIdentityObject(c));
+        } else if (implementsPrimitiveObject && !c.tsym.isPrimitiveClass() && !c.isReferenceProjection() && !c.tsym.isInterface() && !c.tsym.isAbstract()) {
+            log.error(pos, Errors.IdentityClassMustNotImplementPrimitiveObject(c));
+        } else if (implementsPrimitiveObject && implementsIdentityObject) {
+            log.error(pos, Errors.MutuallyIncompatibleSuperInterfaces(c));
+        }
     }
 
     /** Check that all non-override equivalent methods accessible from 'site'

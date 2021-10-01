@@ -21,6 +21,8 @@
  * questions.
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 /*
  * @test
  * @run testng/othervm -Diters=10    -Xint                   VarHandleTestAccessFloat
@@ -42,6 +44,8 @@ import java.util.List;
 import static org.testng.Assert.*;
 
 public class VarHandleTestAccessFloat extends VarHandleBaseTest {
+    static final Class<?> type = float.class;
+
     static final float static_final_v = 1.0f;
 
     static float static_v;
@@ -68,6 +72,7 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
 
     VarHandle vhArray;
 
+    VarHandle vhValueTypeField;
 
     VarHandle[] allocate(boolean same) {
         List<VarHandle> vhs = new ArrayList<>();
@@ -76,19 +81,19 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
         VarHandle vh;
         try {
             vh = MethodHandles.lookup().findVarHandle(
-                    VarHandleTestAccessFloat.class, "final_v" + postfix, float.class);
+                    VarHandleTestAccessFloat.class, "final_v" + postfix, type);
             vhs.add(vh);
 
             vh = MethodHandles.lookup().findVarHandle(
-                    VarHandleTestAccessFloat.class, "v" + postfix, float.class);
+                    VarHandleTestAccessFloat.class, "v" + postfix, type);
             vhs.add(vh);
 
             vh = MethodHandles.lookup().findStaticVarHandle(
-                VarHandleTestAccessFloat.class, "static_final_v" + postfix, float.class);
+                VarHandleTestAccessFloat.class, "static_final_v" + postfix, type);
             vhs.add(vh);
 
             vh = MethodHandles.lookup().findStaticVarHandle(
-                VarHandleTestAccessFloat.class, "static_v" + postfix, float.class);
+                VarHandleTestAccessFloat.class, "static_v" + postfix, type);
             vhs.add(vh);
 
             if (same) {
@@ -107,18 +112,21 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
     @BeforeClass
     public void setup() throws Exception {
         vhFinalField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccessFloat.class, "final_v", float.class);
+                VarHandleTestAccessFloat.class, "final_v", type);
 
         vhField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccessFloat.class, "v", float.class);
+                VarHandleTestAccessFloat.class, "v", type);
 
         vhStaticFinalField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestAccessFloat.class, "static_final_v", float.class);
+            VarHandleTestAccessFloat.class, "static_final_v", type);
 
         vhStaticField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestAccessFloat.class, "static_v", float.class);
+            VarHandleTestAccessFloat.class, "static_v", type);
 
         vhArray = MethodHandles.arrayElementVarHandle(float[].class);
+
+        vhValueTypeField = MethodHandles.lookup().findVarHandle(
+                    Value.class, "float_v", type);
     }
 
 
@@ -203,7 +211,7 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
 
     @Test(dataProvider = "typesProvider")
     public void testTypes(VarHandle vh, List<Class<?>> pts) {
-        assertEquals(vh.varType(), float.class);
+        assertEquals(vh.varType(), type);
 
         assertEquals(vh.coordinateTypes(), pts);
 
@@ -215,12 +223,12 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
     public void testLookupInstanceToStatic() {
         checkIAE("Lookup of static final field to instance final field", () -> {
             MethodHandles.lookup().findStaticVarHandle(
-                    VarHandleTestAccessFloat.class, "final_v", float.class);
+                    VarHandleTestAccessFloat.class, "final_v", type);
         });
 
         checkIAE("Lookup of static field to instance field", () -> {
             MethodHandles.lookup().findStaticVarHandle(
-                    VarHandleTestAccessFloat.class, "v", float.class);
+                    VarHandleTestAccessFloat.class, "v", type);
         });
     }
 
@@ -228,12 +236,12 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
     public void testLookupStaticToInstance() {
         checkIAE("Lookup of instance final field to static final field", () -> {
             MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccessFloat.class, "static_final_v", float.class);
+                VarHandleTestAccessFloat.class, "static_final_v", type);
         });
 
         checkIAE("Lookup of instance field to static field", () -> {
             vhStaticField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestAccessFloat.class, "static_v", float.class);
+                VarHandleTestAccessFloat.class, "static_v", type);
         });
     }
 
@@ -273,6 +281,11 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
                                               false));
         cases.add(new VarHandleAccessTestCase("Array index out of bounds",
                                               vhArray, VarHandleTestAccessFloat::testArrayIndexOutOfBounds,
+                                              false));
+        cases.add(new VarHandleAccessTestCase("Value type field",
+                                              vhValueTypeField, vh -> testValueTypeField(Value.getInstance(), vh)));
+        cases.add(new VarHandleAccessTestCase("Value type field unsupported",
+                                              vhValueTypeField, vh -> testValueTypeFieldUnsupported(Value.getInstance(), vh),
                                               false));
         // Work around issue with jtreg summary reporting which truncates
         // the String result of Object.toString to 30 characters, hence
@@ -375,6 +388,19 @@ public class VarHandleTestAccessFloat extends VarHandleBaseTest {
         });
     }
 
+    static void testValueTypeField(Value recv, VarHandle vh) {
+        // Plain
+        {
+            float x = (float) vh.get(recv);
+            assertEquals(x, 1.0f, "get float value");
+        }
+    }
+
+    static void testValueTypeFieldUnsupported(Value recv, VarHandle vh) {
+        checkUOE(() -> {
+            vh.set(recv, 2.0f);
+        });
+    }
 
     static void testStaticFinalField(VarHandle vh) {
         // Plain

@@ -870,6 +870,9 @@ public class Lower extends TreeTranslator {
         else if (enclOp.hasTag(ASSIGN) &&
                  tree == TreeInfo.skipParens(((JCAssign) enclOp).lhs))
             return AccessCode.ASSIGN.code;
+        else if (enclOp.hasTag(WITHFIELD) &&
+                tree == TreeInfo.skipParens(((JCWithField) enclOp).field))
+            return AccessCode.WITHFIELD.code;
         else if ((enclOp.getTag().isIncOrDecUnaryOp() || enclOp.getTag().isAssignop()) &&
                 tree == TreeInfo.skipParens(((JCOperatorExpression) enclOp).getOperand(LEFT)))
             return (((JCOperatorExpression) enclOp).operator).getAccessCode(enclOp.getTag());
@@ -980,11 +983,11 @@ public class Lower extends TreeTranslator {
                     argtypes = List.of(syms.objectType);
                 else
                     argtypes = operator.type.getParameterTypes().tail;
-            } else if (acode == AccessCode.ASSIGN.code)
+            } else if (acode == AccessCode.ASSIGN.code || acode == AccessCode.WITHFIELD.code)
                 argtypes = List.of(vsym.erasure(types));
             else
                 argtypes = List.nil();
-            restype = vsym.erasure(types);
+            restype = acode == AccessCode.WITHFIELD.code ? vsym.owner.erasure(types) : vsym.erasure(types);
             thrown = List.nil();
             break;
         case MTH:
@@ -1130,6 +1133,11 @@ public class Lower extends TreeTranslator {
         switch (sym.kind) {
         case TYP:
             if (sym.owner.kind != PCK) {
+                // Make sure not to lose type fidelity due to symbol sharing between projections
+                boolean requireReferenceProjection =
+                        tree.hasTag(SELECT) && ((JCFieldAccess) tree).name == names.ref && tree.type.isReferenceProjection();
+                boolean requireValueProjection =
+                        tree.hasTag(SELECT) && ((JCFieldAccess) tree).name == names.val && tree.type.isValueProjection();
                 // Convert type idents to
                 // <flat name> or <package name> . <flat name>
                 Name flatname = Convert.shortName(sym.flatName());
@@ -1145,9 +1153,19 @@ public class Lower extends TreeTranslator {
                 } else if (base == null) {
                     tree = make.at(tree.pos).Ident(sym);
                     ((JCIdent) tree).name = flatname;
+                    if (requireReferenceProjection) {
+                        tree.setType(tree.type.referenceProjection());
+                    } else if (requireValueProjection) {
+                        tree.setType(tree.type.asValueType());
+                    }
                 } else {
                     ((JCFieldAccess) tree).selected = base;
                     ((JCFieldAccess) tree).name = flatname;
+                    if (requireReferenceProjection) {
+                        tree.setType(tree.type.referenceProjection());
+                    } else if (requireValueProjection) {
+                        tree.setType(tree.type.asValueType());
+                    }
                 }
             }
             break;
@@ -1353,12 +1371,15 @@ public class Lower extends TreeTranslator {
             case PREINC: case POSTINC: case PREDEC: case POSTDEC:
                 expr = makeUnary(aCode.tag, ref);
                 break;
+            case WITHFIELD:
+                expr = make.WithField(ref, args.head);
+                break;
             default:
                 expr = make.Assignop(
                     treeTag(binaryAccessOperator(acode1, JCTree.Tag.NO_TAG)), ref, args.head);
                 ((JCAssignOp) expr).operator = binaryAccessOperator(acode1, JCTree.Tag.NO_TAG);
             }
-            stat = make.Return(expr.setType(sym.type));
+            stat = make.Return(expr.setType(aCode == AccessCode.WITHFIELD ? sym.owner.type : sym.type));
         } else {
             stat = make.Call(make.App(ref, args));
         }
@@ -1452,8 +1473,9 @@ public class Lower extends TreeTranslator {
             do {
                 proxyName = proxyName(v.name, index++);
             } while (!proxyNames.add(proxyName));
+            final Type type = v.erasure(types);
             VarSymbol proxy = new VarSymbol(
-                flags, proxyName, v.erasure(types), owner);
+                flags, proxyName, type, owner);
             proxies.put(v, proxy);
             JCVariableDecl vd = make.at(pos).VarDef(proxy, null);
             vd.vartype = access(vd.vartype);
@@ -1516,7 +1538,9 @@ public class Lower extends TreeTranslator {
      *  @param owner      The class in which the definition goes.
      */
     JCVariableDecl outerThisDef(int pos, ClassSymbol owner) {
-        VarSymbol outerThis = makeOuterThisVarSymbol(owner, FINAL | SYNTHETIC);
+        Type target = types.erasure(owner.enclClass().type.getEnclosingType());
+        long flags = FINAL | SYNTHETIC;
+        VarSymbol outerThis = makeOuterThisVarSymbol(owner, flags);
         return makeOuterThisVarDecl(pos, outerThis);
     }
 
@@ -1699,7 +1723,7 @@ public class Lower extends TreeTranslator {
 
     private JCStatement makeResourceCloseInvocation(JCExpression resource) {
         // convert to AutoCloseable if needed
-        if (types.asSuper(resource.type, syms.autoCloseableType.tsym) == null) {
+        if (types.asSuper(resource.type.referenceProjectionOrSelf(), syms.autoCloseableType.tsym) == null) {
             resource = convert(resource, syms.autoCloseableType);
         }
 
@@ -2080,7 +2104,8 @@ public class Lower extends TreeTranslator {
     /** Visitor method: Translate a single node, boxing or unboxing if needed.
      */
     public <T extends JCExpression> T translate(T tree, Type type) {
-        return (tree == null) ? null : boxIfNeeded(translate(tree), type);
+        return (tree == null) ? null :
+                applyPrimitiveConversionsAsNeeded(boxIfNeeded(translate(tree), type), type);
     }
 
     /** Visitor method: Translate tree.
@@ -2501,7 +2526,8 @@ public class Lower extends TreeTranslator {
                             syms.typeDescriptorType).appendList(staticArgTypes),
                     staticArgsValues, bootstrapName, name, false);
 
-            VarSymbol _this = new VarSymbol(SYNTHETIC, names._this, tree.sym.type, tree.sym);
+            Type receiverType = tree.sym.type.isPrimitiveReferenceType() ? tree.sym.type.asValueType() : tree.sym.type;
+            VarSymbol _this = new VarSymbol(SYNTHETIC, names._this, receiverType, tree.sym);
 
             JCMethodInvocation proxyCall;
             if (!isEquals) {
@@ -2585,8 +2611,9 @@ public class Lower extends TreeTranslator {
                 bootstrapName, staticArgTypes, List.nil());
 
         MethodType indyType = msym.type.asMethodType();
+        Type receiverType = tree.sym.type.isPrimitiveReferenceType() ? tree.sym.type.asValueType() : tree.sym.type;
         indyType = new MethodType(
-                isStatic ? List.nil() : indyType.argtypes.prepend(tree.sym.type),
+                isStatic ? List.nil() : indyType.argtypes.prepend(receiverType),
                 indyType.restype,
                 indyType.thrown,
                 syms.methodClass
@@ -2831,7 +2858,12 @@ public class Lower extends TreeTranslator {
         } else {
             tree.clazz = access(c, tree.clazz, enclOp, false);
         }
-        result = tree;
+        if (tree.clazz.type.tsym == syms.objectType.tsym) {
+            Assert.check(tree.def == null && tree.encl == null);
+            result = makeCall(make.Ident(syms.objectsType.tsym), names.newIdentity, List.nil());
+        } else {
+            result = tree;
+        }
     }
 
     // Simplify conditionals with known constant controlling expressions.
@@ -3076,6 +3108,20 @@ public class Lower extends TreeTranslator {
         }
         return result.toList();
     }
+
+    /** Apply primitive value/reference conversions as needed */
+    @SuppressWarnings("unchecked")
+    <T extends JCExpression> T applyPrimitiveConversionsAsNeeded(T tree, Type type) {
+        boolean haveValue = tree.type.isPrimitiveClass();
+        if (haveValue == type.isPrimitiveClass())
+            return tree;
+        // For narrowing conversion, insert a cast which should trigger a null check
+        // For widening conversions, insert a cast if emitting a unified class file.
+        return (T) make.TypeCast(type, tree);
+
+    }
+
+
 
     /** Expand a boxing or unboxing conversion if needed. */
     @SuppressWarnings("unchecked") // XXX unchecked
@@ -3475,7 +3521,7 @@ public class Lower extends TreeTranslator {
         private void visitIterableForeachLoop(JCEnhancedForLoop tree) {
             make_at(tree.expr.pos());
             Type iteratorTarget = syms.objectType;
-            Type iterableType = types.asSuper(types.cvarUpperBound(tree.expr.type),
+            Type iterableType = types.asSuper(types.cvarUpperBound(tree.expr.type.referenceProjectionOrSelf()),
                                               syms.iterableType.tsym);
             if (iterableType.getTypeArguments().nonEmpty())
                 iteratorTarget = types.erasure(iterableType.getTypeArguments().head);
@@ -3488,7 +3534,7 @@ public class Lower extends TreeTranslator {
                                            eType,
                                            List.nil());
             VarSymbol itvar = new VarSymbol(SYNTHETIC, names.fromString("i" + target.syntheticNameChar()),
-                                            types.erasure(types.asSuper(iterator.type.getReturnType(), syms.iteratorType.tsym)),
+                                            types.erasure(types.asSuper(iterator.type.getReturnType().referenceProjectionOrSelf(), syms.iteratorType.tsym)),
                                             currentMethodSym);
 
              JCStatement init = make.
@@ -3563,6 +3609,23 @@ public class Lower extends TreeTranslator {
         tree.cond = translate(tree.cond, syms.booleanType);
         tree.body = translate(tree.body);
         result = tree;
+    }
+
+    public void visitWithField(JCWithField tree) {
+        Type fieldType = tree.field.type;
+        tree.field = translate(tree.field, tree);
+        tree.value = translate(tree.value, fieldType); // important to use pre-translation type.
+
+        // If translated field is an Apply, we are
+        // seeing an access method invocation. In this case, append
+        // right hand side as last argument of the access method.
+        if (tree.field.hasTag(APPLY)) {
+            JCMethodInvocation app = (JCMethodInvocation) tree.field;
+            app.args = List.of(tree.value).prependList(app.args);
+            result = app;
+        } else {
+            result = tree;
+        }
     }
 
     public void visitForLoop(JCForLoop tree) {
@@ -4043,7 +4106,15 @@ public class Lower extends TreeTranslator {
             tree.selected.hasTag(SELECT) &&
             TreeInfo.name(tree.selected) == names._super &&
             !types.isDirectSuperInterface(((JCFieldAccess)tree.selected).selected.type.tsym, currentClass);
+        /* JDK-8269956: Where a reflective (class) literal is needed, the unqualified Point.class is
+         * always the "primary" mirror - representing the primitive reference runtime type - thereby
+         * always matching the behavior of Object::getClass
+         */
+        boolean needPrimaryMirror = tree.name == names._class && tree.selected.type.isPrimitiveReferenceType();
         tree.selected = translate(tree.selected);
+        if (needPrimaryMirror && tree.selected.type.isPrimitiveClass()) {
+            tree.selected.setType(tree.selected.type.referenceProjection());
+        }
         if (tree.name == names._class) {
             result = classOf(tree.selected);
         }
@@ -4051,7 +4122,7 @@ public class Lower extends TreeTranslator {
                 types.isDirectSuperInterface(tree.selected.type.tsym, currentClass)) {
             //default super call!! Not a classic qualified super call
             TypeSymbol supSym = tree.selected.type.tsym;
-            Assert.checkNonNull(types.asSuper(currentClass.type, supSym));
+            Assert.checkNonNull(types.asSuper(currentClass.type.referenceProjectionOrSelf(), supSym));
             result = tree;
         }
         else if (tree.name == names._this || tree.name == names._super) {

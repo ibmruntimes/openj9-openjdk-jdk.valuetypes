@@ -63,6 +63,12 @@ public enum Modifier {
      * @since 1.8
      */
      DEFAULT,
+    /**
+     * The modifier {@code primitive}
+     * @since 1.17
+     */
+    PRIMITIVE,
+
     /** The modifier {@code static} */          STATIC,
 
     /**

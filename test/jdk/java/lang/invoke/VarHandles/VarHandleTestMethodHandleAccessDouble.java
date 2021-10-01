@@ -21,6 +21,8 @@
  * questions.
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 /*
  * @test
  * @run testng/othervm -Diters=20000 VarHandleTestMethodHandleAccessDouble
@@ -39,6 +41,8 @@ import java.util.List;
 import static org.testng.Assert.*;
 
 public class VarHandleTestMethodHandleAccessDouble extends VarHandleBaseTest {
+    static final Class<?> type = double.class;
+
     static final double static_final_v = 1.0d;
 
     static double static_v;
@@ -57,21 +61,26 @@ public class VarHandleTestMethodHandleAccessDouble extends VarHandleBaseTest {
 
     VarHandle vhArray;
 
+    VarHandle vhValueTypeField;
+
     @BeforeClass
     public void setup() throws Exception {
         vhFinalField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodHandleAccessDouble.class, "final_v", double.class);
+                VarHandleTestMethodHandleAccessDouble.class, "final_v", type);
 
         vhField = MethodHandles.lookup().findVarHandle(
-                VarHandleTestMethodHandleAccessDouble.class, "v", double.class);
+                VarHandleTestMethodHandleAccessDouble.class, "v", type);
 
         vhStaticFinalField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodHandleAccessDouble.class, "static_final_v", double.class);
+            VarHandleTestMethodHandleAccessDouble.class, "static_final_v", type);
 
         vhStaticField = MethodHandles.lookup().findStaticVarHandle(
-            VarHandleTestMethodHandleAccessDouble.class, "static_v", double.class);
+            VarHandleTestMethodHandleAccessDouble.class, "static_v", type);
 
         vhArray = MethodHandles.arrayElementVarHandle(double[].class);
+
+        vhValueTypeField = MethodHandles.lookup().findVarHandle(
+                    Value.class, "double_v", type);
     }
 
 
@@ -100,6 +109,11 @@ public class VarHandleTestMethodHandleAccessDouble extends VarHandleBaseTest {
             cases.add(new MethodHandleAccessTestCase("Array index out of bounds",
                                                      vhArray, f, VarHandleTestMethodHandleAccessDouble::testArrayIndexOutOfBounds,
                                                      false));
+        cases.add(new MethodHandleAccessTestCase("Value type field",
+                                                 vhValueTypeField, f, hs -> testValueTypeField(Value.getInstance(), hs)));
+        cases.add(new MethodHandleAccessTestCase("Value type field unsupported",
+                                                 vhValueTypeField, f, hs -> testValueTypeFieldUnsupported(Value.getInstance(), hs),
+                                                 false));
         }
 
         // Work around issue with jtreg summary reporting which truncates
@@ -295,6 +309,29 @@ public class VarHandleTestMethodHandleAccessDouble extends VarHandleBaseTest {
         }
     }
 
+    static void testValueTypeField(Value recv, Handles hs) throws Throwable {
+        // Plain
+        {
+            double x = (double) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 1.0d, "get double value");
+        }
+    }
+
+    static void testValueTypeFieldUnsupported(Value recv, Handles hs) throws Throwable {
+        // Plain
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.SET)) {
+            checkUOE(am, () -> {
+                hs.get(am).invokeExact(recv, 1.0d);
+            });
+        }
+
+
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
+            checkUOE(am, () -> {
+                double r = (double) hs.get(am).invokeExact(recv, 1.0d);
+            });
+        }
+    }
 
     static void testStaticField(Handles hs) throws Throwable {
         // Plain

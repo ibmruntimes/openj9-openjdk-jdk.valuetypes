@@ -27,6 +27,7 @@ package java.util;
 
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.misc.Unsafe;
 
 import java.util.function.Supplier;
 
@@ -412,6 +413,17 @@ public final class Objects {
     }
 
     /**
+     * Return the size of the object in the heap.
+     *
+     * @param o an object
+     * @return the objects's size
+     * @since Valhalla
+     */
+    public static long getObjectSize(Object o) {
+        return Unsafe.getUnsafe().getObjectSize(o);
+    }
+
+    /**
      * Checks if the {@code index} is within the bounds of the range from
      * {@code 0} (inclusive) to {@code length} (exclusive).
      *
@@ -485,5 +497,16 @@ public final class Objects {
     public static
     long checkFromIndexSize(long fromIndex, long size, long length) {
         return Preconditions.checkFromIndexSize(fromIndex, size, length, null);
+    }
+    /**
+     * {@return a new instance of an unspecified class}
+     * The object has a unique identity; no other references to it exist.
+     * It can be used for synchronization, or where a placeholder Object is needed.
+     * Use this method to avoid relying on the {@linkplain Object#Object() Object constructor}.
+     *
+     * @since 17
+     */
+    public static Object newIdentity() {
+        return new Object() {};
     }
 }

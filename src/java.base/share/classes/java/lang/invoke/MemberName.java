@@ -191,10 +191,11 @@ final class MemberName implements Member, Cloneable {
      */
     public MethodType getInvocationType() {
         MethodType itype = getMethodOrFieldType();
-        if (isConstructor() && getReferenceKind() == REF_newInvokeSpecial)
-            return itype.changeReturnType(clazz);
+        Class<?> c = clazz.isPrimitiveClass() ? clazz.asValueType() : clazz;
+        if (isObjectConstructor() && getReferenceKind() == REF_newInvokeSpecial)
+            return itype.changeReturnType(c);
         if (!isStatic())
-            return itype.insertParameterTypes(0, clazz);
+            return itype.insertParameterTypes(0, c);
         return itype;
     }
 
@@ -283,7 +284,7 @@ final class MemberName implements Member, Cloneable {
         if (isField()) {
             assert(staticIsConsistent());
             assert(MethodHandleNatives.refKindIsField(refKind));
-        } else if (isConstructor()) {
+        } else if (isObjectConstructor()) {
             assert(refKind == REF_newInvokeSpecial || refKind == REF_invokeSpecial);
         } else if (isMethod()) {
             assert(staticIsConsistent());
@@ -429,6 +430,8 @@ final class MemberName implements Member, Cloneable {
     }
     /** Utility method to query the modifier flags of this member. */
     public boolean isFinal() {
+        // all fields declared in a value type are effectively final
+        assert(!clazz.isPrimitiveClass() || !isField() || Modifier.isFinal(flags));
         return Modifier.isFinal(flags);
     }
     /** Utility method to query whether this member or its defining class is final. */
@@ -450,11 +453,13 @@ final class MemberName implements Member, Cloneable {
     // let the rest (native, volatile, transient, etc.) be tested via Modifier.isFoo
 
     // unofficial modifier flags, used by HotSpot:
-    static final int BRIDGE    = 0x00000040;
-    static final int VARARGS   = 0x00000080;
-    static final int SYNTHETIC = 0x00001000;
-    static final int ANNOTATION= 0x00002000;
-    static final int ENUM      = 0x00004000;
+    static final int BRIDGE      = 0x00000040;
+    static final int VARARGS     = 0x00000080;
+    static final int SYNTHETIC   = 0x00001000;
+    static final int ANNOTATION  = 0x00002000;
+    static final int ENUM        = 0x00004000;
+    static final int FLATTENED   = 0x00008000;
+
     /** Utility method to query the modifier flags of this member; returns false if the member is not a method. */
     public boolean isBridge() {
         return testAllFlags(IS_METHOD | BRIDGE);
@@ -468,6 +473,18 @@ final class MemberName implements Member, Cloneable {
         return testAllFlags(SYNTHETIC);
     }
 
+    /** Query whether this member is a flattened field */
+    public boolean isFlattened() { return (flags & FLATTENED) == FLATTENED; }
+
+    /** Query whether this member is a field of a primitive class. */
+    public boolean isInlineableField()  {
+        if (isField()) {
+            Class<?> type = getFieldType();
+            return type.isValueType();
+        }
+        return false;
+    }
+
     static final String CONSTRUCTOR_NAME = "<init>";  // the ever-popular
 
     // modifiers exported by the JVM:
@@ -475,16 +492,16 @@ final class MemberName implements Member, Cloneable {
 
     // private flags, not part of RECOGNIZED_MODIFIERS:
     static final int
-            IS_METHOD        = MN_IS_METHOD,        // method (not constructor)
-            IS_CONSTRUCTOR   = MN_IS_CONSTRUCTOR,   // constructor
-            IS_FIELD         = MN_IS_FIELD,         // field
-            IS_TYPE          = MN_IS_TYPE,          // nested type
-            CALLER_SENSITIVE = MN_CALLER_SENSITIVE, // @CallerSensitive annotation detected
-            TRUSTED_FINAL    = MN_TRUSTED_FINAL;    // trusted final field
+            IS_METHOD             = MN_IS_METHOD,              // method (not object constructor)
+            IS_OBJECT_CONSTRUCTOR = MN_IS_OBJECT_CONSTRUCTOR,  // object constructor
+            IS_FIELD              = MN_IS_FIELD,               // field
+            IS_TYPE               = MN_IS_TYPE,                // nested type
+            CALLER_SENSITIVE      = MN_CALLER_SENSITIVE,       // @CallerSensitive annotation detected
+            TRUSTED_FINAL         = MN_TRUSTED_FINAL;    // trusted final field
 
     static final int ALL_ACCESS = Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED;
-    static final int ALL_KINDS = IS_METHOD | IS_CONSTRUCTOR | IS_FIELD | IS_TYPE;
-    static final int IS_INVOCABLE = IS_METHOD | IS_CONSTRUCTOR;
+    static final int ALL_KINDS = IS_METHOD | IS_OBJECT_CONSTRUCTOR | IS_FIELD | IS_TYPE;
+    static final int IS_INVOCABLE = IS_METHOD | IS_OBJECT_CONSTRUCTOR;
     static final int IS_FIELD_OR_METHOD = IS_METHOD | IS_FIELD;
     static final int SEARCH_ALL_SUPERS = MN_SEARCH_SUPERCLASSES | MN_SEARCH_INTERFACES;
 
@@ -501,8 +518,12 @@ final class MemberName implements Member, Cloneable {
         return testAllFlags(IS_METHOD);
     }
     /** Query whether this member is a constructor. */
-    public boolean isConstructor() {
-        return testAllFlags(IS_CONSTRUCTOR);
+    public boolean isObjectConstructor() {
+        return testAllFlags(IS_OBJECT_CONSTRUCTOR);
+    }
+    /** Query whether this member is an object constructor or static <init> factory */
+    public boolean isObjectConstructorOrStaticInitMethod() {
+        return isObjectConstructor() || (getName().equals(CONSTRUCTOR_NAME) && testAllFlags(IS_METHOD));
     }
     /** Query whether this member is a field. */
     public boolean isField() {
@@ -633,7 +654,7 @@ final class MemberName implements Member, Cloneable {
     /** If this MN is not REF_newInvokeSpecial, return a clone with that ref. kind.
      *  In that case it must already be REF_invokeSpecial.
      */
-    public MemberName asConstructor() {
+    public MemberName asObjectConstructor() {
         switch (getReferenceKind()) {
         case REF_invokeSpecial:     return clone().changeReferenceKind(REF_newInvokeSpecial, REF_invokeSpecial);
         case REF_newInvokeSpecial:  return this;
@@ -674,8 +695,14 @@ final class MemberName implements Member, Cloneable {
         MethodHandleNatives.init(this, ctor);
         assert(isResolved() && this.clazz != null);
         this.name = CONSTRUCTOR_NAME;
-        if (this.type == null)
-            this.type = new Object[] { void.class, ctor.getParameterTypes() };
+        if (this.type == null) {
+            Class<?> rtype = void.class;
+            if (isStatic()) {  // a static init factory, not a true constructor
+                rtype = getDeclaringClass();
+                // FIXME: If it's a hidden class, this sig won't work.
+            }
+            this.type = new Object[] { rtype, ctor.getParameterTypes() };
+        }
     }
     /** Create a name for the given reflected field.  The resulting name will be in a resolved state.
      */
@@ -816,7 +843,7 @@ final class MemberName implements Member, Cloneable {
      *  The resulting name will in an unresolved state.
      */
     public MemberName(Class<?> defClass, String name, MethodType type, byte refKind) {
-        int initFlags = (name != null && name.equals(CONSTRUCTOR_NAME) ? IS_CONSTRUCTOR : IS_METHOD);
+        int initFlags = (name != null && name.equals(CONSTRUCTOR_NAME) && type.returnType() == void.class ? IS_OBJECT_CONSTRUCTOR : IS_METHOD);
         init(defClass, name, type, flagsMods(initFlags, 0, refKind));
         initResolved(false);
     }
@@ -834,7 +861,7 @@ final class MemberName implements Member, Cloneable {
             if (!(type instanceof MethodType))
                 throw newIllegalArgumentException("not a method type");
         } else if (refKind == REF_newInvokeSpecial) {
-            kindFlags = IS_CONSTRUCTOR;
+            kindFlags = IS_OBJECT_CONSTRUCTOR;
             if (!(type instanceof MethodType) ||
                 !CONSTRUCTOR_NAME.equals(name))
                 throw newIllegalArgumentException("not a constructor type or name");
@@ -957,7 +984,7 @@ final class MemberName implements Member, Cloneable {
     private String message() {
         if (isResolved())
             return "no access";
-        else if (isConstructor())
+        else if (isObjectConstructor())
             return "no such constructor";
         else if (isMethod())
             return "no such method";
@@ -970,7 +997,7 @@ final class MemberName implements Member, Cloneable {
         if (isResolved() || !(resolution instanceof NoSuchMethodError ||
                               resolution instanceof NoSuchFieldError))
             ex = new IllegalAccessException(message);
-        else if (isConstructor())
+        else if (isObjectConstructor())
             ex = new NoSuchMethodException(message);
         else if (isMethod())
             ex = new NoSuchMethodException(message);
@@ -1151,12 +1178,12 @@ final class MemberName implements Member, Cloneable {
             int matchFlags = IS_METHOD | (searchSupers ? SEARCH_ALL_SUPERS : 0);
             return getMembers(defc, name, type, matchFlags, lookupClass);
         }
-        /** Return a list of all constructors defined by the given class.
+        /** Return a list of all object constructors defined by the given class.
          *  Access checking is performed on behalf of the given {@code lookupClass}.
          *  Inaccessible members are not added to the last.
          */
-        public List<MemberName> getConstructors(Class<?> defc, Class<?> lookupClass) {
-            return getMembers(defc, null, null, IS_CONSTRUCTOR, lookupClass);
+        public List<MemberName> getObjectConstructors(Class<?> defc, Class<?> lookupClass) {
+            return getMembers(defc, null, null, IS_OBJECT_CONSTRUCTOR, lookupClass);
         }
         /** Return a list of all fields defined by the given class.
          *  Super types are searched (for inherited members) if {@code searchSupers} is true.

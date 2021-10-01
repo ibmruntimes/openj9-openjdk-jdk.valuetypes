@@ -53,7 +53,6 @@ import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticType;
-import com.sun.tools.javac.util.JCDiagnostic.Warning;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +64,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -418,43 +416,60 @@ public class Resolve {
             return true;
         }
 
-        switch ((short)(sym.flags() & AccessFlags)) {
-        case PRIVATE:
-            return
-                (env.enclClass.sym == sym.owner // fast special case
-                 ||
-                 env.enclClass.sym.outermostClass() ==
-                 sym.owner.outermostClass())
-                &&
-                sym.isInheritedIn(site.tsym, types);
-        case 0:
-            return
-                (env.toplevel.packge == sym.owner.owner // fast special case
-                 ||
-                 env.toplevel.packge == sym.packge())
-                &&
-                isAccessible(env, site, checkInner)
-                &&
-                sym.isInheritedIn(site.tsym, types)
-                &&
-                notOverriddenIn(site, sym);
-        case PROTECTED:
-            return
-                (env.toplevel.packge == sym.owner.owner // fast special case
-                 ||
-                 env.toplevel.packge == sym.packge()
-                 ||
-                 isProtectedAccessible(sym, env.enclClass.sym, site)
-                 ||
-                 // OK to select instance method or field from 'super' or type name
-                 // (but type names should be disallowed elsewhere!)
-                 env.info.selectSuper && (sym.flags() & STATIC) == 0 && sym.kind != TYP)
-                &&
-                isAccessible(env, site, checkInner)
-                &&
-                notOverriddenIn(site, sym);
-        default: // this case includes erroneous combinations as well
-            return isAccessible(env, site, checkInner) && notOverriddenIn(site, sym);
+        ClassSymbol enclosingCsym = env.enclClass.sym;
+        if (sym.kind == MTH || sym.kind == VAR) {
+            /* If any primitive class types are involved, ask the same question in the reference universe,
+               where the hierarchy is navigable
+            */
+            if (site.isPrimitiveClass())
+                site = site.referenceProjection();
+        } else if (sym.kind == TYP) {
+            // A type is accessible in a reference projection if it was
+            // accessible in the value projection.
+            if (site.isReferenceProjection())
+                site = site.asValueType();
+        }
+        try {
+            switch ((short)(sym.flags() & AccessFlags)) {
+                case PRIVATE:
+                    return
+                            (env.enclClass.sym == sym.owner // fast special case
+                                    ||
+                                    env.enclClass.sym.outermostClass() ==
+                                            sym.owner.outermostClass())
+                                    &&
+                                    sym.isInheritedIn(site.tsym, types);
+                case 0:
+                    return
+                            (env.toplevel.packge == sym.owner.owner // fast special case
+                                    ||
+                                    env.toplevel.packge == sym.packge())
+                                    &&
+                                    isAccessible(env, site, checkInner)
+                                    &&
+                                    sym.isInheritedIn(site.tsym, types)
+                                    &&
+                                    notOverriddenIn(site, sym);
+                case PROTECTED:
+                    return
+                            (env.toplevel.packge == sym.owner.owner // fast special case
+                                    ||
+                                    env.toplevel.packge == sym.packge()
+                                    ||
+                                    isProtectedAccessible(sym, env.enclClass.sym, site)
+                                    ||
+                                    // OK to select instance method or field from 'super' or type name
+                                    // (but type names should be disallowed elsewhere!)
+                                    env.info.selectSuper && (sym.flags() & STATIC) == 0 && sym.kind != TYP)
+                                    &&
+                                    isAccessible(env, site, checkInner)
+                                    &&
+                                    notOverriddenIn(site, sym);
+                default: // this case includes erroneous combinations as well
+                    return isAccessible(env, site, checkInner) && notOverriddenIn(site, sym);
+            }
+        } finally {
+            env.enclClass.sym = enclosingCsym;
         }
     }
     //where
@@ -467,11 +482,16 @@ public class Resolve {
     private boolean notOverriddenIn(Type site, Symbol sym) {
         if (sym.kind != MTH || sym.isConstructor() || sym.isStatic())
             return true;
-        else {
-            Symbol s2 = ((MethodSymbol)sym).implementation(site.tsym, types, true);
-            return (s2 == null || s2 == sym || sym.owner == s2.owner ||
-                    !types.isSubSignature(types.memberType(site, s2), types.memberType(site, sym)));
-        }
+
+        /* If any primitive class types are involved, ask the same question in the reference universe,
+           where the hierarchy is navigable
+        */
+        if (site.isPrimitiveClass())
+            site = site.referenceProjection();
+
+        Symbol s2 = ((MethodSymbol)sym).implementation(site.tsym, types, true);
+        return (s2 == null || s2 == sym || sym.owner == s2.owner ||
+                !types.isSubSignature(types.memberType(site, s2), types.memberType(site, sym)));
     }
     //where
         /** Is given protected symbol accessible if it is selected from given site
@@ -1686,12 +1706,12 @@ public class Resolve {
                 // but we need to protect against cases where the methods are defined in some classfile
                 // and make sure we issue an ambiguity error accordingly (by skipping the logic below).
                 if (m1Owner != m2Owner) {
-                    if (types.asSuper(m1Owner.type, m2Owner) != null &&
+                    if (types.asSuper(m1Owner.type.referenceProjectionOrSelf(), m2Owner) != null &&
                         ((m1.owner.flags_field & INTERFACE) == 0 ||
                          (m2.owner.flags_field & INTERFACE) != 0) &&
                         m1.overrides(m2, m1Owner, types, false))
                         return m1;
-                    if (types.asSuper(m2Owner.type, m1Owner) != null &&
+                    if (types.asSuper(m2Owner.type.referenceProjectionOrSelf(), m1Owner) != null &&
                         ((m2.owner.flags_field & INTERFACE) == 0 ||
                          (m1.owner.flags_field & INTERFACE) != 0) &&
                         m2.overrides(m1, m2Owner, types, false))
@@ -2279,6 +2299,22 @@ public class Resolve {
                           Type site,
                           Name name,
                           TypeSymbol c) {
+        return findMemberTypeInternal(env,site, name, c);
+    }
+
+    /** Find qualified member type.
+     *  @param env       The current environment.
+     *  @param site      The original type from where the selection takes
+     *                   place.
+     *  @param name      The type's name.
+     *  @param c         The class to search for the member type. This is
+     *                   always a superclass or implemented interface of
+     *                   site's class.
+     */
+    Symbol findMemberTypeInternal(Env<AttrContext> env,
+                          Type site,
+                          Name name,
+                          TypeSymbol c) {
         Symbol sym = findImmediateMemberType(env, site, name, c);
 
         if (sym != typeNotFound)
@@ -2327,6 +2363,14 @@ public class Resolve {
      *  @param name      The type's name.
      */
     Symbol findType(Env<AttrContext> env, Name name) {
+        return findTypeInternal(env, name);
+    }
+
+    /** Find an unqualified type symbol.
+     *  @param env       The current environment.
+     *  @param name      The type's name.
+     */
+    Symbol findTypeInternal(Env<AttrContext> env, Name name) {
         if (name == names.empty)
             return typeNotFound; // do not allow inadvertent "lookup" of anonymous types
         Symbol bestSoFar = typeNotFound;
@@ -3544,7 +3588,7 @@ public class Resolve {
             if (TreeInfo.isStaticSelector(referenceTree.expr, names)) {
                 if (argtypes.nonEmpty() &&
                         (argtypes.head.hasTag(NONE) ||
-                        types.isSubtypeUnchecked(inferenceContext.asUndetVar(argtypes.head), originalSite))) {
+                        types.isSubtypeUnchecked(inferenceContext.asUndetVar(argtypes.head.referenceProjectionOrSelf()), originalSite))) {
                     return new UnboundMethodReferenceLookupHelper(referenceTree, name,
                             originalSite, argtypes, typeargtypes, maxPhase);
                 } else {
@@ -3597,7 +3641,7 @@ public class Resolve {
                 List<Type> argtypes, List<Type> typeargtypes, MethodResolutionPhase maxPhase) {
             super(referenceTree, name, site, argtypes.tail, typeargtypes, maxPhase);
             if (site.isRaw() && !argtypes.head.hasTag(NONE)) {
-                Type asSuperSite = types.asSuper(argtypes.head, site.tsym);
+                Type asSuperSite = types.asSuper(argtypes.head.referenceProjectionOrSelf(), site.tsym);
                 this.site = types.skipTypeVars(asSuperSite, true);
             }
         }
@@ -3656,7 +3700,7 @@ public class Resolve {
                 List<Type> typeargtypes, MethodResolutionPhase maxPhase) {
             super(referenceTree, names.init, site, argtypes, typeargtypes, maxPhase);
             if (site.isRaw()) {
-                this.site = new ClassType(site.getEnclosingType(), site.tsym.type.getTypeArguments(), site.tsym, site.getMetadata());
+                this.site = new ClassType(site.getEnclosingType(), site.tsym.type.getTypeArguments(), site.tsym, site.getMetadata(), site.getFlavor());
                 needsInference = true;
             }
         }
@@ -3746,7 +3790,7 @@ public class Resolve {
                 if (t.tsym == c) {
                     env.info.defaultSuperCallSite = t;
                     return new VarSymbol(0, names._super,
-                            types.asSuper(env.enclClass.type, c), env.enclClass.sym);
+                            types.asSuper(env.enclClass.type.referenceProjectionOrSelf(), c), env.enclClass.sym);
                 }
             }
             //find a direct super type that is a subtype of 'c'

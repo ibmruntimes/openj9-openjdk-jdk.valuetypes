@@ -27,6 +27,7 @@ package java.lang.invoke;
 
 import sun.invoke.util.Wrapper;
 
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.ref.SoftReference;
 import java.util.Arrays;
 import java.util.Collections;

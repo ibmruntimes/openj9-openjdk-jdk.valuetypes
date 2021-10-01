@@ -177,8 +177,25 @@ public final class Unsafe {
     @IntrinsicCandidate
     public native void putInt(Object o, long offset, int x);
 
+    private static final int JVM_ACC_FIELD_INLINED = 0x00008000; // HotSpot-specific bit
+
+    /**
+     * Returns true if the given field is flattened.
+     */
+    public boolean isFlattened(Field f) {
+        return (f.getModifiers() & JVM_ACC_FIELD_INLINED) == JVM_ACC_FIELD_INLINED;
+    }
+
+    /**
+     * Returns true if the given class is a flattened array.
+     */
+    public native boolean isFlattenedArray(Class<?> arrayClass);
+
     /**
      * Fetches a reference value from a given Java variable.
+     * This method can return a reference to either an object or value
+     * or a null reference.
+     *
      * @see #getInt(Object, long)
      */
     @IntrinsicCandidate
@@ -186,6 +203,8 @@ public final class Unsafe {
 
     /**
      * Stores a reference value into a given Java variable.
+     * This method can store a reference to either an object or value
+     * or a null reference.
      * <p>
      * Unless the reference {@code x} being stored is either null
      * or matches the field type, the results are undefined.
@@ -196,6 +215,107 @@ public final class Unsafe {
      */
     @IntrinsicCandidate
     public native void putReference(Object o, long offset, Object x);
+
+    /**
+     * Fetches a value of type {@code <V>} from a given Java variable.
+     * More specifically, fetches a field or array element within the given
+     * {@code o} object at the given offset, or (if {@code o} is null)
+     * from the memory address whose numerical value is the given offset.
+     *
+     * @param o Java heap object in which the variable resides, if any, else
+     *        null
+     * @param offset indication of where the variable resides in a Java heap
+     *        object, if any, else a memory address locating the variable
+     *        statically
+     * @param pc primitive class
+     * @param <V> the type of a value
+     * @return the value fetched from the indicated Java variable
+     * @throws RuntimeException No defined exceptions are thrown, not even
+     *         {@link NullPointerException}
+     */
+    @IntrinsicCandidate
+    public native <V> V getValue(Object o, long offset, Class<?> pc);
+
+    /**
+     * Stores the given value into a given Java variable.
+     *
+     * Unless the reference {@code o} being stored is either null
+     * or matches the field type, the results are undefined.
+     *
+     * @param o Java heap object in which the variable resides, if any, else
+     *        null
+     * @param offset indication of where the variable resides in a Java heap
+     *        object, if any, else a memory address locating the variable
+     *        statically
+     * @param pc primitive class
+     * @param v the value to store into the indicated Java variable
+     * @param <V> the type of a value
+     * @throws RuntimeException No defined exceptions are thrown, not even
+     *         {@link NullPointerException}
+     */
+    @IntrinsicCandidate
+    public native <V> void putValue(Object o, long offset, Class<?> pc, V v);
+
+    /**
+     * Fetches a reference value of type {@code pc} from a given Java variable.
+     * This method can return a reference to a value or a null reference
+     * for a nullable reference of a primitive type.
+     *
+     * @param pc primitive class
+     */
+    public Object getReference(Object o, long offset, Class<?> pc) {
+        Object ref = getReference(o, offset);
+        if (ref == null && pc.isValueType()) {
+            // If the type of the returned reference is a regular primitive type
+            // return an uninitialized default value if null
+            ref = uninitializedDefaultValue(pc);
+        }
+        return ref;
+    }
+
+    public Object getReferenceVolatile(Object o, long offset, Class<?> pc) {
+        Object ref = getReferenceVolatile(o, offset);
+        if (ref == null && pc.isValueType()) {
+            // If the type of the returned reference is a regular primitive type
+            // return an uninitialized default value if null
+            ref = uninitializedDefaultValue(pc);
+        }
+        return ref;
+    }
+
+    /**
+     * Returns an uninitialized default value of the given primitive class.
+     */
+    public native <V> V uninitializedDefaultValue(Class<?> pc);
+
+    /**
+     * Returns an object instance with a private buffered value whose layout
+     * and contents is exactly the given value instance.  The return object
+     * is in the larval state that can be updated using the unsafe put operation.
+     *
+     * @param value a value instance
+     * @param <V> the type of the given value instance
+     */
+    @IntrinsicCandidate
+    public native <V> V makePrivateBuffer(V value);
+
+    /**
+     * Exits the larval state and returns a value instance.
+     *
+     * @param value a value instance
+     * @param <V> the type of the given value instance
+     */
+    @IntrinsicCandidate
+    public native <V> V finishPrivateBuffer(V value);
+
+    /**
+     * Returns the header size of the given primitive class.
+     *
+     * @param pc primitive class
+     * @param <V> value clas
+     * @return the header size of the primitive class
+     */
+    public native <V> long valueHeaderSize(Class<V> pc);
 
     /** @see #getInt(Object, long) */
     @IntrinsicCandidate
@@ -1234,6 +1354,17 @@ public final class Unsafe {
         return arrayIndexScale0(arrayClass);
     }
 
+    /**
+     * Return the size of the object in the heap.
+     * @param o an object
+     * @return the objects's size
+     * @since Valhalla
+     */
+    public long getObjectSize(Object o) {
+        if (o == null)
+            throw new NullPointerException();
+        return getObjectSize0(o);
+    }
 
     /** The value of {@code arrayIndexScale(boolean[].class)} */
     public static final int ARRAY_BOOLEAN_INDEX_SCALE
@@ -1412,16 +1543,109 @@ public final class Unsafe {
                                                        Object expected,
                                                        Object x);
 
+    private final boolean isInlineType(Object o) {
+        return o != null && o.getClass().isPrimitiveClass();
+    }
+
+    /*
+     * For primitive type, CAS should do substitutability test as opposed
+     * to two pointers comparison.
+     *
+     * Perhaps we can keep the xxxObject methods for compatibility and
+     * change the JDK 13 xxxReference method signature freely.
+     */
+    public final <V> boolean compareAndSetReference(Object o, long offset,
+                                                    Class<?> valueType,
+                                                    V expected,
+                                                    V x) {
+        if (valueType.isPrimitiveClass() || isInlineType(expected)) {
+            synchronized (valueLock) {
+                Object witness = getReference(o, offset);
+                if (witness == expected) {
+                    putReference(o, offset, x);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        } else {
+            return compareAndSetReference(o, offset, expected, x);
+        }
+    }
+
+    @ForceInline
+    public final <V> boolean compareAndSetValue(Object o, long offset,
+                                                Class<?> valueType,
+                                                V expected,
+                                                V x) {
+        synchronized (valueLock) {
+            Object witness = getValue(o, offset, valueType);
+            if (witness == expected) {
+                putValue(o, offset, valueType, x);
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    }
+
     @IntrinsicCandidate
     public final native Object compareAndExchangeReference(Object o, long offset,
                                                            Object expected,
                                                            Object x);
+
+    public final <V> Object compareAndExchangeReference(Object o, long offset,
+                                                        Class<?> valueType,
+                                                        V expected,
+                                                        V x) {
+        if (valueType.isPrimitiveClass() || isInlineType(expected)) {
+            synchronized (valueLock) {
+                Object witness = getReference(o, offset);
+                if (witness == expected) {
+                    putReference(o, offset, x);
+                }
+                return witness;
+            }
+        } else {
+            return compareAndExchangeReference(o, offset, expected, x);
+        }
+    }
+
+    @ForceInline
+    public final <V> Object compareAndExchangeValue(Object o, long offset,
+                                                    Class<?> valueType,
+                                                    V expected,
+                                                    V x) {
+        synchronized (valueLock) {
+            Object witness = getValue(o, offset, valueType);
+            if (witness == expected) {
+                putValue(o, offset, valueType, x);
+            }
+            return witness;
+        }
+    }
 
     @IntrinsicCandidate
     public final Object compareAndExchangeReferenceAcquire(Object o, long offset,
                                                            Object expected,
                                                            Object x) {
         return compareAndExchangeReference(o, offset, expected, x);
+    }
+
+    public final <V> Object compareAndExchangeReferenceAcquire(Object o, long offset,
+                                                               Class<?> valueType,
+                                                               V expected,
+                                                               V x) {
+        return compareAndExchangeReference(o, offset, valueType, expected, x);
+    }
+
+    @ForceInline
+    public final <V> Object compareAndExchangeValueAcquire(Object o, long offset,
+                                                           Class<?> valueType,
+                                                           V expected,
+                                                           V x) {
+        return compareAndExchangeValue(o, offset, valueType, expected, x);
     }
 
     @IntrinsicCandidate
@@ -1431,11 +1655,45 @@ public final class Unsafe {
         return compareAndExchangeReference(o, offset, expected, x);
     }
 
+    public final <V> Object compareAndExchangeReferenceRelease(Object o, long offset,
+                                                               Class<?> valueType,
+                                                               V expected,
+                                                               V x) {
+        return compareAndExchangeReference(o, offset, valueType, expected, x);
+    }
+
+    @ForceInline
+    public final <V> Object compareAndExchangeValueRelease(Object o, long offset,
+                                                           Class<?> valueType,
+                                                           V expected,
+                                                           V x) {
+        return compareAndExchangeValue(o, offset, valueType, expected, x);
+    }
+
     @IntrinsicCandidate
     public final boolean weakCompareAndSetReferencePlain(Object o, long offset,
                                                          Object expected,
                                                          Object x) {
         return compareAndSetReference(o, offset, expected, x);
+    }
+
+    public final <V> boolean weakCompareAndSetReferencePlain(Object o, long offset,
+                                                             Class<?> valueType,
+                                                             V expected,
+                                                             V x) {
+        if (valueType.isPrimitiveClass() || isInlineType(expected)) {
+            return compareAndSetReference(o, offset, valueType, expected, x);
+        } else {
+            return weakCompareAndSetReferencePlain(o, offset, expected, x);
+        }
+    }
+
+    @ForceInline
+    public final <V> boolean weakCompareAndSetValuePlain(Object o, long offset,
+                                                         Class<?> valueType,
+                                                         V expected,
+                                                         V x) {
+        return compareAndSetValue(o, offset, valueType, expected, x);
     }
 
     @IntrinsicCandidate
@@ -1445,6 +1703,25 @@ public final class Unsafe {
         return compareAndSetReference(o, offset, expected, x);
     }
 
+    public final <V> boolean weakCompareAndSetReferenceAcquire(Object o, long offset,
+                                                               Class<?> valueType,
+                                                               V expected,
+                                                               V x) {
+        if (valueType.isPrimitiveClass() || isInlineType(expected)) {
+            return compareAndSetReference(o, offset, valueType, expected, x);
+        } else {
+            return weakCompareAndSetReferencePlain(o, offset, expected, x);
+        }
+    }
+
+    @ForceInline
+    public final <V> boolean weakCompareAndSetValueAcquire(Object o, long offset,
+                                                           Class<?> valueType,
+                                                           V expected,
+                                                           V x) {
+        return compareAndSetValue(o, offset, valueType, expected, x);
+    }
+
     @IntrinsicCandidate
     public final boolean weakCompareAndSetReferenceRelease(Object o, long offset,
                                                            Object expected,
@@ -1452,11 +1729,49 @@ public final class Unsafe {
         return compareAndSetReference(o, offset, expected, x);
     }
 
+    public final <V> boolean weakCompareAndSetReferenceRelease(Object o, long offset,
+                                                               Class<?> valueType,
+                                                               V expected,
+                                                               V x) {
+        if (valueType.isPrimitiveClass() || isInlineType(expected)) {
+            return compareAndSetReference(o, offset, valueType, expected, x);
+        } else {
+            return weakCompareAndSetReferencePlain(o, offset, expected, x);
+        }
+    }
+
+    @ForceInline
+    public final <V> boolean weakCompareAndSetValueRelease(Object o, long offset,
+                                                           Class<?> valueType,
+                                                           V expected,
+                                                           V x) {
+        return compareAndSetValue(o, offset, valueType, expected, x);
+    }
+
     @IntrinsicCandidate
     public final boolean weakCompareAndSetReference(Object o, long offset,
                                                     Object expected,
                                                     Object x) {
         return compareAndSetReference(o, offset, expected, x);
+    }
+
+    public final <V> boolean weakCompareAndSetReference(Object o, long offset,
+                                                        Class<?> valueType,
+                                                        V expected,
+                                                        V x) {
+        if (valueType.isPrimitiveClass() || isInlineType(expected)) {
+            return compareAndSetReference(o, offset, valueType, expected, x);
+        } else {
+            return weakCompareAndSetReferencePlain(o, offset, expected, x);
+        }
+    }
+
+    @ForceInline
+    public final <V> boolean weakCompareAndSetValue(Object o, long offset,
+                                                    Class<?> valueType,
+                                                    V expected,
+                                                    V x) {
+        return compareAndSetValue(o, offset, valueType, expected, x);
     }
 
     /**
@@ -2075,11 +2390,30 @@ public final class Unsafe {
     public native Object getReferenceVolatile(Object o, long offset);
 
     /**
+     * Global lock for atomic and volatile strength access to any value of
+     * a primitive type.  This is a temporary workaround until better localized
+     * atomic access mechanisms are supported for primitive types.
+     */
+    private static final Object valueLock = new Object();
+
+    public final <V> Object getValueVolatile(Object base, long offset, Class<?> valueType) {
+        synchronized (valueLock) {
+            return getValue(base, offset, valueType);
+        }
+    }
+
+    /**
      * Stores a reference value into a given Java variable, with
      * volatile store semantics. Otherwise identical to {@link #putReference(Object, long, Object)}
      */
     @IntrinsicCandidate
     public native void putReferenceVolatile(Object o, long offset, Object x);
+
+    public final <V> void putValueVolatile(Object o, long offset, Class<?> valueType, V x) {
+        synchronized (valueLock) {
+            putValue(o, offset, valueType, x);
+        }
+    }
 
     /** Volatile version of {@link #getInt(Object, long)}  */
     @IntrinsicCandidate
@@ -2153,6 +2487,10 @@ public final class Unsafe {
         return getReferenceVolatile(o, offset);
     }
 
+    public final <V> Object getValueAcquire(Object base, long offset, Class<?> valueType) {
+        return getValueVolatile(base, offset, valueType);
+    }
+
     /** Acquire version of {@link #getBooleanVolatile(Object, long)} */
     @IntrinsicCandidate
     public final boolean getBooleanAcquire(Object o, long offset) {
@@ -2217,6 +2555,10 @@ public final class Unsafe {
         putReferenceVolatile(o, offset, x);
     }
 
+    public final <V> void putValueRelease(Object o, long offset, Class<?> valueType, V x) {
+        putValueVolatile(o, offset, valueType, x);
+    }
+
     /** Release version of {@link #putBooleanVolatile(Object, long, boolean)} */
     @IntrinsicCandidate
     public final void putBooleanRelease(Object o, long offset, boolean x) {
@@ -2273,6 +2615,10 @@ public final class Unsafe {
         return getReferenceVolatile(o, offset);
     }
 
+    public final <V> Object getValueOpaque(Object base, long offset, Class<?> valueType) {
+        return getValueVolatile(base, offset, valueType);
+    }
+
     /** Opaque version of {@link #getBooleanVolatile(Object, long)} */
     @IntrinsicCandidate
     public final boolean getBooleanOpaque(Object o, long offset) {
@@ -2325,6 +2671,10 @@ public final class Unsafe {
     @IntrinsicCandidate
     public final void putReferenceOpaque(Object o, long offset, Object x) {
         putReferenceVolatile(o, offset, x);
+    }
+
+    public final <V> void putValueOpaque(Object o, long offset, Class<?> valueType, V x) {
+        putValueVolatile(o, offset, valueType, x);
     }
 
     /** Opaque version of {@link #putBooleanVolatile(Object, long, boolean)} */
@@ -2761,6 +3111,15 @@ public final class Unsafe {
         return v;
     }
 
+    @SuppressWarnings("unchecked")
+    public final <V> Object getAndSetValue(Object o, long offset, Class<?> valueType, V newValue) {
+        synchronized (valueLock) {
+            Object oldValue = getValue(o, offset, valueType);
+            putValue(o, offset, valueType, newValue);
+            return oldValue;
+        }
+    }
+
     @ForceInline
     public final Object getAndSetReferenceRelease(Object o, long offset, Object newValue) {
         Object v;
@@ -2771,12 +3130,22 @@ public final class Unsafe {
     }
 
     @ForceInline
+    public final <V> Object getAndSetValueRelease(Object o, long offset, Class<?> valueType, V newValue) {
+        return getAndSetValue(o, offset, valueType, newValue);
+    }
+
+    @ForceInline
     public final Object getAndSetReferenceAcquire(Object o, long offset, Object newValue) {
         Object v;
         do {
             v = getReferenceAcquire(o, offset);
         } while (!weakCompareAndSetReferenceAcquire(o, offset, v, newValue));
         return v;
+    }
+
+    @ForceInline
+    public final <V> Object getAndSetValueAcquire(Object o, long offset, Class<?> valueType, V newValue) {
+        return getAndSetValue(o, offset, valueType, newValue);
     }
 
     @IntrinsicCandidate
@@ -3832,6 +4201,7 @@ public final class Unsafe {
     private native void ensureClassInitialized0(Class<?> c);
     private native int arrayBaseOffset0(Class<?> arrayClass);
     private native int arrayIndexScale0(Class<?> arrayClass);
+    private native long getObjectSize0(Object o);
     private native int getLoadAverage0(double[] loadavg, int nelems);
 
 

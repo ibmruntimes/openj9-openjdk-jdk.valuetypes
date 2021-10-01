@@ -199,6 +199,13 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     }
 
     @DefinedBy(Api.COMPILER_TREE)
+    public JCTree visitDefaultValue(DefaultValueTree node, P p) {
+        JCDefaultValue t = (JCDefaultValue) node;
+        JCExpression clazz = copy(t.clazz, p);
+        return M.at(t.pos).DefaultValue(clazz);
+    }
+
+    @DefinedBy(Api.COMPILER_TREE)
     public JCTree visitDoWhileLoop(DoWhileLoopTree node, P p) {
         JCDoWhileLoop t = (JCDoWhileLoop) node;
         JCStatement body = copy(t.body, p);
@@ -242,7 +249,8 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     @DefinedBy(Api.COMPILER_TREE)
     public JCTree visitIdentifier(IdentifierTree node, P p) {
         JCIdent t = (JCIdent) node;
-        return M.at(t.pos).Ident(t.name);
+        JCIdent ident = M.at(t.pos).Ident(t.name);
+        return ident;
     }
 
     @DefinedBy(Api.COMPILER_TREE)
@@ -358,7 +366,8 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     public JCTree visitMemberSelect(MemberSelectTree node, P p) {
         JCFieldAccess t = (JCFieldAccess) node;
         JCExpression selected = copy(t.selected, p);
-        return M.at(t.pos).Select(selected, t.name);
+        JCFieldAccess select = M.at(t.pos).Select(selected, t.name);
+        return select;
     }
 
     @DefinedBy(Api.COMPILER_TREE)
@@ -545,6 +554,14 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCStatement body = copy(t.body, p);
         JCExpression cond = copy(t.cond, p);
         return M.at(t.pos).WhileLoop(cond, body);
+    }
+
+    @DefinedBy(Api.COMPILER_TREE)
+    public JCTree visitWithField(WithFieldTree node, P p) {
+        JCWithField t = (JCWithField) node;
+        JCExpression field = copy(t.field, p);
+        JCExpression value = copy(t.value, p);
+        return M.at(t.pos).WithField(field, value);
     }
 
     @DefinedBy(Api.COMPILER_TREE)

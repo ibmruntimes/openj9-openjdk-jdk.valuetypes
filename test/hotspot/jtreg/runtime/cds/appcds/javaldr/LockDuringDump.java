@@ -57,7 +57,7 @@ public class LockDuringDump {
         String appJar =
             ClassFileInstaller.writeJar("LockDuringDumpApp.jar", appClasses);
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             // i = 0 -- dump without agent
             // i = 1 -- dump with agent
 

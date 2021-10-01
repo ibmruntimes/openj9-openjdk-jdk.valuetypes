@@ -52,6 +52,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Kinds.Kind;
+import com.sun.tools.javac.code.Type.ClassType.Flavor;
 import com.sun.tools.javac.comp.Annotate.AnnotationTypeMetadata;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.comp.Attr;
@@ -415,6 +416,18 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
         return (flags_field & Flags.AccessFlags) == PRIVATE;
     }
 
+    public boolean isSynthetic() {
+        return (flags_field & SYNTHETIC) != 0;
+    }
+
+    public boolean isReferenceFavoringPrimitiveClass() {
+        return (flags() & REFERENCE_FAVORING) != 0;  // bit set only for primitive classes
+    }
+
+    public boolean isPrimitiveClass() {
+        return (flags() & PRIMITIVE_CLASS) != 0;
+    }
+
     public boolean isPublic() {
         return (flags_field & Flags.AccessFlags) == PUBLIC;
     }
@@ -456,7 +469,13 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
     /** Is this symbol a constructor?
      */
     public boolean isConstructor() {
-        return name == name.table.names.init;
+        return name == name.table.names.init && (flags() & STATIC) == 0;
+    }
+
+    /** Is this symbol a primitive object factory?
+     */
+    public boolean isPrimitiveObjectFactory() {
+        return ((name == name.table.names.init && this.type.getReturnType().tsym == this.owner));
     }
 
     public boolean isDynamic() {
@@ -1316,7 +1335,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
             this(
                 flags,
                 name,
-                new ClassType(Type.noType, null, null),
+                new ClassType(Type.noType, null, null, TypeMetadata.EMPTY, Flavor.X_Typeof_X),
                 owner);
             this.type.tsym = this;
         }
@@ -1353,7 +1372,8 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
             if (erasure_field == null)
                 erasure_field = new ClassType(types.erasure(type.getEnclosingType()),
                                               List.nil(), this,
-                                              type.getMetadata());
+                                              type.getMetadata(),
+                                              type.getFlavor());
             return erasure_field;
         }
 
@@ -1361,7 +1381,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
             if (name.isEmpty())
                 return
                     Log.getLocalizedString("anonymous.class", flatname);
-            else
+
                 return fullname.toString();
         }
 
@@ -1414,6 +1434,14 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
                 flags_field |= (PUBLIC|STATIC);
                 this.type = new ErrorType(this, Type.noType);
                 throw ex;
+            } finally {
+                if (this.type != null && this.type.hasTag(CLASS)) {
+                    ClassType ct = (ClassType) this.type;
+                    ct.flavor = ct.flavor.metamorphose(this.flags_field);
+                    if (!this.type.isIntersection() && this.erasure_field != null && this.erasure_field.hasTag(CLASS)) {
+                        ((ClassType) this.erasure_field).flavor = ct.flavor;
+                    }
+                }
             }
         }
 
@@ -1603,6 +1631,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
                 classType.supertype_field = null;
                 classType.interfaces_field = null;
                 classType.all_interfaces_field = null;
+                classType.flavor = Flavor.X_Typeof_X;
             }
             clearAnnotationMetadata();
         }
@@ -2019,7 +2048,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
 
             // check for a direct implementation
             if (other.isOverridableIn((TypeSymbol)owner) &&
-                types.asSuper(owner.type, other.owner) != null &&
+                types.asSuper(owner.type.referenceProjectionOrSelf(), other.owner) != null &&
                 types.isSameType(erasure(types), other.erasure(types)))
                 return true;
 
@@ -2088,7 +2117,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
 
             // check for a direct implementation
             if (other.isOverridableIn((TypeSymbol)owner) &&
-                types.asSuper(owner.type, other.owner) != null) {
+                types.asSuper(owner.type.referenceProjectionOrSelf(), other.owner) != null) {
                 Type mt = types.memberType(owner.type, this);
                 Type ot = types.memberType(owner.type, other);
                 if (types.isSubSignature(mt, ot)) {
@@ -2137,6 +2166,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
 
         @Override
         public boolean isInheritedIn(Symbol clazz, Types types) {
+
             switch ((int)(flags_field & Flags.AccessFlags)) {
                 case PUBLIC:
                     return !this.owner.isInterface() ||
@@ -2443,7 +2473,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
             return accessCode;
         }
 
-        /** Access codes for dereferencing, assignment,
+        /** Access codes for dereferencing, assignment, withfield
          *  and pre/post increment/decrement.
 
          *  All access codes for accesses to the current class are even.
@@ -2463,7 +2493,8 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
             PREDEC(6, Tag.PREDEC),
             POSTINC(8, Tag.POSTINC),
             POSTDEC(10, Tag.POSTDEC),
-            FIRSTASGOP(12, Tag.NO_TAG);
+            WITHFIELD(12, Tag.WITHFIELD),
+            FIRSTASGOP(14, Tag.NO_TAG);
 
             public final int code;
             public final Tag tag;
@@ -2496,6 +2527,8 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
                         return AccessCode.POSTINC.code;
                     case POSTDEC:
                         return AccessCode.POSTDEC.code;
+                    case WITHFIELD:
+                        return AccessCode.WITHFIELD.code;
                 }
                 if (iadd <= opcode && opcode <= lxor) {
                     return (opcode - iadd) * 2 + FIRSTASGOP.code;

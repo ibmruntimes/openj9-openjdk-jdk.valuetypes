@@ -27,9 +27,7 @@ package java.lang.invoke;
 
 import java.security.*;
 import java.lang.reflect.*;
-import java.lang.invoke.MethodHandleNatives.Constants;
 import java.lang.invoke.MethodHandles.Lookup;
-import static java.lang.invoke.MethodHandleStatics.*;
 
 /*
  * Auxiliary to MethodHandleInfo, wants to nest in MethodHandleInfo but must be non-public.
@@ -111,16 +109,26 @@ final class InfoFromMemberName implements MethodHandleInfo {
         byte refKind = (byte) getReferenceKind();
         Class<?> defc = getDeclaringClass();
         boolean isPublic = Modifier.isPublic(getModifiers());
-        if (MethodHandleNatives.refKindIsMethod(refKind)) {
+        if (member.isObjectConstructorOrStaticInitMethod()) {
+            MethodType methodType = getMethodType();
+            if (MethodHandleNatives.refKindIsObjectConstructor(refKind) &&
+                methodType.returnType() != void.class) {
+                // object constructor
+                throw new IllegalArgumentException("object constructor must be of void return type");
+            } else if (MethodHandleNatives.refKindIsMethod(refKind) &&
+                       methodType.returnType() != defc.asValueType()) {
+                // TODO: allow to return Object or perhaps one of the supertypes of that class
+                // static init factory
+                throw new IllegalArgumentException("static constructor must be of " + defc.getName());
+            }
+
+            return isPublic ? defc.getConstructor(methodType.parameterArray())
+                            : defc.getDeclaredConstructor(methodType.parameterArray());
+        } else if (MethodHandleNatives.refKindIsMethod(refKind)) {
             if (isPublic)
                 return defc.getMethod(getName(), getMethodType().parameterArray());
             else
                 return defc.getDeclaredMethod(getName(), getMethodType().parameterArray());
-        } else if (MethodHandleNatives.refKindIsConstructor(refKind)) {
-            if (isPublic)
-                return defc.getConstructor(getMethodType().parameterArray());
-            else
-                return defc.getDeclaredConstructor(getMethodType().parameterArray());
         } else if (MethodHandleNatives.refKindIsField(refKind)) {
             if (isPublic)
                 return defc.getField(getName());

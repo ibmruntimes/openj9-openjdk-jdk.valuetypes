@@ -83,6 +83,7 @@ public abstract class Remapper {
       */
     public String mapDesc(final String descriptor) {
         return mapType(Type.getType(descriptor)).getDescriptor();
+            // FIXME: support Q-type
     }
 
     /**
