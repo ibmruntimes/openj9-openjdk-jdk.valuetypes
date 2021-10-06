@@ -482,11 +482,16 @@ public class Resolve {
     private boolean notOverriddenIn(Type site, Symbol sym) {
         if (sym.kind != MTH || sym.isConstructor() || sym.isStatic())
             return true;
-        else {
-            Symbol s2 = ((MethodSymbol)sym).implementation(site.tsym, types, true);
-            return (s2 == null || s2 == sym || sym.owner == s2.owner || (sym.owner.isInterface() && s2.owner == syms.objectType.tsym) ||
-                    !types.isSubSignature(types.memberType(site, s2), types.memberType(site, sym)));
-        }
+
+        /* If any primitive class types are involved, ask the same question in the reference universe,
+           where the hierarchy is navigable
+        */
+        if (site.isPrimitiveClass())
+            site = site.referenceProjection();
+
+        Symbol s2 = ((MethodSymbol)sym).implementation(site.tsym, types, true);
+        return (s2 == null || s2 == sym || sym.owner == s2.owner ||
+                !types.isSubSignature(types.memberType(site, s2), types.memberType(site, sym)));
     }
     //where
         /** Is given protected symbol accessible if it is selected from given site
