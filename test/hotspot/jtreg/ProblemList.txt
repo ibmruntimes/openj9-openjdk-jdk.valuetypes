@@ -108,7 +108,6 @@ applications/jcstress/copy.java 8229852 linux-x64
 # Valhalla
 
 runtime/valhalla/inlinetypes/ClassInitializationFailuresTest.java 8274131 linux-aarch64-debug,macosx-aarch64-debug
->>>>>>> 0789e052ba99420264473098c5afaac6a3778121
 
 
 # :hotspot_serviceability
@@ -120,9 +119,9 @@ serviceability/jvmti/ModuleAwareAgents/ThreadStart/MAAThreadStart.java 8225354 w
 serviceability/dcmd/gc/RunFinalizationTest.java 8227120 linux-all,windows-x64
 
 serviceability/sa/ClhsdbCDSCore.java 8269982 macosx-aarch64
-serviceability/sa/ClhsdbFindPC.java#xcomp-core 8269982 macosx-aarch64
-serviceability/sa/ClhsdbFindPC.java#no-xcomp-core 8269982 macosx-aarch64
-serviceability/sa/ClhsdbPstack.java#core 8269982 macosx-aarch64
+serviceability/sa/ClhsdbFindPC.java#id1 8269982 macosx-aarch64
+serviceability/sa/ClhsdbFindPC.java#id3 8269982 macosx-aarch64
+serviceability/sa/ClhsdbPstack.java#id1 8269982 macosx-aarch64
 
 # Valhalla TODO:
 serviceability/sa/ClhsdbCDSCore.java 8190936 generic-all
