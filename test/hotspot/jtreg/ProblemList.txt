@@ -150,6 +150,8 @@ serviceability/sa/TestJmapCoreMetaspace.java 8190936 generic-all
 serviceability/sa/TestPrintMdo.java 8190936 generic-all
 serviceability/sa/jmap-hprof/JMapHProfLargeHeapTest.java 8190936 generic-all
 
+resourcehogs/serviceability/sa/TestHeapDumpForLargeArray.java 8274620 macosx-x64
+
 #############################################################################
 
 # :hotspot_misc
