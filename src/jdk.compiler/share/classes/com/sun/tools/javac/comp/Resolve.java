@@ -490,7 +490,7 @@ public class Resolve {
             site = site.referenceProjection();
 
         Symbol s2 = ((MethodSymbol)sym).implementation(site.tsym, types, true);
-        return (s2 == null || s2 == sym || sym.owner == s2.owner ||
+        return (s2 == null || s2 == sym || sym.owner == s2.owner || (sym.owner.isInterface() && s2.owner == syms.objectType.tsym) ||
                 !types.isSubSignature(types.memberType(site, s2), types.memberType(site, sym)));
     }
     //where
