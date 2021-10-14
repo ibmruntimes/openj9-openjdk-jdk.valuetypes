@@ -339,15 +339,18 @@ public class ObjectMethods {
                                    Class<?> recordClass,
                                    String names,
                                    MethodHandle... getters) throws Throwable {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(recordClass);
+        requireNonNull(methodName);
+        requireNonNull(type);
+        requireNonNull(recordClass);
+        requireNonNull(names);
+        requireNonNull(getters);
+        Arrays.stream(getters).forEach(Objects::requireNonNull);
         MethodType methodType;
         Class<?> receiverType = recordClass.isPrimitiveClass() ? recordClass.asValueType() : recordClass;
-
-        if (type instanceof MethodType) {
-            methodType = (MethodType) type;
-            if (((MethodType) type).parameterType(0) != receiverType) {
-                throw new IllegalArgumentException("Bad method type: " + methodType);
+        if (type instanceof MethodType mt) {
+            methodType = mt;
+            if (mt.parameterType(0) != receiverType) {
+                throw new IllegalArgumentException("Bad method type: " + mt);
             }
         } else {
             methodType = null;
