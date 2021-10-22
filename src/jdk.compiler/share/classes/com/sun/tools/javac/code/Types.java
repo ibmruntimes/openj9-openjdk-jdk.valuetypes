@@ -1721,7 +1721,7 @@ public class Types {
                 && s.hasTag(CLASS) && s.tsym.kind.matches(Kinds.KindSelector.TYP)
                 && (t.tsym.isSealed() || s.tsym.isSealed())) {
             return (t.isCompound() || s.isCompound()) ?
-                    false :
+                    true :
                     !areDisjoint((ClassSymbol)t.tsym, (ClassSymbol)s.tsym);
         }
         return result;
