@@ -98,6 +98,7 @@ public class Lower extends TreeTranslator {
     private final boolean debugLower;
     private final boolean disableProtectedAccessors; // experimental
     private final PkgInfo pkginfoOpt;
+    private final boolean optimizeOuterThis;
 
     protected Lower(Context context) {
         context.put(lowerKey, this);
@@ -119,6 +120,9 @@ public class Lower extends TreeTranslator {
         Options options = Options.instance(context);
         debugLower = options.isSet("debuglower");
         pkginfoOpt = PkgInfo.get(options);
+        optimizeOuterThis =
+            target.optimizeOuterThis() ||
+            options.getBoolean("optimizeOuterThis", false);
         disableProtectedAccessors = options.isSet("disableProtectedAccessors");
     }
 
@@ -1502,8 +1506,12 @@ public class Lower extends TreeTranslator {
 
     private VarSymbol makeOuterThisVarSymbol(Symbol owner, long flags) {
         Type target = types.erasure(owner.enclClass().type.getEnclosingType());
+        // Set NOOUTERTHIS for all synthetic outer instance variables, and unset
+        // it when the variable is accessed. If the variable is never accessed,
+        // we skip creating an outer instance field and saving the constructor
+        // parameter to it.
         VarSymbol outerThis =
-            new VarSymbol(flags, outerThisName(target, owner), target, owner);
+            new VarSymbol(flags | NOOUTERTHIS, outerThisName(target, owner), target, owner);
         outerThisStack = outerThisStack.prepend(outerThis);
         return outerThis;
     }
@@ -1752,6 +1760,7 @@ public class Lower extends TreeTranslator {
         }
         VarSymbol ot = ots.head;
         JCExpression tree = access(make.at(pos).Ident(ot));
+        ot.flags_field &= ~NOOUTERTHIS;
         TypeSymbol otc = ot.type.tsym;
         while (otc != c) {
             do {
@@ -1769,6 +1778,7 @@ public class Lower extends TreeTranslator {
                 return makeNull();
             }
             tree = access(make.at(pos).Select(tree, ot));
+            ot.flags_field &= ~NOOUTERTHIS;
             otc = ot.type.tsym;
         }
         return tree;
@@ -1808,6 +1818,7 @@ public class Lower extends TreeTranslator {
         }
         VarSymbol ot = ots.head;
         JCExpression tree = access(make.at(pos).Ident(ot));
+        ot.flags_field &= ~NOOUTERTHIS;
         TypeSymbol otc = ot.type.tsym;
         while (!(preciseMatch ? sym.isMemberOf(otc, types) : otc.isSubClass(sym.owner, types))) {
             do {
@@ -1820,6 +1831,7 @@ public class Lower extends TreeTranslator {
                 ot = ots.head;
             } while (ot.owner != otc);
             tree = access(make.at(pos).Select(tree, ot));
+            ot.flags_field &= ~NOOUTERTHIS;
             otc = ot.type.tsym;
         }
         return tree;
@@ -1841,10 +1853,9 @@ public class Lower extends TreeTranslator {
 
     /** Return tree simulating the assignment {@code this.this$n = this$n}.
      */
-    JCStatement initOuterThis(int pos) {
-        VarSymbol rhs = outerThisStack.head;
+    JCStatement initOuterThis(int pos, VarSymbol rhs) {
         Assert.check(rhs.owner.kind == MTH);
-        VarSymbol lhs = outerThisStack.tail.head;
+        VarSymbol lhs = outerThisStack.head;
         Assert.check(rhs.owner.owner == lhs.owner);
         make.at(pos);
         return
@@ -2249,15 +2260,25 @@ public class Lower extends TreeTranslator {
         // Convert name to flat representation, replacing '.' by '$'.
         tree.name = Convert.shortName(currentClass.flatName());
 
-        // Add this$n and free variables proxy definitions to class.
+        // Add free variables proxy definitions to class.
 
         for (List<JCVariableDecl> l = fvdefs; l.nonEmpty(); l = l.tail) {
             tree.defs = tree.defs.prepend(l.head);
             enterSynthetic(tree.pos(), l.head.sym, currentClass.members());
         }
-        if (currentClass.hasOuterInstance()) {
+        // If this$n was accessed, add the field definition and
+        // update initial constructors to initialize it
+        if (currentClass.hasOuterInstance() && shouldEmitOuterThis(currentClass)) {
             tree.defs = tree.defs.prepend(otdef);
             enterSynthetic(tree.pos(), otdef.sym, currentClass.members());
+
+           for (JCTree def : tree.defs) {
+                if (TreeInfo.isInitialConstructor(def)) {
+                  JCMethodDecl mdef = (JCMethodDecl) def;
+                  mdef.body.stats = mdef.body.stats.prepend(
+                      initOuterThis(mdef.body.pos, mdef.params.head.sym));
+                }
+            }
         }
 
         proxies = prevProxies;
@@ -2272,6 +2293,39 @@ public class Lower extends TreeTranslator {
 
         // Return empty block {} as a placeholder for an inner class.
         result = make_at(tree.pos()).Block(SYNTHETIC, List.nil());
+    }
+
+    private boolean shouldEmitOuterThis(ClassSymbol sym) {
+      if (!optimizeOuterThis) {
+        // Optimization is disabled
+        return true;
+      }
+      if ((outerThisStack.head.flags_field & NOOUTERTHIS) == 0)  {
+        // Enclosing instance field is used
+        return true;
+      }
+      if (rs.isSerializable(sym.type) && !hasSerialVersionUID(sym)) {
+        // Class is serializable and does not have a stable serialVersionUID
+        return true;
+      }
+      return false;
+    }
+
+    private boolean hasSerialVersionUID(ClassSymbol sym) {
+      VarSymbol svuid = (VarSymbol) sym.members().findFirst(names.serialVersionUID, f -> f.kind == VAR);
+      if (svuid == null) {
+        return false;
+      }
+      if ((svuid.flags() & (STATIC | FINAL)) != (STATIC | FINAL)) {
+        return false;
+      }
+      if (!svuid.type.hasTag(LONG)) {
+        return false;
+      }
+      if (svuid.getConstValue() == null) {
+        return false;
+      }
+      return true;
     }
 
     List<JCTree> generateMandatedAccessors(JCClassDecl tree) {
@@ -2729,11 +2783,6 @@ public class Lower extends TreeTranslator {
                     olderasure.getReturnType(),
                     olderasure.getThrownTypes(),
                     syms.methodClass);
-            }
-            if (currentClass.hasOuterInstance() &&
-                TreeInfo.isInitialConstructor(tree))
-            {
-                added = added.prepend(initOuterThis(tree.body.pos));
             }
 
             // pop local variables from proxy stack
