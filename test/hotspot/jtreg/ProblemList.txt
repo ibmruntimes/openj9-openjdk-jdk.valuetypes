@@ -121,10 +121,13 @@ serviceability/sa/TestRevPtrsForInvokeDynamic.java 8241235 generic-all
 serviceability/jvmti/ModuleAwareAgents/ThreadStart/MAAThreadStart.java 8225354 windows-all
 serviceability/dcmd/gc/RunFinalizationTest.java 8227120 linux-all,windows-x64
 
-serviceability/sa/ClhsdbCDSCore.java 8269982 macosx-aarch64
-serviceability/sa/ClhsdbFindPC.java#id1 8269982 macosx-aarch64
-serviceability/sa/ClhsdbFindPC.java#id3 8269982 macosx-aarch64
-serviceability/sa/ClhsdbPstack.java#id1 8269982 macosx-aarch64
+serviceability/sa/ClhsdbCDSCore.java 8269982,8267433 macosx-aarch64,macosx-x64
+serviceability/sa/ClhsdbFindPC.java#xcomp-core 8269982,8267433 macosx-aarch64,macosx-x64
+serviceability/sa/ClhsdbFindPC.java#no-xcomp-core 8269982,8267433 macosx-aarch64,macosx-x64
+serviceability/sa/ClhsdbPmap.java#core 8267433 macosx-x64
+serviceability/sa/ClhsdbPstack.java#core 8269982,8267433 macosx-aarch64,macosx-x64
+serviceability/sa/TestJmapCore.java 8267433 macosx-x64
+serviceability/sa/TestJmapCoreMetaspace.java 8267433 macosx-x64
 
 # Valhalla TODO:
 serviceability/sa/ClhsdbCDSCore.java 8190936 generic-all
@@ -152,6 +155,8 @@ serviceability/sa/TestJmapCore.java 8190936 generic-all
 serviceability/sa/TestJmapCoreMetaspace.java 8190936 generic-all
 serviceability/sa/TestPrintMdo.java 8190936 generic-all
 serviceability/sa/jmap-hprof/JMapHProfLargeHeapTest.java 8190936 generic-all
+
+resourcehogs/serviceability/sa/TestHeapDumpForLargeArray.java 8274620 macosx-x64
 
 #############################################################################
 
