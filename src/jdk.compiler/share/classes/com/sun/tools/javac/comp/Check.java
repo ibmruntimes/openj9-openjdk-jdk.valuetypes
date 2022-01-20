@@ -2027,7 +2027,7 @@ public class Check {
         }
 
         if (origin.isValueClass() && other.owner == syms.objectType.tsym && m.type.getParameterTypes().size() == 0) {
-            if (m.name == names.clone || m.name == names.finalize) {
+            if (m.name == names.finalize) {
                 log.error(TreeInfo.diagnosticPositionFor(m, tree),
                         Errors.ValueClassMayNotOverride(m.name));
                 m.flags_field |= BAD_OVERRIDE;
