@@ -851,7 +851,7 @@ public class Check {
      *  @param primitiveClassOK       If false, a primitive class does not qualify
      */
     Type checkRefType(DiagnosticPosition pos, Type t, boolean primitiveClassOK) {
-        if (t.isReference() && (primitiveClassOK || !types.isPrimitiveClass(t)))
+        if (t.isReference() && (primitiveClassOK || !t.isPrimitiveClass()))
             return t;
         else
             return typeTagError(pos,
@@ -953,7 +953,7 @@ public class Check {
         @Override
         public Void visitClassType(ClassType t, DiagnosticPosition pos) {
             for (Type targ : t.allparams()) {
-                if (types.isPrimitiveClass(targ)) {
+                if (targ.isPrimitiveClass()) {
                     log.error(pos, Errors.GenericParameterizationWithPrimitiveClass(t));
                 }
                 visit(targ, pos);
@@ -1369,7 +1369,7 @@ public class Check {
                 mask = implicit = InterfaceVarFlags;
             else {
                 mask = VarFlags;
-                if (types.isValueClass(sym.owner.type) && (flags & STATIC) == 0) {
+                if (sym.owner.type.isValueClass() && (flags & STATIC) == 0) {
                     implicit |= FINAL;
                 }
             }
@@ -2347,8 +2347,7 @@ public class Check {
         // or by virtue of being a member of a diamond inferred anonymous class. Latter case is to
         // be treated "as if as they were annotated" with @Override.
         boolean mustOverride = explicitOverride ||
-                (env.info.isAnonymousDiamond && !m.isConstructor() && !m.isPrivate() &&
-                        (!m.owner.isPrimitiveClass() || (tree.body.flags & SYNTHETIC) == 0));
+                (env.info.isAnonymousDiamond && !m.isConstructor() && !m.isPrivate());
         if (mustOverride && !isOverrider(m)) {
             DiagnosticPosition pos = tree.pos();
             for (JCAnnotation a : tree.getModifiers().annotations) {
@@ -2509,7 +2508,7 @@ public class Check {
     }
         // where
         private boolean cyclePossible(VarSymbol symbol) {
-            return (symbol.flags() & STATIC) == 0 && types.isPrimitiveClass(symbol.type);
+            return (symbol.flags() & STATIC) == 0 && symbol.type.isPrimitiveClass();
         }
 
     void checkNonCyclicDecl(JCClassDecl tree) {
