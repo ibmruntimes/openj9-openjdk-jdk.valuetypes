@@ -331,7 +331,7 @@ public class Attr extends JCTree.Visitor {
                    withfield operator -This does not result in mutation of final fields; the code generator
                    would implement `copy on write' semantics via the opcode `withfield'.
                 */
-                if (env.info.inWithField && v.getKind() == ElementKind.FIELD && (v.flags() & STATIC) == 0 && types.isPrimitiveClass(v.owner.type)) {
+                if (env.info.inWithField && v.getKind() == ElementKind.FIELD && (v.flags() & STATIC) == 0 && v.owner.type.isPrimitiveClass()) {
                     if (env.enclClass.sym.outermostClass() == v.owner.outermostClass())
                         complain = false;
                 }
@@ -1333,7 +1333,7 @@ public class Attr extends JCTree.Visitor {
                as these can undergo updates via copy on write.
             */
             if (tree.init != null) {
-                if ((v.flags_field & FINAL) == 0 || ((v.flags_field & STATIC) == 0 && types.isPrimitiveClass(v.owner.type)) ||
+                if ((v.flags_field & FINAL) == 0 || ((v.flags_field & STATIC) == 0 && v.owner.isPrimitiveClass()) ||
                     !memberEnter.needsLazyConstValue(tree.init)) {
                     // Not a compile-time constant
                     // Attribute initializer in a new environment
@@ -1536,7 +1536,7 @@ public class Attr extends JCTree.Visitor {
             if (tree.field.type != null && !tree.field.type.isErroneous()) {
                 final Symbol sym = TreeInfo.symbol(tree.field);
                 if (sym == null || sym.kind != VAR || sym.owner.kind != TYP ||
-                        (sym.flags() & STATIC) != 0 || !types.isPrimitiveClass(sym.owner.type)) {
+                        (sym.flags() & STATIC) != 0 || !sym.owner.type.isPrimitiveClass()) {
                     log.error(tree.field.pos(), Errors.PrimitiveClassInstanceFieldExpectedHere);
                 } else {
                     Type ownType = sym.owner.type;
@@ -2662,11 +2662,11 @@ public class Attr extends JCTree.Visitor {
             if (symbol != null) {
                 /* Is this an ill conceived attempt to invoke jlO methods not available on primitive class types ??
                  */
-                boolean superCallOnPrimitiveReceiver = types.isPrimitiveClass(env.enclClass.sym.type)
+                boolean superCallOnPrimitiveReceiver = env.enclClass.sym.type.isPrimitiveClass()
                         && (tree.meth.hasTag(SELECT))
                         && ((JCFieldAccess)tree.meth).selected.hasTag(IDENT)
                         && TreeInfo.name(((JCFieldAccess)tree.meth).selected) == names._super;
-                if (types.isPrimitiveClass(qualifier) || superCallOnPrimitiveReceiver) {
+                if (qualifier.isPrimitiveClass() || superCallOnPrimitiveReceiver) {
                     int argSize = argtypes.size();
                     Name name = symbol.name;
                     switch (name.toString()) {
@@ -3144,7 +3144,7 @@ public class Attr extends JCTree.Visitor {
         if (arg.getTag() == NEWCLASS)
             return arg;
         // Likewise arg can't be null if it is a primitive class instance.
-        if (types.isPrimitiveClass(arg.type))
+        if (arg.type.isPrimitiveClass())
             return arg;
         // optimization: X.this is never null; skip null check
         Name name = TreeInfo.name(arg);
@@ -5388,7 +5388,7 @@ public class Attr extends JCTree.Visitor {
         try {
             annotate.flush();
             attribClass(c);
-            if (types.isPrimitiveClass(c.type)) {
+            if (c.type.isPrimitiveClass()) {
                 final Env<AttrContext> env = typeEnvs.get(c);
                 if (env != null && env.tree != null && env.tree.hasTag(CLASSDEF))
                     chk.checkNonCyclicMembership((JCClassDecl)env.tree);
