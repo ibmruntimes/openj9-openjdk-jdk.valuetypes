@@ -260,12 +260,13 @@ public class ObjectMethods {
      */
     private static MethodHandle makeToString(MethodHandles.Lookup lookup,
                                             Class<?> receiverClass,
+                                            String simpleName,
                                             MethodHandle[] getters,
                                             List<String> names) {
         assert getters.length == names.size();
         if (getters.length == 0) {
             // special case
-            MethodHandle emptyRecordCase = MethodHandles.constant(String.class, receiverClass.getSimpleName() + "[]");
+            MethodHandle emptyRecordCase = MethodHandles.constant(String.class, simpleName + "[]");
             emptyRecordCase = MethodHandles.dropArguments(emptyRecordCase, 0, receiverClass); // (R)S
             return emptyRecordCase;
         }
@@ -286,7 +287,7 @@ public class ObjectMethods {
             for (int splitIndex = 0; splitIndex < splits.size(); splitIndex++) {
                 String recipe = "";
                 if (firstTime && splitIndex == 0) {
-                    recipe = receiverClass.getSimpleName() + "[";
+                    recipe = simpleName + "[";
                 }
                 for (int i = 0; i < splits.get(splitIndex).size(); i++) {
                     recipe += firstTime ? names.get(namesIndex) + "=" + "\1" : "\1";
@@ -449,7 +450,7 @@ public class ObjectMethods {
                 List<String> nameList = "".equals(names) ? List.of() : List.of(names.split(";"));
                 if (nameList.size() != getterList.size())
                     throw new IllegalArgumentException("Name list and accessor list do not match");
-                yield makeToString(lookup, recordClass, getters, nameList);
+                yield makeToString(lookup, receiverType, recordClass.getSimpleName(), getters, nameList);
             }
             default -> throw new IllegalArgumentException(methodName);
         };

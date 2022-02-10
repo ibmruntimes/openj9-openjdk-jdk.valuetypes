@@ -137,6 +137,7 @@ hotspot_not_fast_compiler = \
 hotspot_slow_compiler = \
   compiler/codegen/aes \
   compiler/codecache/stress \
+  compiler/codegen/aes \
   compiler/gcbarriers/PreserveFPRegistersTest.java \
   :hotspot_compiler_arraycopy
 

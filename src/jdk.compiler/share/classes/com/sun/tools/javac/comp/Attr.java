@@ -178,7 +178,7 @@ public class Attr extends JCTree.Visitor {
                              Feature.PATTERN_SWITCH.allowedInSource(source);
         sourceName = source.name;
         useBeforeDeclarationWarning = options.isSet("useBeforeDeclarationWarning");
-
+        tolerateObjectInstantiation = options.isSet("tolerateObjectInstantiation");
         statInfo = new ResultInfo(KindSelector.NIL, Type.noType);
         varAssignmentInfo = new ResultInfo(KindSelector.ASG, Type.noType);
         unknownExprInfo = new ResultInfo(KindSelector.VAL, Type.noType);
@@ -229,6 +229,12 @@ public class Attr extends JCTree.Visitor {
      * RFE: 6425594
      */
     boolean useBeforeDeclarationWarning;
+
+    /**
+     * Switch: warn about use of new Object() ? By default, Yes;
+     * but not if -XDtolerateObjectInstantiation is in effect
+     */
+    boolean tolerateObjectInstantiation;
 
     /**
      * Switch: name of source level; used for error reporting.
@@ -2650,13 +2656,13 @@ public class Attr extends JCTree.Visitor {
 
             final Symbol symbol = TreeInfo.symbol(tree.meth);
             if (symbol != null) {
-                /* Is this an ill conceived attempt to invoke jlO methods not available on primitive class types ??
+                /* Is this an ill-conceived attempt to invoke jlO methods not available on value class types ??
                  */
-                boolean superCallOnPrimitiveReceiver = env.enclClass.sym.type.isPrimitiveClass()
+                boolean superCallOnValueReceiver = env.enclClass.sym.type.isValueClass()
                         && (tree.meth.hasTag(SELECT))
                         && ((JCFieldAccess)tree.meth).selected.hasTag(IDENT)
                         && TreeInfo.name(((JCFieldAccess)tree.meth).selected) == names._super;
-                if (qualifier.isPrimitiveClass() || superCallOnPrimitiveReceiver) {
+                if (qualifier.isValueClass() || superCallOnValueReceiver) {
                     int argSize = argtypes.size();
                     Name name = symbol.name;
                     switch (name.toString()) {
@@ -2664,14 +2670,14 @@ public class Attr extends JCTree.Visitor {
                             if (argSize == 0
                                     || (types.isConvertible(argtypes.head, syms.longType) &&
                                     (argSize == 1 || (argSize == 2 && types.isConvertible(argtypes.tail.head, syms.intType))))) {
-                                log.error(tree.pos(), Errors.PrimitiveClassDoesNotSupport(name));
+                                log.error(tree.pos(), Errors.ValueClassDoesNotSupport(name));
                             }
                             break;
                         case "notify":
                         case "notifyAll":
                         case "finalize":
                             if (argSize == 0)
-                                log.error(tree.pos(), Errors.PrimitiveClassDoesNotSupport(name));
+                                log.error(tree.pos(), Errors.ValueClassDoesNotSupport(name));
                             break;
                     }
                 }
@@ -2824,7 +2830,7 @@ public class Attr extends JCTree.Visitor {
             clazztype = TreeInfo.isEnumInit(env.tree) ?
                 attribIdentAsEnumType(env, (JCIdent)clazz) :
                 attribType(clazz, env);
-            if (clazztype.tsym == syms.objectType.tsym && cdef == null && !tree.classDeclRemoved()) {
+            if (!tolerateObjectInstantiation && clazztype.tsym == syms.objectType.tsym && cdef == null && !tree.classDeclRemoved()) {
                 log.note(tree.pos(), Notes.CantInstantiateObjectDirectly);
             }
         } finally {
