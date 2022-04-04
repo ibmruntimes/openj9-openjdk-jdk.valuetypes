@@ -119,7 +119,7 @@ public sealed interface ClassDesc
      * valid type descriptor strings include {@code "Ljava/lang/String;"},
      * {@code "QPoint;}, {@code "I"}, {@code "[I"}, {@code "V"},
      * {@code "[Ljava/lang/String;"}, {@code "[LPoint;"}, {@code "[[QPoint;} etc.
-     * See JVMS 4.3.2 ("Field Descriptors") for more detail.
+     * See JVMS {@jvms 4.3.2 }("Field Descriptors") for more detail.
      *
      * @param descriptor a field descriptor string
      * @return a {@linkplain ClassDesc} describing the desired class
