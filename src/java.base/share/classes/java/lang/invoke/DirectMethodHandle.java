@@ -645,7 +645,7 @@ sealed class DirectMethodHandle extends MethodHandle {
     static int ftypeKind(Class<?> ftype, boolean isValue) {
         if (ftype.isPrimitive())
             return Wrapper.forPrimitiveType(ftype).ordinal();
-        else if (VerifyType.isNullReferenceConversion(Object.class, ftype)) {
+        else if (ftype.isInterface() || ftype.isAssignableFrom(Object.class)) {
             return FT_UNCHECKED_REF;
         } else
             // null check for value type in addition to check cast

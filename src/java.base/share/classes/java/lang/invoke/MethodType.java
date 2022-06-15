@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.vm.annotation.Stable;
 import sun.invoke.util.BytecodeDescriptor;
 import sun.invoke.util.VerifyType;
@@ -1410,7 +1411,7 @@ s.writeObject(this.parameterArray());
 
         public ConcurrentWeakInternSet() {
             this.map = new ConcurrentHashMap<>(512);
-            this.stale = new ReferenceQueue<>();
+            this.stale = SharedSecrets.getJavaLangRefAccess().newNativeReferenceQueue();
         }
 
         /**

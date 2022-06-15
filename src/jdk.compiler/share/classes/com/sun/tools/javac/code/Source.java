@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -241,6 +241,8 @@ public enum Source {
         REDUNDANT_STRICTFP(JDK17),
         PRIMITIVE_CLASSES(JDK18, Fragments.FeaturePrimitiveClasses, DiagKind.PLURAL),
         VALUE_CLASSES(JDK18, Fragments.FeatureValueClasses, DiagKind.PLURAL),
+        UNCONDITIONAL_PATTERN_IN_INSTANCEOF(JDK19, Fragments.FeatureUnconditionalPatternsInInstanceof, DiagKind.PLURAL),
+        RECORD_PATTERNS(JDK19, Fragments.FeatureDeconstructionPatterns, DiagKind.PLURAL),
         ;
 
         enum DiagKind {
