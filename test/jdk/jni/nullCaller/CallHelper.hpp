@@ -20,16 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * ===========================================================================
+ */
+
 #ifndef __CallHelper_hpp__
 #define __CallHelper_hpp__
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <jni.h>
 #undef NDEBUG
 #include <assert.h>
 #include <string>
 #include <algorithm>
-#include <iostream>
 
 /*
  * basis of classes to provide a bunch of checking in native calls to java
@@ -48,7 +55,7 @@ protected:
     void emitErrorMessage(const std::string& msg) {
         std::string nm = classname;
         std::replace(nm.begin(), nm.end(), '/', '.');
-        std::cerr << "ERROR: " << nm << "::" << method << ", " << msg << std::endl;
+        ::fprintf(stderr, "ERROR: %s::%s, %s\n", nm.c_str(), method.c_str(), msg.c_str());
     }
 
     // check the given object which is expected to be null
@@ -78,14 +85,15 @@ protected:
 
     // check if an expected exception was thrown
     void checkExpectedExceptionThrown(const std::string& exception) {
+         jthrowable t = env->ExceptionOccurred();
+         // unless the exception is cleared before calling FindClass, OpenJ9 will return NULL from FindClass, which will assert below
+         env->ExceptionClear();
          jclass expected = env->FindClass(exception.c_str());
          assert(expected != NULL);
-         jthrowable t = env->ExceptionOccurred();
          if (env->IsInstanceOf(t, expected) == JNI_FALSE) {
             emitErrorMessage("Didn't get the expected " + exception);
             ::exit(-1);
          }
-         env->ExceptionClear();
     }
 
 protected:
@@ -202,7 +210,7 @@ public:
 };
 
 void emitErrorMessageAndExit(const std::string& msg) {
-    std::cerr << "ERROR: " << msg << std::endl;
+    ::fprintf(stderr, "ERROR: %s\n", msg.c_str());
     ::exit(-1);
 }
 
