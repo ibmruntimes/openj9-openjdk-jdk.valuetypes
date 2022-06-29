@@ -127,7 +127,7 @@ public class ModuleDescriptor
          */
         MANDATED(AccessFlag.MANDATED.mask());
 
-        private int mask;
+        private final int mask;
         private Modifier(int mask) {
             this.mask = mask;
         }
@@ -164,7 +164,7 @@ public class ModuleDescriptor
              * The dependence is mandatory in the static phase, during compilation,
              * but is optional in the dynamic phase, during execution.
              */
-            STATIC(AccessFlag.STATIC.mask()),
+            STATIC(AccessFlag.STATIC_PHASE.mask()),
 
             /**
              * The dependence was not explicitly or implicitly declared in the
@@ -177,7 +177,7 @@ public class ModuleDescriptor
              * declaration.
              */
             MANDATED(AccessFlag.MANDATED.mask());
-            private int mask;
+            private final int mask;
             private Modifier(int mask) {
                 this.mask = mask;
             }
@@ -408,7 +408,7 @@ public class ModuleDescriptor
              */
             MANDATED(AccessFlag.MANDATED.mask());
 
-            private int mask;
+            private final int mask;
             private Modifier(int mask) {
                 this.mask = mask;
             }
@@ -630,7 +630,7 @@ public class ModuleDescriptor
              * module declaration.
              */
             MANDATED(AccessFlag.MANDATED.mask());
-            private int mask;
+            private final int mask;
             private Modifier(int mask) {
                 this.mask = mask;
             }
