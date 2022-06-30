@@ -962,7 +962,9 @@ final class ProxyGenerator extends ClassWriter {
             mv.visitVarInsn(ALOAD, 0); // classLoader
             mv.visitMethodInsn(INVOKESTATIC,
                     JL_CLASS,
-                    "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
+                    "forName",
+                    "(Ljava/lang/String;Z" + LJL_CLASSLOADER + ")Ljava/lang/Class;",
+                    false);
             if (cl.isPrimitiveValueType()) {
               mv.visitMethodInsn(INVOKEVIRTUAL,
                                  JL_CLASS,
