@@ -396,7 +396,7 @@ public class Lower extends TreeTranslator {
         if (fvs != null) {
             return fvs;
         }
-        if (c.owner.kind.matches(KindSelector.VAL_MTH)) {
+        if (c.owner.kind.matches(KindSelector.VAL_MTH) && !c.isStatic()) {
             FreeVarCollector collector = new FreeVarCollector(c);
             collector.scan(classDef(c));
             fvs = collector.fvs;
@@ -2701,6 +2701,7 @@ public class Lower extends TreeTranslator {
 
     private void visitMethodDefInternal(JCMethodDecl tree) {
         if (tree.name == names.init &&
+            !currentClass.isStatic() &&
             (currentClass.isInner() || currentClass.isDirectlyOrIndirectlyLocal())) {
             // We are seeing a constructor of an inner class.
             MethodSymbol m = tree.sym;
@@ -2836,7 +2837,7 @@ public class Lower extends TreeTranslator {
 
         // If created class is local, add free variables after
         // explicit constructor arguments.
-        if (c.isDirectlyOrIndirectlyLocal()) {
+        if (c.isDirectlyOrIndirectlyLocal() && !c.isStatic()) {
             tree.args = tree.args.appendList(loadFreevars(tree.pos(), freevars(c)));
         }
 
@@ -3038,7 +3039,7 @@ public class Lower extends TreeTranslator {
             // If we are calling a constructor of a local class, add
             // free variables after explicit constructor arguments.
             ClassSymbol c = (ClassSymbol)constructor.owner;
-            if (c.isDirectlyOrIndirectlyLocal()) {
+            if (c.isDirectlyOrIndirectlyLocal() && !c.isStatic()) {
                 tree.args = tree.args.appendList(loadFreevars(tree.pos(), freevars(c)));
             }
 
