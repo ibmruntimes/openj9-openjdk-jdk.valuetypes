@@ -55,6 +55,7 @@ import javax.crypto.spec.SecretKeySpec;
 import jdk.crypto.jniprovider.NativeCrypto;
 
 import sun.security.action.GetPropertyAction;
+import sun.security.util.ECUtil;
 import sun.security.util.NamedCurve;
 
 /**
@@ -102,6 +103,8 @@ public final class NativeECDHKeyAgreement extends KeyAgreementSpi {
         /* attempt to translate the key if it is not an ECKey */
         this.privateKey = (ECPrivateKeyImpl) ECKeyFactory.toECKey(key);
         this.publicKey = null;
+
+        ECUtil.checkPrivateKey(this.privateKey);
 
         ECParameterSpec params = this.privateKey.getParams();
         if (params instanceof NamedCurve) {
@@ -164,8 +167,7 @@ public final class NativeECDHKeyAgreement extends KeyAgreementSpi {
         /* attempt to translate the key if it is not an ECKey */
         this.publicKey = (ECPublicKeyImpl) ECKeyFactory.toECKey(key);
 
-        ECParameterSpec params = this.publicKey.getParams();
-        int keyLenBits = params.getCurve().getField().getFieldSize();
+        int keyLenBits = this.publicKey.getParams().getCurve().getField().getFieldSize();
         this.secretLen = (keyLenBits + 7) >> 3;
 
         return null;
@@ -228,6 +230,7 @@ public final class NativeECDHKeyAgreement extends KeyAgreementSpi {
         if (ret == -1) {
             throw new ProviderException("Could not derive key");
         }
+        this.publicKey = null;
         return this.secretLen;
     }
 
