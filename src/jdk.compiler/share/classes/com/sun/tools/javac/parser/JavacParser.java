@@ -3237,7 +3237,8 @@ public class JavacParser implements Parser {
                         lookahead++;
                         break;
                     } else {
-                        return PatternResult.EXPRESSION;
+                        // This is a potential guard, if we are already in a pattern
+                        return pendingResult;
                     }
                 case LPAREN:
                     if (S.token(lookahead + 1).kind == RPAREN) {
