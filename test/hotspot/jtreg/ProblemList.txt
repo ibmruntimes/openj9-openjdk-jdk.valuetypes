@@ -167,7 +167,6 @@ resourcehogs/serviceability/sa/TestHeapDumpForLargeArray.java 8274620 macosx-x64
 
 #############################################################################
 
-vmTestbase/nsk/jdi/HiddenClass/events/events001.java                 8257705 generic-all
 vmTestbase/nsk/jdi/ThreadReference/stop/stop001/TestDescription.java 7034630 generic-all
 
 vmTestbase/metaspace/gc/firstGC_10m/TestDescription.java 8208250 generic-all
