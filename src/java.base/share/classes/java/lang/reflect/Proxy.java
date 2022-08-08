@@ -542,7 +542,7 @@ public class Proxy implements java.io.Serializable {
              * Generate the specified proxy class.
              */
             byte[] proxyClassFile = ProxyGenerator.generateProxyClass(loader, proxyName, interfaces,
-                                                                      context.accessFlags() | Modifier.FINAL);
+                                                                      context.accessFlags() | Modifier.FINAL | Modifier.IDENTITY);
             try {
                 Class<?> pc = JLA.defineClass(loader, proxyName, proxyClassFile,
                                               null, "__dynamic_proxy__");
