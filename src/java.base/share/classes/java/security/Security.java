@@ -48,7 +48,7 @@ import sun.security.jca.*;
 /*[IF CRIU_SUPPORT]*/
 import openj9.internal.criu.InternalCRIUSupport;
 import openj9.internal.criu.security.CRIUConfigurator;
-/*[ENDIF] CRIU_SUPPORT*/
+/*[ENDIF] CRIU_SUPPORT */
 
 import openj9.internal.security.FIPSConfigurator;
 
@@ -59,6 +59,9 @@ import openj9.internal.security.FIPSConfigurator;
  * <p>The default values of security properties are read from an
  * implementation-specific location, which is typically the properties file
  * {@code conf/security/java.security} in the Java installation directory.
+ *
+ * @implNote If the properties file fails to load, the JDK implementation will
+ * throw an unspecified error when initializing the {@code Security} class.
  *
  * @author Benjamin Renaud
  * @since 1.1
@@ -196,11 +199,7 @@ public final class Security {
         }
 
         if (!loadedProps) {
-            initializeStatic();
-            if (sdebug != null) {
-                sdebug.println("unable to load security properties " +
-                        "-- using defaults");
-            }
+            throw new InternalError("java.security file missing");
         }
 
 /*[IF CRIU_SUPPORT]*/
@@ -208,32 +207,13 @@ public final class Security {
         if (InternalCRIUSupport.isCheckpointAllowed()) {
             CRIUConfigurator.setCRIUSecMode(props);
         }
-/*[ENDIF] CRIU_SUPPORT*/
+/*[ENDIF] CRIU_SUPPORT */
 
-        // Load FIPS properties
-        if (loadedProps) {
-            boolean fipsEnabled = FIPSConfigurator.configureFIPS(props);
-            if (sdebug != null) {
-                if (fipsEnabled) {
-                    sdebug.println("FIPS mode enabled.");
-                } else {
-                    sdebug.println("FIPS mode disabled.");
-                }
-            }
+        // Load FIPS properties.
+        boolean fipsEnabled = FIPSConfigurator.configureFIPS(props);
+        if (sdebug != null) {
+            sdebug.println(fipsEnabled ? "FIPS mode enabled.": "FIPS mode disabled.");
         }
-    }
-
-    /*
-     * Initialize to default values, if <java.home>/lib/java.security
-     * is not found.
-     */
-    private static void initializeStatic() {
-        props.put("security.provider.1", "sun.security.provider.Sun");
-        props.put("security.provider.2", "sun.security.rsa.SunRsaSign");
-        props.put("security.provider.3", "sun.security.ssl.SunJSSE");
-        props.put("security.provider.4", "com.sun.crypto.provider.SunJCE");
-        props.put("security.provider.5", "sun.security.jgss.SunProvider");
-        props.put("security.provider.6", "com.sun.security.sasl.Provider");
     }
 
     /**
