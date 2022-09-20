@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2541,8 +2541,14 @@ public class ClassReader {
         // read flags, or skip if this is an inner class
         long f = nextChar();
         long flags = adjustClassFlags(f);
-        if (c == syms.objectType.tsym)
+        if (c == syms.objectType.tsym) {
             flags &= ~IDENTITY_TYPE; // jlO lacks identity even while being a concrete class.
+        }
+        if ((flags & PRIMITIVE_CLASS) != 0) {
+            if ((flags & (FINAL | PRIMITIVE_CLASS | IDENTITY_TYPE)) != (FINAL | PRIMITIVE_CLASS)) {
+                throw badClassFile("bad.access.flags", Flags.toString(flags));
+            }
+        }
         if ((flags & MODULE) == 0) {
             if (c.owner.kind == PCK || c.owner.kind == ERR) c.flags_field = flags;
             // read own class name and check that it matches
@@ -2644,7 +2650,7 @@ public class ClassReader {
                     if (member.erasure_field != null)
                         ((ClassType)member.erasure_field).setEnclosingType(types.erasure(outer.type));
                 }
-                if (c == outer) {
+                if (c == outer && member.owner == c) {
                     member.flags_field = flags;
                     enterMember(c, member);
                 }

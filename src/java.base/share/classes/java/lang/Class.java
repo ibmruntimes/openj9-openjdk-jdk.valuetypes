@@ -78,6 +78,7 @@ import jdk.internal.reflect.CallerSensitiveAdapter;
 import jdk.internal.reflect.ConstantPool;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
+import jdk.internal.value.PrimitiveClass;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
 import sun.invoke.util.Wrapper;
@@ -203,8 +204,6 @@ public final class Class<T> implements java.io.Serializable,
     private static final int ANNOTATION = 0x00002000;
     private static final int ENUM       = 0x00004000;
     private static final int SYNTHETIC  = 0x00001000;
-    private static final int VALUE_CLASS     = 0x00000040;
-    private static final int PRIMITIVE_CLASS = 0x00000800;
 
     private static native void registerNatives();
     static {
@@ -379,6 +378,11 @@ public final class Class<T> implements java.io.Serializable,
      * A call to {@code forName("X")} causes the class named
      * {@code X} to be initialized.
      *
+     * <p>
+     * In cases where this method is called from a context where there is no
+     * caller frame on the stack (e.g. when called directly from a JNI
+     * attached thread), the system class loader is used.
+     *
      * @param      className   the fully qualified name of the desired class.
      * @return     the {@code Class} object for the class with the
      *             specified name.
@@ -402,7 +406,9 @@ public final class Class<T> implements java.io.Serializable,
     @CallerSensitiveAdapter
     private static Class<?> forName(String className, Class<?> caller)
             throws ClassNotFoundException {
-        return forName0(className, true, ClassLoader.getClassLoader(caller), caller);
+        ClassLoader loader = (caller == null) ? ClassLoader.getSystemClassLoader()
+                                              : ClassLoader.getClassLoader(caller);
+        return forName0(className, true, loader, caller);
     }
 
     /**
@@ -626,19 +632,26 @@ public final class Class<T> implements java.io.Serializable,
      * @see #asValueType()
      * @since Valhalla
      */
-    public boolean isPrimitiveClass() {
-        return (this.getModifiers() & PRIMITIVE_CLASS) != 0;
+    /* package */ boolean isPrimitiveClass() {
+        return (this.getModifiers() & PrimitiveClass.PRIMITIVE_CLASS) != 0;
     }
 
     /**
-     * Returns {@code true} if this class is a value class.
+     * {@return {@code true} if this class is an identity class, otherwise {@code false}}
      *
-     * @return {@code true} if this class is a value class;
-     * otherwise {@code false}
+     * @since Valhalla
+     */
+    public boolean isIdentity() {
+        return (this.getModifiers() & Modifier.IDENTITY) != 0;
+    }
+
+    /**
+     * {@return {@code true} if this class is a value class, otherwise {@code false}}
+     *
      * @since Valhalla
      */
     public boolean isValue() {
-        return (this.getModifiers() & VALUE_CLASS) != 0;
+        return (this.getModifiers() & Modifier.VALUE) != 0;
     }
 
     /**
@@ -660,7 +673,7 @@ public final class Class<T> implements java.io.Serializable,
      * @since Valhalla
      */
     @IntrinsicCandidate
-    public Class<?> asPrimaryType() {
+    /* package */ Class<?> asPrimaryType() {
         return isPrimitiveClass() ? primaryType : this;
     }
 
@@ -678,7 +691,7 @@ public final class Class<T> implements java.io.Serializable,
      * @since Valhalla
      */
     @IntrinsicCandidate
-    public Class<?> asValueType() {
+    /* package */ Class<?> asValueType() {
         if (isPrimitiveClass())
             return secondaryType;
 
@@ -704,7 +717,7 @@ public final class Class<T> implements java.io.Serializable,
      * the primary type of this class or interface
      * @since Valhalla
      */
-    public boolean isPrimaryType() {
+    /* package */ boolean isPrimaryType() {
         if (isPrimitiveClass()) {
             return this == primaryType;
         }
@@ -719,7 +732,7 @@ public final class Class<T> implements java.io.Serializable,
      * the value type of a primitive class
      * @since Valhalla
      */
-    public boolean isPrimitiveValueType() {
+    /* package */ boolean isPrimitiveValueType() {
         return isPrimitiveClass() && this == secondaryType;
     }
 
@@ -1009,8 +1022,6 @@ public final class Class<T> implements java.io.Serializable,
      * <tr><th scope="row"> {@code char}    <td style="text-align:center"> {@code C}
      * <tr><th scope="row"> class or interface with <a href="ClassLoader.html#binary-name">binary name</a> <i>N</i>
      *                                      <td style="text-align:center"> {@code L}<em>N</em>{@code ;}
-     * <tr><th scope="row"> {@linkplain #isPrimitiveClass() primitive class} with <a href="ClassLoader.html#binary-name">binary name</a> <i>N</i>
-     *                                      <td style="text-align:center"> {@code Q}<em>N</em>{@code ;}
      * <tr><th scope="row"> {@code double}  <td style="text-align:center"> {@code D}
      * <tr><th scope="row"> {@code float}   <td style="text-align:center"> {@code F}
      * <tr><th scope="row"> {@code int}     <td style="text-align:center"> {@code I}
@@ -1029,14 +1040,8 @@ public final class Class<T> implements java.io.Serializable,
      *     returns "java.lang.String"
      * byte.class.getName()
      *     returns "byte"
-     * Point.class.getName()
-     *     returns "Point"
      * (new Object[3]).getClass().getName()
      *     returns "[Ljava.lang.Object;"
-     * (new Point[3]).getClass().getName()
-     *     returns "[QPoint;"
-     * (new Point.ref[3][4]).getClass().getName()
-     *     returns "[[LPoint;"
      * (new int[3][4][5][6][7][8][9]).getClass().getName()
      *     returns "[[[[[[[I"
      * </pre></blockquote>
@@ -1442,6 +1447,8 @@ public final class Class<T> implements java.io.Serializable,
      * {@code private}, {@code final}, {@code static},
      * {@code abstract} and {@code interface}; they should be decoded
      * using the methods of class {@code Modifier}.
+     * The modifiers also include the Java Virtual Machine's constants for
+     * {@code identity class} and {@code value class}.
      *
      * <p> If the underlying class is an array class, then its
      * {@code public}, {@code private} and {@code protected}
@@ -1471,7 +1478,43 @@ public final class Class<T> implements java.io.Serializable,
     @IntrinsicCandidate
     public native int getModifiers();
 
-    /**
+   /**
+     * {@return an unmodifiable set of the {@linkplain AccessFlag access
+     * flags} for this class, possibly empty}
+     *
+     * <p> If the underlying class is an array class, then its
+     * {@code PUBLIC}, {@code PRIVATE} and {@code PROTECTED}
+     * access flags are the same as those of its component type.  If this
+     * {@code Class} object represents a primitive type or void, the
+     * {@code PUBLIC} access flag is present, and the
+     * {@code PROTECTED} and {@code PRIVATE} access flags are always
+     * absent. If this {@code Class} object represents an array class, a
+     * primitive type or void, then the {@code FINAL} access flag is always
+     * present and the interface access flag is always
+     * absent. The values of its other access flags are not determined
+     * by this specification.
+     *
+     * @see #getModifiers()
+     * @jvms 4.1 The ClassFile Structure
+     * @jvms 4.7.6 The InnerClasses Attribute
+     * @since 20
+     */
+    public Set<AccessFlag> accessFlags() {
+        // Location.CLASS allows SUPER and AccessFlag.MODULE which
+        // INNER_CLASS forbids. INNER_CLASS allows PRIVATE, PROTECTED,
+        // and STATIC, which are not allowed on Location.CLASS.
+        // Use getClassAccessFlagsRaw to expose SUPER status.
+        var location = (isMemberClass() || isLocalClass() ||
+                        isAnonymousClass() || isArray()) ?
+            AccessFlag.Location.INNER_CLASS :
+            AccessFlag.Location.CLASS;
+        return AccessFlag.maskToAccessFlags((location == AccessFlag.Location.CLASS) ?
+                                            getClassAccessFlagsRaw() :
+                                            getModifiers(),
+                                            location);
+    }
+
+   /**
      * Gets the signers of this class.
      *
      * @return  the signers of this class, or null if there are no signers.  In
@@ -1485,26 +1528,6 @@ public final class Class<T> implements java.io.Serializable,
      * Set the signers of this class.
      */
     native void setSigners(Object[] signers);
-
-    /**
-     * {@return an unmodifiable set of the {@linkplain AccessFlag access
-     * flags} for this class, possibly empty}
-     * @see #getModifiers()
-     * @jvms 4.1 The ClassFile Structure
-     * @jvms 4.7.6 The InnerClasses Attribute
-     * @since 20
-     */
-    public Set<AccessFlag> accessFlags() {
-        // This likely needs some refinement. Exploration of hidden
-        // classes, array classes.  Location.CLASS allows SUPER and
-        // AccessFlag.MODULE which INNER_CLASS forbids. INNER_CLASS
-        // allows PRIVATE, PROTECTED, and STATIC, which are not
-        // allowed on Location.CLASS.
-        return AccessFlag.maskToAccessFlags(getModifiers(),
-                                            (isMemberClass() || isLocalClass() || isAnonymousClass()) ?
-                                            AccessFlag.Location.INNER_CLASS :
-                                            AccessFlag.Location.CLASS);
-    }
 
     /**
      * If this {@code Class} object represents a local or anonymous
@@ -3180,9 +3203,9 @@ public final class Class<T> implements java.io.Serializable,
         if (callerModule != thisModule) {
             String pn = Resources.toPackageName(name);
             if (thisModule.getDescriptor().packages().contains(pn)) {
-                if (callerModule == null && !thisModule.isOpen(pn)) {
-                    // no caller, package not open
-                    return false;
+                if (callerModule == null) {
+                    // no caller, return true if the package is open to all modules
+                    return thisModule.isOpen(pn);
                 }
                 if (!thisModule.isOpen(pn, callerModule)) {
                     // package not open to caller
@@ -3303,7 +3326,7 @@ public final class Class<T> implements java.io.Serializable,
         }
         // check package access on the proxy interfaces
         if (checkProxyInterfaces && Proxy.isProxyClass(this)) {
-            ReflectUtil.checkProxyPackageAccess(ccl, this.getInterfaces());
+            ReflectUtil.checkProxyPackageAccess(ccl, this.getInterfaces(/* cloneArray */ false));
         }
     }
 
@@ -3551,7 +3574,7 @@ public final class Class<T> implements java.io.Serializable,
         addAll(fields, privateGetDeclaredFields(true));
 
         // Direct superinterfaces, recursively
-        for (Class<?> si : getInterfaces()) {
+        for (Class<?> si : getInterfaces(/* cloneArray */ false)) {
             addAll(fields, si.privateGetPublicFields());
         }
 
@@ -4088,7 +4111,7 @@ public final class Class<T> implements java.io.Serializable,
             if (universe == null)
                 throw new IllegalArgumentException(
                     getName() + " is not an enum class");
-            directory = new HashMap<>((int)(universe.length / 0.75f) + 1);
+            directory = HashMap.newHashMap(universe.length);
             for (T constant : universe) {
                 directory.put(((Enum<?>)constant).name(), constant);
             }
@@ -4106,9 +4129,7 @@ public final class Class<T> implements java.io.Serializable,
      * @return the object after casting, or null if obj is null
      *
      * @throws ClassCastException if the object is not
-     * {@code null} and is not assignable to the type T.
-     * @throws NullPointerException if this class is an {@linkplain #isPrimitiveValueType()
-     * primitive value type} and the object is {@code null}
+     * null and is not assignable to the type T.
      *
      * @since 1.5
      */
@@ -4308,10 +4329,10 @@ public final class Class<T> implements java.io.Serializable,
                 Class<? extends Annotation> annotationClass = e.getKey();
                 if (AnnotationType.getInstance(annotationClass).isInherited()) {
                     if (annotations == null) { // lazy construction
-                        annotations = new LinkedHashMap<>((Math.max(
+                        annotations = LinkedHashMap.newLinkedHashMap(Math.max(
                                 declaredAnnotations.size(),
                                 Math.min(12, declaredAnnotations.size() + superAnnotations.size())
-                            ) * 4 + 2) / 3
+                            )
                         );
                     }
                     annotations.put(annotationClass, e.getValue());
@@ -4811,4 +4832,34 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     private native Class<?>[] getPermittedSubclasses0();
+
+    /*
+     * Return the class's major and minor class file version packed into an int.
+     * The high order 16 bits contain the class's minor version.  The low order
+     * 16 bits contain the class's major version.
+     *
+     * If the class is an array type then the class file version of its element
+     * type is returned.  If the class is a primitive type then the latest class
+     * file major version is returned and zero is returned for the minor version.
+     */
+    private int getClassFileVersion() {
+        Class<?> c = isArray() ? elementType() : this;
+        return c.getClassFileVersion0();
+    }
+
+    private native int getClassFileVersion0();
+
+    /*
+     * Return the access flags as they were in the class's bytecode, including
+     * the original setting of ACC_SUPER.
+     *
+     * If the class is an array type then the access flags of the element type is
+     * returned.  If the class is a primitive then ACC_ABSTRACT | ACC_FINAL | ACC_PUBLIC.
+     */
+    private int getClassAccessFlagsRaw() {
+        Class<?> c = isArray() ? elementType() : this;
+        return c.getClassAccessFlagsRaw0();
+    }
+
+    private native int getClassAccessFlagsRaw0();
 }

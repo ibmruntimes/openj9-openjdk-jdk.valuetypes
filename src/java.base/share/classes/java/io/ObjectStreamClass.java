@@ -62,6 +62,7 @@ import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaSecurityAccess;
+import jdk.internal.value.PrimitiveClass;
 import sun.reflect.misc.ReflectUtil;
 import static java.io.ObjectStreamField.*;
 
@@ -81,7 +82,7 @@ import static java.io.ObjectStreamField.*;
  *      <cite>Java Object Serialization Specification,</cite> Section 4, "Class Descriptors"</a>
  * @since   1.1
  */
-public class ObjectStreamClass implements Serializable {
+public final class ObjectStreamClass implements Serializable {
 
     /** serialPersistentFields value indicating no serializable fields */
     public static final ObjectStreamField[] NO_FIELDS =
@@ -445,7 +446,7 @@ public class ObjectStreamClass implements Serializable {
             if (isEnum) {
                 deserializeEx = new ExceptionInfo(name, "enum type");
             } else if (cl.isValue() && writeReplaceMethod == null) {
-                deserializeEx = new ExceptionInfo(name, cl.isPrimitiveClass() ? "primitive class" : "value class");
+                deserializeEx = new ExceptionInfo(name, "value class");
             } else if (cons == null && !isRecord) {
                 deserializeEx = new ExceptionInfo(name, "no valid constructor");
             }
@@ -1651,7 +1652,7 @@ public class ObjectStreamClass implements Serializable {
 
         ObjectStreamField[] boundFields =
             new ObjectStreamField[serialPersistentFields.length];
-        Set<String> fieldNames = new HashSet<>(serialPersistentFields.length);
+        Set<String> fieldNames = HashSet.newHashSet(serialPersistentFields.length);
 
         for (int i = 0; i < serialPersistentFields.length; i++) {
             ObjectStreamField spf = serialPersistentFields[i];

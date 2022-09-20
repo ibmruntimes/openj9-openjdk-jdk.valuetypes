@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 
 package java.lang.invoke;
 
+import jdk.internal.value.PrimitiveClass;
 import sun.invoke.util.Wrapper;
 
 import java.lang.reflect.Constructor;
@@ -225,7 +226,7 @@ final class VarHandles {
             // the redundant componentType.isPrimitiveValueType() check is
             // there to minimize the performance impact to non-value array.
             // It should be removed when Unsafe::isFlattenedArray is intrinsified.
-            return maybeAdapt(componentType.isPrimitiveValueType() && UNSAFE.isFlattenedArray(arrayClass)
+            return maybeAdapt(PrimitiveClass.isPrimitiveValueType(componentType) && UNSAFE.isFlattenedArray(arrayClass)
                 ? new VarHandleValues.Array(aoffset, ashift, arrayClass)
                 : new VarHandleReferences.Array(aoffset, ashift, arrayClass));
         }
@@ -317,23 +318,18 @@ final class VarHandles {
     }
 
     /**
-     * Creates a memory access VarHandle.
+     * Creates a memory segment view var handle.
      *
-     * Resulting VarHandle will take a memory address as first argument,
-     * and a certain number of coordinate {@code long} parameters, depending on the length
-     * of the {@code strides} argument array.
-     *
-     * Coordinates are multiplied with corresponding scale factors ({@code strides}) and added
-     * to a single fixed offset to compute an effective offset from the given MemoryAddress for the access.
+     * The resulting var handle will take a memory segment as first argument (the segment to be dereferenced),
+     * and a {@code long} as second argument (the offset into the segment).
      *
      * @param carrier the Java carrier type.
-     * @param skipAlignmentMaskCheck if true, only the base part of the address will be checked for alignment.
      * @param alignmentMask alignment requirement to be checked upon access. In bytes. Expressed as a mask.
      * @param byteOrder the byte order.
      * @return the created VarHandle.
      */
-    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, boolean skipAlignmentMaskCheck, long alignmentMask,
-                                                 ByteOrder byteOrder) {
+    static VarHandle memorySegmentViewHandle(Class<?> carrier, long alignmentMask,
+                                             ByteOrder byteOrder) {
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
             throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
         }
@@ -342,19 +338,19 @@ final class VarHandles {
         boolean exact = false;
 
         if (carrier == byte.class) {
-            return maybeAdapt(new MemoryAccessVarHandleByteHelper(skipAlignmentMaskCheck, be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsBytes(be, size, alignmentMask, exact));
         } else if (carrier == char.class) {
-            return maybeAdapt(new MemoryAccessVarHandleCharHelper(skipAlignmentMaskCheck, be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsChars(be, size, alignmentMask, exact));
         } else if (carrier == short.class) {
-            return maybeAdapt(new MemoryAccessVarHandleShortHelper(skipAlignmentMaskCheck, be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsShorts(be, size, alignmentMask, exact));
         } else if (carrier == int.class) {
-            return maybeAdapt(new MemoryAccessVarHandleIntHelper(skipAlignmentMaskCheck, be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsInts(be, size, alignmentMask, exact));
         } else if (carrier == float.class) {
-            return maybeAdapt(new MemoryAccessVarHandleFloatHelper(skipAlignmentMaskCheck, be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsFloats(be, size, alignmentMask, exact));
         } else if (carrier == long.class) {
-            return maybeAdapt(new MemoryAccessVarHandleLongHelper(skipAlignmentMaskCheck, be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsLongs(be, size, alignmentMask, exact));
         } else if (carrier == double.class) {
-            return maybeAdapt(new MemoryAccessVarHandleDoubleHelper(skipAlignmentMaskCheck, be, size, alignmentMask, exact));
+            return maybeAdapt(new VarHandleSegmentAsDoubles(be, size, alignmentMask, exact));
         } else {
             throw new IllegalStateException("Cannot get here");
         }
@@ -712,8 +708,8 @@ final class VarHandles {
 //                @LambdaForm.Compiled
 //                @Hidden
 //                static final <METHOD> throws Throwable {
-//                    handle.checkExactAccessMode(ad);
-//                    if (handle.isDirect() && handle.vform.methodType_table[ad.type] == ad.symbolicMethodTypeErased) {
+//                    boolean direct = handle.checkAccessModeThenIsDirect(ad);
+//                    if (direct && handle.vform.methodType_table[ad.type] == ad.symbolicMethodTypeErased) {
 //                        <RESULT_ERASED>MethodHandle.linkToStatic(<LINK_TO_STATIC_ARGS>);<RETURN_ERASED>
 //                    } else {
 //                        MethodHandle mh = handle.getMethodHandle(ad.mode);
@@ -727,10 +723,10 @@ final class VarHandles {
 //                @LambdaForm.Compiled
 //                @Hidden
 //                static final <METHOD> throws Throwable {
-//                    handle.checkExactAccessMode(ad);
-//                    if (handle.isDirect() && handle.vform.methodType_table[ad.type] == ad.symbolicMethodTypeErased) {
+//                    boolean direct = handle.checkAccessModeThenIsDirect(ad);
+//                    if (direct && handle.vform.methodType_table[ad.type] == ad.symbolicMethodTypeErased) {
 //                        MethodHandle.linkToStatic(<LINK_TO_STATIC_ARGS>);
-//                    } else if (handle.isDirect() && handle.vform.getMethodType_V(ad.type) == ad.symbolicMethodTypeErased) {
+//                    } else if (direct && handle.vform.getMethodType_V(ad.type) == ad.symbolicMethodTypeErased) {
 //                        MethodHandle.linkToStatic(<LINK_TO_STATIC_ARGS>);
 //                    } else {
 //                        MethodHandle mh = handle.getMethodHandle(ad.mode);
@@ -876,9 +872,6 @@ final class VarHandles {
 //            List<String> LINK_TO_STATIC_ARGS = params.keySet().stream().
 //                    collect(toList());
 //            LINK_TO_STATIC_ARGS.add("handle.vform.getMemberName(ad.mode)");
-//            List<String> LINK_TO_STATIC_ARGS_V = params.keySet().stream().
-//                    collect(toList());
-//            LINK_TO_STATIC_ARGS_V.add("handle.vform.getMemberName_V(ad.mode)");
 //
 //            List<String> LINK_TO_INVOKER_ARGS = params.keySet().stream().
 //                    collect(toList());
@@ -910,8 +903,6 @@ final class VarHandles {
 //                    replace("<RESULT_ERASED>", RESULT_ERASED).
 //                    replace("<RETURN_ERASED>", RETURN_ERASED).
 //                    replaceAll("<LINK_TO_STATIC_ARGS>", LINK_TO_STATIC_ARGS.stream().
-//                            collect(joining(", "))).
-//                    replaceAll("<LINK_TO_STATIC_ARGS_V>", LINK_TO_STATIC_ARGS_V.stream().
 //                            collect(joining(", "))).
 //                    replace("<LINK_TO_INVOKER_ARGS>", LINK_TO_INVOKER_ARGS.stream().
 //                            collect(joining(", ")))
