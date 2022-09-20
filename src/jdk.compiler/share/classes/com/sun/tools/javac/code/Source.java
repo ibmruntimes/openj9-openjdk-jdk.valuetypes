@@ -163,7 +163,7 @@ public enum Source {
         this.name = name;
     }
 
-    public static final Source MIN = Source.JDK7;
+    public static final Source MIN = Source.JDK8;
 
     private static final Source MAX = values()[values().length - 1];
 
@@ -207,26 +207,9 @@ public enum Source {
      */
     public enum Feature {
 
-        DIAMOND(JDK7, Fragments.FeatureDiamond, DiagKind.NORMAL),
         MODULES(JDK9, Fragments.FeatureModules, DiagKind.PLURAL),
         EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES(JDK9, Fragments.FeatureVarInTryWithResources, DiagKind.PLURAL),
         DEPRECATION_ON_IMPORT(MIN, JDK8),
-        POLY(JDK8),
-        LAMBDA(JDK8, Fragments.FeatureLambda, DiagKind.PLURAL),
-        METHOD_REFERENCES(JDK8, Fragments.FeatureMethodReferences, DiagKind.PLURAL),
-        DEFAULT_METHODS(JDK8, Fragments.FeatureDefaultMethods, DiagKind.PLURAL),
-        STATIC_INTERFACE_METHODS(JDK8, Fragments.FeatureStaticIntfMethods, DiagKind.PLURAL),
-        STATIC_INTERFACE_METHODS_INVOKE(JDK8, Fragments.FeatureStaticIntfMethodInvoke, DiagKind.PLURAL),
-        STRICT_METHOD_CLASH_CHECK(JDK8),
-        EFFECTIVELY_FINAL_IN_INNER_CLASSES(JDK8),
-        TYPE_ANNOTATIONS(JDK8, Fragments.FeatureTypeAnnotations, DiagKind.PLURAL),
-        ANNOTATIONS_AFTER_TYPE_PARAMS(JDK8, Fragments.FeatureAnnotationsAfterTypeParams, DiagKind.PLURAL),
-        REPEATED_ANNOTATIONS(JDK8, Fragments.FeatureRepeatableAnnotations, DiagKind.PLURAL),
-        INTERSECTION_TYPES_IN_CAST(JDK8, Fragments.FeatureIntersectionTypesInCast, DiagKind.PLURAL),
-        GRAPH_INFERENCE(JDK8),
-        FUNCTIONAL_INTERFACE_MOST_SPECIFIC(JDK8),
-        POST_APPLICABILITY_VARARGS_ACCESS_CHECK(JDK8),
-        MAP_CAPTURES_TO_BOUNDS(MIN, JDK7),
         PRIVATE_SAFE_VARARGS(JDK9),
         DIAMOND_WITH_ANONYMOUS_CLASS_CREATION(JDK9, Fragments.FeatureDiamondAndAnonClass, DiagKind.NORMAL),
         UNDERSCORE_IDENTIFIER(MIN, JDK8),
@@ -245,10 +228,10 @@ public enum Source {
         CASE_NULL(JDK17, Fragments.FeatureCaseNull, DiagKind.NORMAL),
         PATTERN_SWITCH(JDK17, Fragments.FeaturePatternSwitch, DiagKind.PLURAL),
         REDUNDANT_STRICTFP(JDK17),
-        PRIMITIVE_CLASSES(JDK18, Fragments.FeaturePrimitiveClasses, DiagKind.PLURAL),
-        VALUE_CLASSES(JDK18, Fragments.FeatureValueClasses, DiagKind.PLURAL),
         UNCONDITIONAL_PATTERN_IN_INSTANCEOF(JDK19, Fragments.FeatureUnconditionalPatternsInInstanceof, DiagKind.PLURAL),
         RECORD_PATTERNS(JDK19, Fragments.FeatureDeconstructionPatterns, DiagKind.PLURAL),
+        PRIMITIVE_CLASSES(JDK19, Fragments.FeaturePrimitiveClasses, DiagKind.PLURAL),
+        VALUE_CLASSES(JDK19, Fragments.FeatureValueClasses, DiagKind.PLURAL),
         ;
 
         enum DiagKind {

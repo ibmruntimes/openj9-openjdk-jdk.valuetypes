@@ -149,6 +149,20 @@ public class WhiteBox {
     return encodeConstantPoolIndyIndex0(index);
   }
 
+  private native Object[] getObjectsViaKlassOopMaps0(Object thing);
+  public Object[] getObjectsViaKlassOopMaps(Object thing) {
+    Objects.requireNonNull(thing);
+    return getObjectsViaKlassOopMaps0(thing);
+  }
+
+  private native Object[] getObjectsViaOopIterator0(Object thing);
+  public Object[] getObjectsViaOopIterator(Object thing) {
+    Objects.requireNonNull(thing);
+    return getObjectsViaOopIterator0(thing);
+  }
+
+  public native Object[] getObjectsViaFrameOopIterator(int depth);
+
   // JVMTI
   private native void addToBootstrapClassLoaderSearch0(String segment);
   public         void addToBootstrapClassLoaderSearch(String segment){
@@ -401,7 +415,6 @@ public class WhiteBox {
       return allocateCodeBlob( intSize, type);
   }
   public native void    freeCodeBlob(long addr);
-  public native void    forceNMethodSweep();
   public native Object[] getCodeHeapEntries(int type);
   public native int     getCompilationActivityMode();
   private native long getMethodData0(Executable method);

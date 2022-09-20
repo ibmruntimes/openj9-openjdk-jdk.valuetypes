@@ -43,6 +43,7 @@ import java.util.Objects;
  * References can only refer to identity objects.
  * Attempts to create a reference to a {@linkplain Class#isValue() value object}
  * results in an {@link IdentityException}.
+ * @param <T> the type of the referent
  *
  * @author   Mark Reinhold
  * @since    1.2

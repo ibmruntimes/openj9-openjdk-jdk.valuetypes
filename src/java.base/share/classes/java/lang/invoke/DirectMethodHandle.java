@@ -25,6 +25,7 @@
 
 package java.lang.invoke;
 
+import jdk.internal.value.PrimitiveClass;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
@@ -80,7 +81,7 @@ sealed class DirectMethodHandle extends MethodHandle {
         if (!member.isStatic()) {
             if (!member.getDeclaringClass().isAssignableFrom(refc) || member.isObjectConstructor())
                 throw new InternalError(member.toString());
-            Class<?> receiverType = refc.isPrimitiveClass() ? refc.asValueType() : refc;
+            Class<?> receiverType = PrimitiveClass.isPrimitiveClass(refc) ? PrimitiveClass.asValueType(refc) : refc;
             mtype = mtype.insertParameterTypes(0, receiverType);
         }
         if (!member.isField()) {
@@ -552,9 +553,9 @@ sealed class DirectMethodHandle extends MethodHandle {
 
     /** This subclass handles static field references. */
     static final class StaticAccessor extends DirectMethodHandle {
-        private final Class<?> fieldType;
-        private final Object   staticBase;
-        private final long     staticOffset;
+        final Class<?> fieldType;
+        final Object staticBase;
+        final long staticOffset;
 
         private StaticAccessor(MethodType mtype, LambdaForm form, MemberName member,
                                boolean crackable, Object staticBase, long staticOffset) {
@@ -643,13 +644,15 @@ sealed class DirectMethodHandle extends MethodHandle {
     private static final LambdaForm[] ACCESSOR_FORMS
             = new LambdaForm[afIndex(AF_LIMIT, false, false, 0)];
     static int ftypeKind(Class<?> ftype, boolean isValue) {
-        if (ftype.isPrimitive())
+        if (ftype.isPrimitive()) {
             return Wrapper.forPrimitiveType(ftype).ordinal();
-        else if (ftype.isInterface() || ftype.isAssignableFrom(Object.class)) {
+        } else if (ftype.isInterface() || ftype.isAssignableFrom(Object.class)) {
+            // retyping can be done without a cast
             return FT_UNCHECKED_REF;
-        } else
+        } else {
             // null check for value type in addition to check cast
             return isValue ? FT_CHECKED_VALUE : FT_CHECKED_REF;
+        }
     }
 
     /**

@@ -25,6 +25,7 @@
 
 package java.lang.reflect;
 
+import jdk.internal.value.PrimitiveClass;
 import jdk.internal.misc.VM;
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ByteVector;
@@ -42,7 +43,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -532,7 +532,7 @@ final class ProxyGenerator extends ClassWriter {
      */
     private void addProxyMethod(Method m, Class<?> fromClass) {
         Class<?> returnType = m.getReturnType();
-        Class<?>[] exceptionTypes = m.getExceptionTypes();
+        Class<?>[] exceptionTypes = m.getSharedExceptionTypes();
 
         String sig = m.toShortSignature();
         List<ProxyMethod> sigmethods = proxyMethods.computeIfAbsent(sig,
@@ -554,7 +554,7 @@ final class ProxyGenerator extends ClassWriter {
                 return;
             }
         }
-        sigmethods.add(new ProxyMethod(m, sig, m.getParameterTypes(), returnType,
+        sigmethods.add(new ProxyMethod(m, sig, m.getSharedParameterTypes(), returnType,
                 exceptionTypes, fromClass,
                 "m" + proxyMethodCount++));
     }
@@ -745,8 +745,8 @@ final class ProxyGenerator extends ClassWriter {
          */
         private ProxyMethod(Method method, String methodFieldName) {
             this(method, method.toShortSignature(),
-                    method.getParameterTypes(), method.getReturnType(),
-                    method.getExceptionTypes(), method.getDeclaringClass(), methodFieldName);
+                    method.getSharedParameterTypes(), method.getReturnType(),
+                    method.getSharedExceptionTypes(), method.getDeclaringClass(), methodFieldName);
         }
 
         /**
@@ -857,7 +857,8 @@ final class ProxyGenerator extends ClassWriter {
             while (c.isArray()) {
                 c = c.getComponentType();
             }
-            return (c.isValue() && !c.isPrimitiveClass()) || c.isPrimitiveValueType();
+            return (c.isValue() && !PrimitiveClass.isPrimitiveClass(c)) ||
+                    PrimitiveClass.isPrimitiveValueType(c);
         }
 
         /**
@@ -895,7 +896,7 @@ final class ProxyGenerator extends ClassWriter {
                 mv.visitInsn(prim.returnOpcode);
             } else {
                 String internalName = dotToSlash(type.getName());
-                if (type.isPrimitiveValueType()) {
+                if (PrimitiveClass.isPrimitiveValueType(type)) {
                     internalName = 'Q' + internalName + ";";
                 }
                 mv.visitTypeInsn(CHECKCAST, internalName);
@@ -955,6 +956,7 @@ final class ProxyGenerator extends ClassWriter {
          *
          * The code is written to the supplied stream.  Note that the code generated
          * by this method may caused the checked ClassNotFoundException to be thrown.
+         * A class loader is anticipated at local variable index 0.
          */
         private void codeClassForName(MethodVisitor mv, Class<?> cl) {
             mv.visitLdcInsn(cl.getName());
@@ -965,11 +967,13 @@ final class ProxyGenerator extends ClassWriter {
                     "forName",
                     "(Ljava/lang/String;Z" + LJL_CLASSLOADER + ")Ljava/lang/Class;",
                     false);
-            if (cl.isPrimitiveValueType()) {
-              mv.visitMethodInsn(INVOKEVIRTUAL,
-                                 JL_CLASS,
-                                 "asValueType", "()Ljava/lang/Class;", false);
+            if (PrimitiveClass.isPrimitiveValueType(cl)) {
+                mv.visitMethodInsn(INVOKESTATIC,
+                      "jdk/internal/value/PrimitiveClass",
+                      "asValueType", "(Ljava/lang/Class;)Ljava/lang/Class;",
+                      false);
             }
+
         }
 
         /**

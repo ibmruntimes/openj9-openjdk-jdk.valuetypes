@@ -193,7 +193,8 @@ module java.base {
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,
         jdk.jfr,
-        jdk.jlink;
+        jdk.jlink,
+        jdk.jshell;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jfr,
         jdk.jlink;
@@ -269,6 +270,8 @@ module java.base {
         jdk.jfr;
     exports jdk.internal.util.random to
         jdk.random;
+    exports jdk.internal.value to  // Needed by Unsafe
+        jdk.unsupported;
     exports sun.net to
         java.net.http,
         jdk.naming.dns;
