@@ -137,6 +137,7 @@ class ConstantUtils {
     static List<String> parseMethodDescriptor(String descriptor) {
         int cur = 0, end = descriptor.length();
         ArrayList<String> ptypes = new ArrayList<>();
+        ptypes.add(null); //placeholder for return type
 
         if (cur >= end || descriptor.charAt(cur) != '(')
             throw new IllegalArgumentException("Bad method descriptor: " + descriptor);
@@ -156,7 +157,7 @@ class ConstantUtils {
         int rLen = skipOverFieldSignature(descriptor, cur, end, true);
         if (rLen == 0 || cur + rLen != end)
             throw new IllegalArgumentException("Bad method descriptor: " + descriptor);
-        ptypes.add(0, descriptor.substring(cur, cur + rLen));
+        ptypes.set(0, descriptor.substring(cur, cur + rLen));
         return ptypes;
     }
 
@@ -214,7 +215,6 @@ class ConstantUtils {
                         if (!legal) {
                             return 0;
                         }
-                        return index - start + unqualifiedName.length() + 1;
                     }
                     return 0;
                 case JVM_SIGNATURE_ARRAY:
