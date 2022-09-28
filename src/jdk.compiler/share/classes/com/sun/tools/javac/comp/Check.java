@@ -1140,7 +1140,7 @@ public class Check {
         }
 
         //upward project the initializer type
-        Type varType = types.upward(t, types.captures(t));
+        Type varType = types.upward(t, types.captures(t)).baseType();
         if (varType.hasTag(CLASS)) {
             checkParameterizationByPrimitiveClass(pos, varType);
         }

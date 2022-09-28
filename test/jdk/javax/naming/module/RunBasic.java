@@ -68,17 +68,7 @@ public class RunBasic {
 
     private static final List<String> JAVA_CMDS;
 
-    // To update .ldap files under src/test/test, LDAP request and response
-    // bytes can be logged while interacting with a real LDAP server
-    // (e.g.: HOST_NAME = "localhost:8389").
-    // For that point HOST_NAME to a real server in which the ROOT_DOMAIN
-    // below is configured to allow modifications by anonymous users, and
-    // pass an additional "-trace" argument to the created subprocesses.
-    // The LDAP requests and response bytes will appear in the log, and you
-    // can then update the corresponding .ldap files.
     static final String HOST_NAME = InetAddress.getLoopbackAddress().getHostName();
-    static final String ROOT_DOMAIN = "dc=ie,dc=oracle,dc=com";
-    static final String PATH = "/" + ROOT_DOMAIN;
 
     static {
         String javaPath = JDKToolFinder.getJDKTool("java");
