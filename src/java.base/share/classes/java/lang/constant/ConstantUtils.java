@@ -205,16 +205,27 @@ class ConstantUtils {
                     return index - start + 1;
                 case JVM_SIGNATURE_CLASS:
                 case JVM_SIGNATURE_VALUE_TYPE:
-                    // Skip leading 'L' or 'Q' and ignore first appearance of ';'
-                    index++;
-                    int indexOfSemi = descriptor.indexOf(';', index);
-                    if (indexOfSemi != -1) {
-                        String unqualifiedName = descriptor.substring(index, indexOfSemi);
-                        boolean legal = verifyUnqualifiedClassName(unqualifiedName);
-                        if (!legal) {
-                            return 0;
+                    // state variable for detection of illegal states, such as:
+                    // empty unqualified name, '//', leading '/', or trailing '/'
+                    boolean legal = false;
+                    while (++index < end) {
+                        switch (descriptor.charAt(index)) {
+                            case ';' -> {
+                                // illegal state on parser exit indicates empty unqualified name or trailing '/'
+                                return legal ? index - start + 1 : 0;
+                            }
+                            case '.', '[' -> {
+                                // do not permit '.' or '['
+                                return 0;
+                            }
+                            case '/' -> {
+                                // illegal state when received '/' indicates '//' or leading '/'
+                                if (!legal) return 0;
+                                legal = false;
+                            }
+                            default ->
+                                legal = true;
                         }
-                        return index - start + unqualifiedName.length() + 1;
                     }
                     return 0;
                 case JVM_SIGNATURE_ARRAY:
@@ -232,6 +243,27 @@ class ConstantUtils {
             }
         }
         return 0;
+    }
+
+    static boolean verifyUnqualifiedClassName(String name) {
+        for (int index = 0; index < name.length(); index++) {
+            char ch = name.charAt(index);
+            if (ch < 128) {
+                if (ch == '.' || ch == ';' || ch == '[' ) {
+                    return false;   // do not permit '.', ';', or '['
+                }
+                if (ch == '/') {
+                    // check for '//' or leading or trailing '/' which are not legal
+                    // unqualified name must not be empty
+                    if (index == 0 || index + 1 >= name.length() || name.charAt(index + 1) == '/') {
+                        return false;
+                    }
+                }
+            } else {
+                index ++;
+            }
+        }
+        return true;
     }
 
     /**
@@ -290,24 +322,4 @@ class ConstantUtils {
         throw new IllegalArgumentException(String.format("not a valid type descriptor: %s", descriptor));
     }
 
-    static boolean verifyUnqualifiedClassName(String name) {
-        for (int index = 0; index < name.length(); index++) {
-            char ch = name.charAt(index);
-            if (ch < 128) {
-                if (ch == '.' || ch == ';' || ch == '[' ) {
-                    return false;   // do not permit '.', ';', or '['
-                }
-                if (ch == '/') {
-                    // check for '//' or leading or trailing '/' which are not legal
-                    // unqualified name must not be empty
-                    if (index == 0 || index + 1 >= name.length() || name.charAt(index + 1) == '/') {
-                        return false;
-                    }
-                }
-            } else {
-                index ++;
-            }
-        }
-        return true;
-    }
 }
