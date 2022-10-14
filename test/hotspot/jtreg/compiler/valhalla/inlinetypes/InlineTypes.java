@@ -34,6 +34,8 @@ public class InlineTypes {
 
     public static final Scenario[] DEFAULT_SCENARIOS = {
             new Scenario(0,
+                         "-XX:+EnableValhalla",
+                         "-XX:+EnablePrimitiveClasses",
                          "--add-exports", "java.base/jdk.internal.value=ALL-UNNAMED",
                          "-XX:+IgnoreUnrecognizedVMOptions",
                          "-XX:-UseACmpProfile",
@@ -46,6 +48,8 @@ public class InlineTypes {
                          "-XX:+InlineTypeReturnedAsFields"
             ),
             new Scenario(1,
+                         "-XX:+EnableValhalla",
+                         "-XX:+EnablePrimitiveClasses",
                          "--add-exports", "java.base/jdk.internal.value=ALL-UNNAMED",
                          "-XX:+IgnoreUnrecognizedVMOptions",
                          "-XX:-UseACmpProfile",
@@ -58,6 +62,8 @@ public class InlineTypes {
                          "-XX:-InlineTypeReturnedAsFields"
             ),
             new Scenario(2,
+                         "-XX:+EnableValhalla",
+                         "-XX:+EnablePrimitiveClasses",
                          "--add-exports", "java.base/jdk.internal.value=ALL-UNNAMED",
                          "-XX:+IgnoreUnrecognizedVMOptions",
                          "-XX:-UseACmpProfile",
@@ -71,6 +77,8 @@ public class InlineTypes {
                          "-XX:+StressInlineTypeReturnedAsFields"
             ),
             new Scenario(3,
+                         "-XX:+EnableValhalla",
+                         "-XX:+EnablePrimitiveClasses",
                          "--add-exports", "java.base/jdk.internal.value=ALL-UNNAMED",
                          "-XX:+IgnoreUnrecognizedVMOptions",
                          "-DVerifyIR=false",
@@ -82,6 +90,8 @@ public class InlineTypes {
                          "-XX:+InlineTypeReturnedAsFields"
             ),
             new Scenario(4,
+                         "-XX:+EnableValhalla",
+                         "-XX:+EnablePrimitiveClasses",
                          "--add-exports", "java.base/jdk.internal.value=ALL-UNNAMED",
                          "-XX:+IgnoreUnrecognizedVMOptions",
                          "-DVerifyIR=false",
@@ -93,6 +103,8 @@ public class InlineTypes {
                          "-XX:-ReduceInitialCardMarks"
             ),
             new Scenario(5,
+                         "-XX:+EnableValhalla",
+                         "-XX:+EnablePrimitiveClasses",
                          "--add-exports", "java.base/jdk.internal.value=ALL-UNNAMED",
                          "-XX:+IgnoreUnrecognizedVMOptions",
                          "-XX:-UseACmpProfile",
@@ -153,7 +165,7 @@ public class InlineTypes {
         protected static final String CHECKCAST_ARRAYCOPY = "(.*" + CALL_LEAF_NOFP + ".*checkcast_arraycopy.*" + END;
         protected static final String JLONG_ARRAYCOPY = "(.*" + CALL_LEAF_NOFP + ".*jlong_disjoint_arraycopy.*" + END;
         protected static final String FIELD_ACCESS = "(.*Field: *" + END;
-        protected static final String SUBSTITUTABILITY_TEST = START + "CallStaticJava" + MID + "java.lang.runtime.PrimitiveObjectMethods::isSubstitutable" + END;
+        protected static final String SUBSTITUTABILITY_TEST = START + "CallStaticJava" + MID + "java.lang.runtime.ValueObjectMethods::isSubstitutable" + END;
         protected static final String CMPP = START + "(CmpP|CmpN)" + MID + "" + END;
     }
 }
