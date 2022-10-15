@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,24 +19,36 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
-import jdk.test.lib.cds.CDSOptions;
 
-// This class represents options used for
-// during creation of the archive and/or running JVM with archive
+/**
+ * @test
+ * @bug 8269983
+ * @summary BootstrapMethodError with method reference and intersection type
+ * @run main IntersectionParameterTypeTest2
+ */
 
-public class AppCDSOptions extends CDSOptions {
-    public String appJar;
-    public String appJarDir;
+public class IntersectionParameterTypeTest2 {
 
-    public AppCDSOptions setAppJar(String appJar) {
-        this.appJar = appJar;
-        return this;
+    public static void main(String[] args) {
+        f();
     }
 
-    public AppCDSOptions setAppJarDir(String appJarDir) {
-        this.appJarDir = appJarDir;
-        return this;
+    static <T extends Comparable<T> & G> C<T> f() {
+        return new C<>(Q::g);
+    }
+
+    public interface G {}
+
+    private interface E<T> {
+        void g(Q g, T value);
+    }
+
+    static class C<T extends Comparable<?>> {
+        C(E<T> g) {}
+    }
+
+    static class Q {
+        void g(G g) {}
     }
 }
