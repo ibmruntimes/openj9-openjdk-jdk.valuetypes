@@ -1693,22 +1693,20 @@ public class Thread implements Runnable {
      * @revised 6.0, 14
      */
     public void interrupt() {
-        if (this != Thread.currentThread()) {
+        if (currentThread() != this) {
             checkAccess();
+        }
+
+        synchronized (interruptLock) {
+            interrupted = true;
+            interrupt0();  // inform VM of interrupt
 
             // thread may be blocked in an I/O operation
-            synchronized (interruptLock) {
-                Interruptible b = nioBlocker;
-                if (b != null) {
-                    interrupted = true;
-                    interrupt0();  // inform VM of interrupt
-                    b.interrupt(this);
-                    return;
-                }
+            Interruptible b = nioBlocker;
+            if (b != null) {
+                b.interrupt(this);
             }
         }
-        interrupted = true;
-        interrupt0();  // inform VM of interrupt
     }
 
     /**
@@ -2492,6 +2490,10 @@ public class Thread implements Runnable {
     private Object getStackTrace0() {
         Throwable t;
         synchronized (interruptLock) {
+            /* Ensure only live thread is passed to native code. */
+            if (!isAlive()) {
+                return EMPTY_STACK_TRACE;
+            }
             t = getStackTraceImpl();
         }
         return (Object)J9VMInternals.getStackTrace(t, false);
