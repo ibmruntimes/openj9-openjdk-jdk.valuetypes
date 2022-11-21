@@ -2210,10 +2210,6 @@ public class Flow {
             Lint lintPrev = lint;
             lint = lint.augment(tree.sym);
             try {
-                if (tree.sym == null) {
-                    return;
-                }
-
                 JCClassDecl classDefPrev = classDef;
                 int firstadrPrev = firstadr;
                 int nextadrPrev = nextadr;
@@ -2301,15 +2297,6 @@ public class Flow {
             lint = lint.augment(tree.sym);
             ThisExposability priorThisExposability = this.thisExposability;
             try {
-                if (tree.body == null) {
-                    return;
-                }
-                /*  Ignore synthetic methods, except for translated lambda methods.
-                 */
-                if ((tree.sym.flags() & (SYNTHETIC | LAMBDA_METHOD)) == SYNTHETIC) {
-                    return;
-                }
-
                 final Bits initsPrev = new Bits(inits);
                 final Bits uninitsPrev = new Bits(uninits);
                 int nextadrPrev = nextadr;
