@@ -38,6 +38,7 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Array;
+import java.lang.reflect.ClassFileFormatVersion;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
@@ -69,10 +70,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jdk.internal.javac.PreviewFeature;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.Unsafe;
-import jdk.internal.misc.ValhallaFeatures;
 import jdk.internal.module.Resources;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.CallerSensitiveAdapter;
@@ -648,6 +649,7 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @since Valhalla
      */
+    @PreviewFeature(feature = PreviewFeature.Feature.VALUE_OBJECTS)
     public native boolean isIdentity();
 
     /**
@@ -659,6 +661,7 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @since Valhalla
      */
+    @PreviewFeature(feature = PreviewFeature.Feature.VALUE_OBJECTS)
     public boolean isValue() {
         return (this.getModifiers() & Modifier.VALUE) != 0;
     }
@@ -1455,17 +1458,21 @@ public final class Class<T> implements java.io.Serializable,
      * The modifiers also include the Java Virtual Machine's constants for
      * {@code identity class} and {@code value class}.
      *
-     * <p> If the underlying class is an array class, then its
-     * {@code public}, {@code private} and {@code protected}
-     * modifiers are the same as those of its component type.  If this
-     * {@code Class} object represents a primitive type or void, its
-     * {@code public} modifier is always {@code true}, and its
-     * {@code protected} and {@code private} modifiers are always
-     * {@code false}. If this {@code Class} object represents an array class, a
-     * primitive type or void, then its {@code final} modifier is always
-     * {@code true} and its interface modifier is always
-     * {@code false}. The values of its other modifiers are not determined
-     * by this specification.
+     * <p> If the underlying class is an array class:
+     * <ul>
+     * <li> its {@code public}, {@code private} and {@code protected}
+     *      modifiers are the same as those of its component type
+     * <li> its {@code abstract} and {@code final} modifiers are always
+     *      {@code true}
+     * <li> its interface modifier is always {@code false}, even when
+     *      the component type is an interface
+     * </ul>
+     * If this {@code Class} object represents a primitive type or
+     * void, its {@code public}, {@code abstract}, and {@code final}
+     * modifiers are always {@code true}.
+     * For {@code Class} objects representing void, primitive types, and
+     * arrays, the values of other modifiers are {@code false} other
+     * than as specified above.
      *
      * <p> The modifier encodings are defined in section {@jvms 4.1}
      * of <cite>The Java Virtual Machine Specification</cite>.
@@ -1479,6 +1486,7 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.1
      * @jls 8.1.1 Class Modifiers
      * @jls 9.1.1. Interface Modifiers
+     * @jvms 4.1 The {@code ClassFile} Structure
      */
     @IntrinsicCandidate
     public native int getModifiers();
@@ -1486,18 +1494,21 @@ public final class Class<T> implements java.io.Serializable,
    /**
      * {@return an unmodifiable set of the {@linkplain AccessFlag access
      * flags} for this class, possibly empty}
+     * The {@code AccessFlags} may depend on the class file format version of the class.
      *
-     * <p> If the underlying class is an array class, then its
-     * {@code PUBLIC}, {@code PRIVATE} and {@code PROTECTED}
-     * access flags are the same as those of its component type.  If this
-     * {@code Class} object represents a primitive type or void, the
-     * {@code PUBLIC} access flag is present, and the
-     * {@code PROTECTED} and {@code PRIVATE} access flags are always
-     * absent. If this {@code Class} object represents an array class, a
-     * primitive type or void, then the {@code FINAL} access flag is always
-     * present and the interface access flag is always
-     * absent. The values of its other access flags are not determined
-     * by this specification.
+     * <p> If the underlying class is an array class:
+     * <ul>
+     * <li> its {@code PUBLIC}, {@code PRIVATE} and {@code PROTECTED}
+     *      access flags are the same as those of its component type
+     * <li> its {@code ABSTRACT} and {@code FINAL} flags are present
+     * <li> its {@code INTERFACE} flag is absent, even when the
+     *      component type is an interface
+     * </ul>
+     * If this {@code Class} object represents a primitive type or
+     * void, the flags are {@code PUBLIC}, {@code ABSTRACT}, and
+     * {@code FINAL}.
+     * For {@code Class} objects representing void, primitive types, and
+     * arrays, access flags are absent other than as specified above.
      *
      * @see #getModifiers()
      * @jvms 4.1 The ClassFile Structure
@@ -1513,10 +1524,14 @@ public final class Class<T> implements java.io.Serializable,
                         isAnonymousClass() || isArray()) ?
             AccessFlag.Location.INNER_CLASS :
             AccessFlag.Location.CLASS;
-        return AccessFlag.maskToAccessFlags((location == AccessFlag.Location.CLASS) ?
-                                            getClassAccessFlagsRaw() & (~0x800) :
-                                            getModifiers() & (~0x800), // suppress unspecified bit
-                                            location);
+        int accessFlags = (location == AccessFlag.Location.CLASS) ?
+                getClassAccessFlagsRaw() : getModifiers();
+        var cffv = ClassFileFormatVersion.fromMajor(getClassFileVersion() & 0xffff);
+        if (cffv.compareTo(ClassFileFormatVersion.latest()) >= 0) {
+            // Ignore unspecified (0x800) access flag for current version
+            accessFlags &= ~0x0800;
+        }
+        return AccessFlag.maskToAccessFlags(accessFlags, location, cffv);
     }
 
    /**
@@ -4100,7 +4115,8 @@ public final class Class<T> implements java.io.Serializable,
             // These can happen when users concoct enum-like classes
             // that don't comply with the enum spec.
             catch (InvocationTargetException | NoSuchMethodException |
-                   IllegalAccessException ex) { return null; }
+                   IllegalAccessException | NullPointerException |
+                   ClassCastException ex) { return null; }
         }
         return constants;
     }
@@ -4851,7 +4867,8 @@ public final class Class<T> implements java.io.Serializable,
      * type is returned.  If the class is a primitive type then the latest class
      * file major version is returned and zero is returned for the minor version.
      */
-    private int getClassFileVersion() {
+    /* package-private */
+    int getClassFileVersion() {
         Class<?> c = isArray() ? elementType() : this;
         return c.getClassFileVersion0();
     }
