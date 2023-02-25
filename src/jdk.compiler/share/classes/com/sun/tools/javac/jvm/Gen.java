@@ -27,6 +27,7 @@ package com.sun.tools.javac.jvm;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.sun.tools.javac.jvm.PoolConstant.LoadableConstant;
 import com.sun.tools.javac.tree.TreeInfo.PosKind;
@@ -133,7 +134,6 @@ public class Gen extends JCTree.Visitor {
         // ignore cldc because we cannot have both stackmap formats
         this.stackMap = StackMapFormat.JSR202;
         annotate = Annotate.instance(context);
-        qualifiedSymbolCache = new HashMap<>();
         Source source = Source.instance(context);
         allowPrimitiveClasses = Source.Feature.PRIMITIVE_CLASSES.allowedInSource(source) && options.isSet("enablePrimitiveClasses");
     }
@@ -176,12 +176,8 @@ public class Gen extends JCTree.Visitor {
     Chain switchExpressionFalseChain;
     List<LocalItem> stackBeforeSwitchExpression;
     LocalItem switchResult;
-
-    /** Cache the symbol to reflect the qualifying type.
-     *  key: corresponding type
-     *  value: qualified symbol
-     */
-    Map<Type, Symbol> qualifiedSymbolCache;
+    Set<JCMethodInvocation> invocationsWithPatternMatchingCatch = Set.of();
+    ListBuffer<int[]> patternMatchingInvocationRanges;
 
     boolean allowPrimitiveClasses;
 
@@ -1125,6 +1121,29 @@ public class Gen extends JCTree.Visitor {
     }
 
     public void visitBlock(JCBlock tree) {
+        if (tree.patternMatchingCatch != null) {
+            Set<JCMethodInvocation> prevInvocationsWithPatternMatchingCatch = invocationsWithPatternMatchingCatch;
+            ListBuffer<int[]> prevRanges = patternMatchingInvocationRanges;
+            State startState = code.state.dup();
+            try {
+                invocationsWithPatternMatchingCatch = tree.patternMatchingCatch.calls2Handle();
+                patternMatchingInvocationRanges = new ListBuffer<>();
+                doVisitBlock(tree);
+            } finally {
+                Chain skipCatch = code.branch(goto_);
+                JCCatch handler = tree.patternMatchingCatch.handler();
+                code.entryPoint(startState, handler.param.sym.type);
+                genPatternMatchingCatch(handler, env, patternMatchingInvocationRanges.toList());
+                code.resolve(skipCatch);
+                invocationsWithPatternMatchingCatch = prevInvocationsWithPatternMatchingCatch;
+                patternMatchingInvocationRanges = prevRanges;
+            }
+        } else {
+            doVisitBlock(tree);
+        }
+    }
+
+    private void doVisitBlock(JCBlock tree) {
         int limit = code.nextreg;
         Env<GenContext> localEnv = env.dup(tree, new GenContext());
         genStats(tree.stats, localEnv);
@@ -1150,7 +1169,7 @@ public class Gen extends JCTree.Visitor {
                 Symbol sym = ((JCIdent) tree.field).sym;
                 items.makeThisItem().load();
                 genExpr(tree.value, tree.field.type).load();
-                sym = binaryQualifier(sym, env.enclClass.type);
+                sym = types.binaryQualifier(sym, env.enclClass.type);
                 code.emitop2(withfield, sym, PoolWriter::putMember);
                 result = items.makeStackItem(tree.type);
                 break;
@@ -1166,7 +1185,7 @@ public class Gen extends JCTree.Visitor {
                 } else {
                     code.emitop0(swap);
                 }
-                sym = binaryQualifier(sym, fieldAccess.selected.type);
+                sym = types.binaryQualifier(sym, fieldAccess.selected.type);
                 code.emitop2(withfield, sym, PoolWriter::putMember);
                 result = items.makeStackItem(tree.type);
                 break;
@@ -1718,17 +1737,32 @@ public class Gen extends JCTree.Visitor {
                         }
                     }
                 }
-                VarSymbol exparam = tree.param.sym;
-                code.statBegin(tree.pos);
-                code.markStatBegin();
-                int limit = code.nextreg;
-                code.newLocal(exparam);
-                items.makeLocalItem(exparam).store();
-                code.statBegin(TreeInfo.firstStatPos(tree.body));
-                genStat(tree.body, env, CRT_BLOCK);
-                code.endScopes(limit);
-                code.statBegin(TreeInfo.endPos(tree.body));
+                genCatchBlock(tree, env);
             }
+        }
+        void genPatternMatchingCatch(JCCatch tree,
+                                     Env<GenContext> env,
+                                     List<int[]> ranges) {
+            for (int[] range : ranges) {
+                JCExpression subCatch = tree.param.vartype;
+                int catchType = makeRef(tree.pos(), subCatch.type);
+                registerCatch(tree.pos(),
+                              range[0], range[1], code.curCP(),
+                              catchType);
+            }
+            genCatchBlock(tree, env);
+        }
+        void genCatchBlock(JCCatch tree, Env<GenContext> env) {
+            VarSymbol exparam = tree.param.sym;
+            code.statBegin(tree.pos);
+            code.markStatBegin();
+            int limit = code.nextreg;
+            code.newLocal(exparam);
+            items.makeLocalItem(exparam).store();
+            code.statBegin(TreeInfo.firstStatPos(tree.body));
+            genStat(tree.body, env, CRT_BLOCK);
+            code.endScopes(limit);
+            code.statBegin(TreeInfo.endPos(tree.body));
         }
         // where
         List<Pair<List<Attribute.TypeCompound>, JCExpression>> catchTypesWithAnnotations(JCCatch tree) {
@@ -1946,7 +1980,13 @@ public class Gen extends JCTree.Visitor {
         if (!msym.isDynamic()) {
             code.statBegin(tree.pos);
         }
-        result = m.invoke();
+        if (invocationsWithPatternMatchingCatch.contains(tree)) {
+            int start = code.curCP();
+            result = m.invoke();
+            patternMatchingInvocationRanges.add(new int[] {start, code.curCP()});
+        } else {
+            result = m.invoke();
+        }
     }
 
     public void visitConditional(JCConditional tree) {

@@ -36,7 +36,7 @@
  */
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import org.testng.annotations.Test;
@@ -57,20 +57,20 @@ public class TestClassLoaderFindNative {
 
     @Test
     public void testSimpleLookup() {
-        assertFalse(SymbolLookup.loaderLookup().lookup("f").isEmpty());
+        assertFalse(SymbolLookup.loaderLookup().find("f").isEmpty());
     }
 
     @Test
     public void testInvalidSymbolLookup() {
-        assertTrue(SymbolLookup.loaderLookup().lookup("nonExistent").isEmpty());
+        assertTrue(SymbolLookup.loaderLookup().find("nonExistent").isEmpty());
     }
 
     @Test
     public void testVariableSymbolLookup() {
         MemorySegment segment = MemorySegment.ofAddress(
-                SymbolLookup.loaderLookup().lookup("c").get().address(),
-                JAVA_INT.byteSize(),
-                MemorySession.global());
+                SymbolLookup.loaderLookup().find("c").get().address(),
+                ValueLayout.JAVA_INT.byteSize(),
+                SegmentScope.global());
         /* JAVA_INT applies to both Little-Endian and Big-Endian
          * platforms given the one-byte int value is stored at the
          * highest address(offset 3) of the int type in native on

@@ -52,8 +52,8 @@ import sun.security.util.SecurityConstants;
 
 import java.lang.constant.ConstantDescs;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.LambdaForm.BasicType;
 import java.lang.reflect.Constructor;
@@ -3459,11 +3459,11 @@ return mh1;
             Lookup lookup = c.isAccessible() ? IMPL_LOOKUP : this;
             Class<?> defc = c.getDeclaringClass();
             if (ctor.isObjectConstructor()) {
-                assert(ctor.getReturnType() == void.class);
+                assert(ctor.getMethodType().returnType() == void.class);
                 return lookup.getDirectConstructorNoSecurityManager(defc, ctor);
             } else {
                 // static init factory is a static method
-                assert(ctor.isMethod() && ctor.getReturnType() == defc && ctor.getReferenceKind() == REF_invokeStatic) : ctor.toString();
+                assert(ctor.isMethod() && ctor.getMethodType().returnType() == defc && ctor.getReferenceKind() == REF_invokeStatic) : ctor.toString();
                 assert(!MethodHandleNatives.isCallerSensitive(ctor));  // must not be caller-sensitive
                 return lookup.getDirectMethodNoSecurityManager(ctor.getReferenceKind(), defc, ctor, lookup);
             }
@@ -7953,29 +7953,32 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *     access modes {@code get} and {@code set} for {@code long} and
      *     {@code double} on 32-bit platforms.
      * <li>atomic update access modes for {@code int}, {@code long},
-     *     {@code float}, {@code double} or {@link MemoryAddress}.
+     *     {@code float}, {@code double} or {@link MemorySegment}.
      *     (Future major platform releases of the JDK may support additional
      *     types for certain currently unsupported access modes.)
-     * <li>numeric atomic update access modes for {@code int}, {@code long} and {@link MemoryAddress}.
+     * <li>numeric atomic update access modes for {@code int}, {@code long} and {@link MemorySegment}.
      *     (Future major platform releases of the JDK may support additional
      *     numeric types for certain currently unsupported access modes.)
-     * <li>bitwise atomic update access modes for {@code int}, {@code long} and {@link MemoryAddress}.
+     * <li>bitwise atomic update access modes for {@code int}, {@code long} and {@link MemorySegment}.
      *     (Future major platform releases of the JDK may support additional
      *     numeric types for certain currently unsupported access modes.)
      * </ul>
      *
-     * If {@code T} is {@code float}, {@code double} or {@link MemoryAddress} then atomic
+     * If {@code T} is {@code float}, {@code double} or {@link MemorySegment} then atomic
      * update access modes compare values using their bitwise representation
      * (see {@link Float#floatToRawIntBits},
-     * {@link Double#doubleToRawLongBits} and {@link MemoryAddress#toRawLongValue()}, respectively).
+     * {@link Double#doubleToRawLongBits} and {@link MemorySegment#address()}, respectively).
      * <p>
      * Alternatively, a memory access operation is <em>partially aligned</em> if it occurs at a memory address {@code A}
      * which is only compatible with the alignment constraint {@code B}; in such cases, access for anything other than the
      * {@code get} and {@code set} access modes will result in an {@code IllegalStateException}. If access is partially aligned,
      * atomic access is only guaranteed with respect to the largest power of two that divides the GCD of {@code A} and {@code S}.
      * <p>
-     * Finally, in all other cases, we say that a memory access operation is <em>misaligned</em>; in such cases an
+     * In all other cases, we say that a memory access operation is <em>misaligned</em>; in such cases an
      * {@code IllegalStateException} is thrown, irrespective of the access mode being used.
+     * <p>
+     * Finally, if {@code T} is {@code MemorySegment} all write access modes throw {@link IllegalArgumentException}
+     * unless the value to be written is a {@linkplain MemorySegment#isNative() native} memory segment.
      *
      * @param layout the value layout for which a memory access handle is to be obtained.
      * @return the new memory segment view var handle.
