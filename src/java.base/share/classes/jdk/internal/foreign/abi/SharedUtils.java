@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -39,18 +39,19 @@ import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
 import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.ppc64.aix.AixPPC64Linker;
 import jdk.internal.foreign.abi.ppc64.sysv.SysVPPC64leLinker;
+import jdk.internal.foreign.abi.riscv64.linux.LinuxRISCV64Linker;
 import jdk.internal.foreign.abi.s390x.sysv.SysVS390xLinker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import jdk.internal.vm.annotation.ForceInline;
 
-import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.SegmentScope;
 import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -193,6 +194,7 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.getInstance();
             case LINUX_AARCH_64 -> LinuxAArch64Linker.getInstance();
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.getInstance();
+            case LINUX_RISCV_64 -> LinuxRISCV64Linker.getInstance();
             case SysVPPC64le -> SysVPPC64leLinker.getInstance();
             case SysVS390x -> SysVS390xLinker.getInstance();
             case AIX -> AixPPC64Linker.getInstance();
@@ -307,9 +309,10 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.newVaList(actions, scope);
             case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaList(actions, scope);
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaList(actions, scope);
-            case SysVPPC64le -> SysVPPC64leLinker.newVaList(actions, session);
-            case SysVS390x -> SysVS390xLinker.newVaList(actions, session);
-            case AIX -> AixPPC64Linker.newVaList(actions, session);
+            case LINUX_RISCV_64 -> LinuxRISCV64Linker.newVaList(actions, scope);
+            case SysVPPC64le -> SysVPPC64leLinker.newVaList(actions, scope);
+            case SysVS390x -> SysVS390xLinker.newVaList(actions, scope);
+            case AIX -> AixPPC64Linker.newVaList(actions, scope);
         };
     }
 
@@ -319,9 +322,10 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.newVaListOfAddress(address, scope);
             case LINUX_AARCH_64 -> LinuxAArch64Linker.newVaListOfAddress(address, scope);
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.newVaListOfAddress(address, scope);
-            case SysVPPC64le -> SysVPPC64leLinker.newVaListOfAddress(ma, session);
-            case SysVS390x -> SysVS390xLinker.newVaListOfAddress(ma, session);
-            case AIX -> AixPPC64Linker.newVaListOfAddress(ma, session);
+            case LINUX_RISCV_64 -> LinuxRISCV64Linker.newVaListOfAddress(address, scope);
+            case SysVPPC64le -> SysVPPC64leLinker.newVaListOfAddress(address, scope);
+            case SysVS390x -> SysVS390xLinker.newVaListOfAddress(address, scope);
+            case AIX -> AixPPC64Linker.newVaListOfAddress(address, scope);
         };
     }
 
@@ -331,6 +335,7 @@ public final class SharedUtils {
             case SYS_V -> SysVx64Linker.emptyVaList();
             case LINUX_AARCH_64 -> LinuxAArch64Linker.emptyVaList();
             case MAC_OS_AARCH_64 -> MacOsAArch64Linker.emptyVaList();
+            case LINUX_RISCV_64 -> LinuxRISCV64Linker.emptyVaList();
             case SysVPPC64le -> SysVPPC64leLinker.emptyVaList();
             case SysVS390x -> SysVS390xLinker.emptyVaList();
             case AIX -> AixPPC64Linker.emptyVaList();

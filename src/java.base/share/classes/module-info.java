@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -281,6 +281,8 @@ module java.base {
         jdk.random;
     exports jdk.internal.value to  // Needed by Unsafe
         jdk.unsupported;
+    exports jdk.internal.util to
+        java.desktop;
     exports sun.net to
         java.net.http,
         jdk.naming.dns;
@@ -387,6 +389,7 @@ module java.base {
     exports sun.util.resources to
         jdk.localedata;
     exports openj9.internal.security to
+        jdk.crypto.cryptoki,
         jdk.crypto.ec;
 
     // the service types defined by the APIs in this module
