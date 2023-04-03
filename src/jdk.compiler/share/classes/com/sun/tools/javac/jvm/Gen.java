@@ -136,6 +136,7 @@ public class Gen extends JCTree.Visitor {
         annotate = Annotate.instance(context);
         Source source = Source.instance(context);
         allowPrimitiveClasses = Source.Feature.PRIMITIVE_CLASSES.allowedInSource(source) && options.isSet("enablePrimitiveClasses");
+        qualifiedSymbolCache = new HashMap<>();
     }
 
     /** Switches
@@ -180,6 +181,11 @@ public class Gen extends JCTree.Visitor {
     ListBuffer<int[]> patternMatchingInvocationRanges;
 
     boolean allowPrimitiveClasses;
+    /** Cache the symbol to reflect the qualifying type.
+     *  key: corresponding type
+     *  value: qualified symbol
+     */
+    Map<Type, Symbol> qualifiedSymbolCache;
 
     /** Generate code to load an integer constant.
      *  @param n     The integer to be loaded.
@@ -1169,7 +1175,7 @@ public class Gen extends JCTree.Visitor {
                 Symbol sym = ((JCIdent) tree.field).sym;
                 items.makeThisItem().load();
                 genExpr(tree.value, tree.field.type).load();
-                sym = types.binaryQualifier(sym, env.enclClass.type);
+                sym = binaryQualifier(sym, env.enclClass.type);
                 code.emitop2(withfield, sym, PoolWriter::putMember);
                 result = items.makeStackItem(tree.type);
                 break;
@@ -1185,7 +1191,7 @@ public class Gen extends JCTree.Visitor {
                 } else {
                     code.emitop0(swap);
                 }
-                sym = types.binaryQualifier(sym, fieldAccess.selected.type);
+                sym = binaryQualifier(sym, fieldAccess.selected.type);
                 code.emitop2(withfield, sym, PoolWriter::putMember);
                 result = items.makeStackItem(tree.type);
                 break;

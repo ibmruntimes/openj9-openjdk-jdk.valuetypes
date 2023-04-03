@@ -40,6 +40,7 @@ public enum CABI {
     WIN_64,
     LINUX_AARCH_64,
     MAC_OS_AARCH_64,
+    LINUX_RISCV_64,
     SysVPPC64le,
     SysVS390x,
     AIX;
@@ -67,6 +68,13 @@ public enum CABI {
             } else {
                 // The Linux ABI follows the standard AAPCS ABI
                 ABI = LINUX_AARCH_64;
+            }
+        } else if (ARCH.equals("riscv64")) {
+            if (OS.startsWith("Linux")) {
+                ABI = LINUX_RISCV_64;
+            } else {
+                // unsupported
+                ABI = null;
             }
         } else if (ARCH.startsWith("ppc64")) {
             if (OS.startsWith("Linux")) {

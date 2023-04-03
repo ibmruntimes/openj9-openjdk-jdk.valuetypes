@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -65,7 +65,7 @@ public final class SystemLookup implements SymbolLookup {
     private static SymbolLookup makeSystemLookup() {
         try {
             return switch (CABI.current()) {
-                case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, SysVPPC64le, SysVS390x -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
+                case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, LINUX_RISCV_64, SysVPPC64le, SysVS390x -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
                 case AIX -> makeAixLookup();
                 case WIN_64 -> makeWindowsLookup(); // out of line to workaround javac crash
             };
@@ -89,7 +89,7 @@ public final class SystemLookup implements SymbolLookup {
                 long addr = lib.lookup(name);
                 return (addr == 0) ?
                         Optional.empty() :
-                        Optional.of(MemorySegment.ofAddress(MemoryAddress.ofLong(addr), 0, MemorySession.global()));
+                        Optional.of(MemorySegment.ofAddress(addr, 0, SegmentScope.global()));
             } catch (NoSuchMethodException e) {
                 return Optional.empty();
             }
@@ -146,7 +146,7 @@ public final class SystemLookup implements SymbolLookup {
     private static Path jdkLibraryPath(String name) {
         Path javahome = Path.of(GetPropertyAction.privilegedGetProperty("java.home"));
         String lib = switch (CABI.current()) {
-            case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, SysVPPC64le, SysVS390x, AIX -> "lib";
+            case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, LINUX_RISCV_64, SysVPPC64le, SysVS390x, AIX -> "lib";
             case WIN_64 -> "bin";
         };
         String libname = System.mapLibraryName(name);
@@ -220,8 +220,7 @@ public final class SystemLookup implements SymbolLookup {
         wscanf_s,
 
         // time
-        gmtime
-        ;
+        gmtime;
 
         static WindowsFallbackSymbols valueOfOrNull(String name) {
             try {

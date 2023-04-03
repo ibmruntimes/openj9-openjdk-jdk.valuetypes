@@ -31,9 +31,9 @@
 
 package java.lang;
 
-import java.lang.reflect.Method;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.Permission;
@@ -1813,6 +1813,10 @@ public class Thread implements Runnable {
      * @revised 6.0, 14
      */
     public boolean isInterrupted() {
+        // use fully qualified name to avoid ambiguous class error
+        if (com.ibm.oti.vm.VM.isJVMInSingleThreadedMode()) {
+            return isInterruptedImpl();
+        }
         return interrupted;
     }
 
@@ -1833,15 +1837,18 @@ public class Thread implements Runnable {
     }
 
     boolean getAndClearInterrupt() {
-        boolean oldValue = interrupted;
-        // We may have been interrupted the moment after we read the field,
-        // so only clear the field if we saw that it was set and will return
-        // true; otherwise we could lose an interrupt.
-        if (oldValue) {
-            interrupted = false;
-            clearInterruptEvent();
+        // use fully qualified name to avoid ambiguous class error
+        if (com.ibm.oti.vm.VM.isJVMInSingleThreadedMode()) {
+            return interruptedImpl();
         }
-        return oldValue;
+        synchronized (interruptLock) {
+            boolean oldValue = interrupted;
+            if (oldValue) {
+                interrupted = false;
+                clearInterruptEvent();
+            }
+            return oldValue;
+        }
     }
 
     /**
@@ -3134,6 +3141,7 @@ public class Thread implements Runnable {
     private native void setPriorityNoVMAccessImpl(long eetop, int priority);
     private native void interruptImpl();
     private static native boolean interruptedImpl();
+    private native boolean isInterruptedImpl();
     private native void setNameImpl(long threadRef, String threadName);
     private native int getStateImpl(long eetop);
 
