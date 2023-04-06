@@ -26,7 +26,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -40,10 +40,11 @@ public enum CABI {
     WIN_64,
     LINUX_AARCH_64,
     MAC_OS_AARCH_64,
+    WIN_AARCH_64,
     LINUX_RISCV_64,
-    SysVPPC64le,
-    SysVS390x,
-    AIX;
+    SYS_V_PPC_64LE,
+    SYS_V_S390X,
+    AIX_PPC_64;
 
     private static final CABI ABI;
     private static final String ARCH;
@@ -65,6 +66,8 @@ public enum CABI {
         } else if (ARCH.equals("aarch64")) {
             if (OS.startsWith("Mac")) {
                 ABI = MAC_OS_AARCH_64;
+            } else if (OS.startsWith("Windows")) {
+                ABI = WIN_AARCH_64;
             } else {
                 // The Linux ABI follows the standard AAPCS ABI
                 ABI = LINUX_AARCH_64;
@@ -78,12 +81,12 @@ public enum CABI {
             }
         } else if (ARCH.startsWith("ppc64")) {
             if (OS.startsWith("Linux")) {
-                ABI = SysVPPC64le;
+                ABI = SYS_V_PPC_64LE;
             } else {
-                ABI = AIX;
+                ABI = AIX_PPC_64;
             }
         } else if (ARCH.equals("s390x") && OS.startsWith("Linux")) {
-            ABI = SysVS390x;
+            ABI = SYS_V_S390X;
         } else {
             // unsupported
             ABI = null;

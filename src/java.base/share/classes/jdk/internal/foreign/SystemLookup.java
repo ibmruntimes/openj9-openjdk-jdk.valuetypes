@@ -65,9 +65,9 @@ public final class SystemLookup implements SymbolLookup {
     private static SymbolLookup makeSystemLookup() {
         try {
             return switch (CABI.current()) {
-                case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, LINUX_RISCV_64, SysVPPC64le, SysVS390x -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
-                case AIX -> makeAixLookup();
-                case WIN_64 -> makeWindowsLookup(); // out of line to workaround javac crash
+                case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, LINUX_RISCV_64, SYS_V_PPC_64LE, SYS_V_S390X -> libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
+                case AIX_PPC_64 -> makeAixLookup();
+                case WIN_64, WIN_AARCH_64 -> makeWindowsLookup(); // out of line to workaround javac crash
             };
         } catch (Throwable ex) {
             // This can happen in the event of a library loading failure - e.g. if one of the libraries the
@@ -85,14 +85,27 @@ public final class SystemLookup implements SymbolLookup {
         NativeLibrary lib = NativeLibraries.defaultLibrary;
         return name -> {
             Objects.requireNonNull(name);
-            try {
-                long addr = lib.lookup(name);
-                return (addr == 0) ?
-                        Optional.empty() :
-                        Optional.of(MemorySegment.ofAddress(addr, 0, SegmentScope.global()));
-            } catch (NoSuchMethodException e) {
-                return Optional.empty();
+            MemorySegment funcAddr = null;
+            AixFuncSymbols symbol = AixFuncSymbols.valueOfOrNull(name);
+            if (symbol == null) {
+                try {
+                    /* Look up the libc functions in the default library. */
+                    funcAddr = MemorySegment.ofAddress(lib.lookup(name));
+                } catch (NoSuchMethodException e) {
+                    return Optional.empty();
+                }
+            } else {
+                /* Directly load the specified library with the libc functions
+                 * missing in the default library.
+                 */
+                SymbolLookup funcsLibLookup =
+                        libLookup(libs -> libs.load(jdkLibraryPath("syslookup")));
+                MemorySegment funcs = MemorySegment.ofAddress(funcsLibLookup.find("funcs").orElseThrow().address(),
+                    ADDRESS.byteSize() * AixFuncSymbols.values().length, SegmentScope.global());
+                funcAddr = funcs.getAtIndex(ADDRESS, symbol.ordinal());
             }
+
+            return Optional.of(MemorySegment.ofAddress(funcAddr.address(), 0L, SegmentScope.global()));
         };
     }
 
@@ -146,8 +159,8 @@ public final class SystemLookup implements SymbolLookup {
     private static Path jdkLibraryPath(String name) {
         Path javahome = Path.of(GetPropertyAction.privilegedGetProperty("java.home"));
         String lib = switch (CABI.current()) {
-            case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, LINUX_RISCV_64, SysVPPC64le, SysVS390x, AIX -> "lib";
-            case WIN_64 -> "bin";
+            case SYS_V, LINUX_AARCH_64, MAC_OS_AARCH_64, LINUX_RISCV_64, SYS_V_PPC_64LE, SYS_V_S390X, AIX_PPC_64 -> "lib";
+            case WIN_64, WIN_AARCH_64 -> "bin";
         };
         String libname = System.mapLibraryName(name);
         return javahome.resolve(lib).resolve(libname);
@@ -223,6 +236,22 @@ public final class SystemLookup implements SymbolLookup {
         gmtime;
 
         static WindowsFallbackSymbols valueOfOrNull(String name) {
+            try {
+                return valueOf(name);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
+    /* Inlined libc function symbols missing in the default library. */
+    public enum AixFuncSymbols {
+        bcopy, endfsent, getfsent, getfsfile, getfsspec, longjmp,
+        memcpy, memmove, setfsent, setjmp, siglongjmp, strcat,
+        strcpy, strncat, strncpy
+        ;
+
+        static AixFuncSymbols valueOfOrNull(String name) {
             try {
                 return valueOf(name);
             } catch (IllegalArgumentException e) {
