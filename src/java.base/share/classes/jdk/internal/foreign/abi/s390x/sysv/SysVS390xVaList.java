@@ -26,7 +26,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -39,15 +39,13 @@ import java.util.List;
 import java.util.Objects;
 
 import jdk.internal.foreign.MemorySessionImpl;
-import jdk.internal.foreign.Scoped;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
-import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
-import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 import static jdk.internal.foreign.PlatformLayouts.SysVS390x;
+import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
 /**
  * This class implements VaList specific to Linux/s390x based on "ELF Application Binary Interface
@@ -75,7 +73,7 @@ import static jdk.internal.foreign.PlatformLayouts.SysVS390x;
  *   of all argument registers, with the general registers(r2-r6) starting at offset 16 and the
  *   floating-point registers(f0, f2, f4, and f6) starting at offset 128.
  */
-public non-sealed class SysVS390xVaList implements VaList, Scoped {
+public non-sealed class SysVS390xVaList implements VaList {
 	private static final Unsafe unsafe = Unsafe.getUnsafe();
 
 	private static final GroupLayout LAYOUT_VA_LIST = MemoryLayout.structLayout(
@@ -132,9 +130,9 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 			FP_REG.withName("f6")  /* #3 */
 		);
 
-	/* The starting offset of the general register save area */
+	/* The starting offset of the general register save area. */
 	private static final long GPR_OFFSET = LAYOUT_REG_SAVE_AREA.byteOffset(groupElement("r2"));
-	/* The starting offset of the floating-point register save area */
+	/* The starting offset of the floating-point register save area. */
 	private static final long FPR_OFFSET = LAYOUT_REG_SAVE_AREA.byteOffset(groupElement("f0"));
 
 	private static final long MAX_GPR_NUM = 5; /* 5 8-byte general registers (r2-r6) being used */
@@ -169,23 +167,19 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 		this.gpRegSaveArea = gpRegSaveArea;
 		this.fpRegSaveArea = fpRegSaveArea;
 		this.overflowAreaCursor = overflowArgArea;
-		this.regSaveAreaOfVaList = MemorySegment.ofAddress((MemoryAddress)VH_REG_SAVE_AREA.get(segment),
-															LAYOUT_REG_SAVE_AREA.byteSize(), segment.session());
-		this.overflowArgAreaOfVaList = MemorySegment.ofAddress((MemoryAddress)VH_OVERFLOW_ARG_AREA.get(segment),
-																Long.MAX_VALUE, segment.session());
+		this.regSaveAreaOfVaList = MemorySegment.ofAddress(((MemorySegment)VH_REG_SAVE_AREA.get(segment)).address(),
+															LAYOUT_REG_SAVE_AREA.byteSize(), segment.scope());
+		this.overflowArgAreaOfVaList = MemorySegment.ofAddress(((MemorySegment)VH_OVERFLOW_ARG_AREA.get(segment)).address(),
+																Long.MAX_VALUE, segment.scope());
 	}
 
-	private static MemoryAddress emptyListAddress() {
-		long vaListPtr = unsafe.allocateMemory(LAYOUT_VA_LIST.byteSize());
-		MemorySession session = MemorySession.openImplicit();
-		session.addCloseAction(() -> unsafe.freeMemory(vaListPtr));
-		MemorySegment vaListSegment = MemorySegment.ofAddress(MemoryAddress.ofLong(vaListPtr),
-																LAYOUT_VA_LIST.byteSize(), session);
+	private static MemorySegment emptyListAddress() {
+		MemorySegment vaListSegment = MemorySegment.allocateNative(LAYOUT_VA_LIST, SegmentScope.global());
 		VH_GPR_NO.set(vaListSegment, 0);
 		VH_FPR_NO.set(vaListSegment, 0);
-		VH_OVERFLOW_ARG_AREA.set(vaListSegment, MemoryAddress.NULL);
-		VH_REG_SAVE_AREA.set(vaListSegment, MemoryAddress.NULL);
-		return vaListSegment.address();
+		VH_OVERFLOW_ARG_AREA.set(vaListSegment, MemorySegment.NULL);
+		VH_REG_SAVE_AREA.set(vaListSegment, MemorySegment.NULL);
+		return vaListSegment.asSlice(0, 0);
 	}
 
 	public static VaList empty() {
@@ -208,8 +202,8 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 	}
 
 	@Override
-	public MemoryAddress nextVarg(ValueLayout.OfAddress layout) {
-		return (MemoryAddress)readArg(layout);
+	public MemorySegment nextVarg(ValueLayout.OfAddress layout) {
+		return (MemorySegment)readArg(layout);
 	}
 
 	@Override
@@ -220,14 +214,14 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 	@Override
 	public void skip(MemoryLayout... layouts) {
 		Objects.requireNonNull(layouts);
-		sessionImpl().checkValidState();
+		((MemorySessionImpl)segment.scope()).checkValidState();
 		for (MemoryLayout layout : layouts) {
-			readArg(layout, THROWING_ALLOCATOR, false);
+			readArg(layout, SharedUtils.THROWING_ALLOCATOR, false);
 		}
 	}
 
 	private Object readArg(MemoryLayout layout) {
-		return readArg(layout, THROWING_ALLOCATOR, true);
+		return readArg(layout, SharedUtils.THROWING_ALLOCATOR, true);
 	}
 
 	private Object readArg(MemoryLayout layout, SegmentAllocator allocator, boolean isRead) {
@@ -243,7 +237,7 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 			if (isRead) {
 				argument = getArgFromMemoryArea(layout, overflowAreaCursor, allocator, true);
 			}
-			/* Move to the next argument by 8 bytes in the overflow area */
+			/* Move to the next argument by 8 bytes in the overflow area. */
 			overflowAreaCursor = overflowAreaCursor.asSlice(VA_LIST_SLOT_BYTES);
 		} else {
 			checkRegSaveAreaElement(layout);
@@ -252,14 +246,14 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 					if (isRead) {
 						argument = getArgFromMemoryArea(layout, gpRegSaveArea, allocator, false);
 					}
-					/* Move to the next argument in the general register area */
+					/* Move to the next argument in the general register area. */
 					moveToNextArgOfGprArea(nextGprNo);
 				}
 				case FLOAT, STRUCT_ONE_FLOAT -> {
 					if (isRead) {
 						argument = getArgFromMemoryArea(layout, fpRegSaveArea, allocator, false);
 					}
-					/* Move to the next argument in the floating-point register area */
+					/* Move to the next argument in the floating-point register area. */
 					moveToNextArgOfFprArea(nextFprNo);
 				}
 				default -> throw new IllegalStateException("Unsupported TypeClass: " + typeClass);
@@ -297,7 +291,7 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 		}
 	}
 
-	/* Obtain the argument value from the specified memory area of VaList */
+	/* Obtain the argument value from the specified memory area of VaList. */
 	private Object getArgFromMemoryArea(MemoryLayout layout, MemorySegment argAreaSegment, SegmentAllocator allocator, boolean isOverflowArea) {
 		TypeClass typeClass = TypeClass.classifyLayout(layout);
 		VarHandle argHandle = TypeClass.classifyVarHandle(layout);
@@ -321,8 +315,8 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 				GroupLayout struLayout = (GroupLayout)layout;
 				if (isStruAddrRequired(struLayout)) {
 					long struArgSize = getAlignedStructSize(struLayout);
-					MemoryAddress struAddr = (MemoryAddress)argHandle.get(argAreaSegment);
-					MemorySegment struArgSegment = MemorySegment.ofAddress(struAddr, struArgSize, argAreaSegment.session());
+					MemorySegment struAddr = (MemorySegment)argHandle.get(argAreaSegment);
+					MemorySegment struArgSegment = MemorySegment.ofAddress(struAddr.address(), struArgSize, argAreaSegment.scope());
 					argument = allocator.allocate(struArgSize).copyFrom(struArgSegment);
 				} else {
 					long struArgSize = struLayout.byteSize();
@@ -386,21 +380,21 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 
 	private void moveToNextArgOfGprArea(long nextGprNo) {
 		VH_GPR_NO.set(segment, nextGprNo);
-		/* Move to the next argument by 8 bytes in the general register area */
+		/* Move to the next argument by 8 bytes in the general register area. */
 		gpRegSaveArea = gpRegSaveArea.asSlice(VA_LIST_SLOT_BYTES);
 	}
 
 	private void moveToNextArgOfFprArea(long nextFprNo) {
 		VH_FPR_NO.set(segment, nextFprNo);
-		/* Move to the next argument by 8 bytes in the floating-point register area */
+		/* Move to the next argument by 8 bytes in the floating-point register area. */
 		fpRegSaveArea = fpRegSaveArea.asSlice(VA_LIST_SLOT_BYTES);
 	}
 
-	public static VaList ofAddress(MemoryAddress addr, MemorySession session) {
-		MemorySegment segment = MemorySegment.ofAddress(addr, LAYOUT_VA_LIST.byteSize(), session);
-		MemorySegment regSaveAreaOfVaList = MemorySegment.ofAddress((MemoryAddress)VH_REG_SAVE_AREA.get(segment),
+	public static VaList ofAddress(long address, SegmentScope session) {
+		MemorySegment segment = MemorySegment.ofAddress(address, LAYOUT_VA_LIST.byteSize(), session);
+		MemorySegment regSaveAreaOfVaList = MemorySegment.ofAddress(((MemorySegment)VH_REG_SAVE_AREA.get(segment)).address(),
 															LAYOUT_REG_SAVE_AREA.byteSize(), session);
-		MemorySegment overflowArgAreaOfVaList = MemorySegment.ofAddress((MemoryAddress)VH_OVERFLOW_ARG_AREA.get(segment),
+		MemorySegment overflowArgAreaOfVaList = MemorySegment.ofAddress(((MemorySegment)VH_OVERFLOW_ARG_AREA.get(segment)).address(),
 																Long.MAX_VALUE, session);
 
 		long initGprNo = (long)VH_GPR_NO.get(segment);
@@ -417,19 +411,15 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 	}
 
 	@Override
-	public MemorySession session() {
-		return segment.session();
-	}
-
-	@Override
 	public VaList copy() {
-		MemorySegment copySegment = MemorySegment.allocateNative(LAYOUT_VA_LIST, segment.session()).copyFrom(segment);
+		MemorySegment copySegment = MemorySegment.allocateNative(LAYOUT_VA_LIST, segment.scope()).copyFrom(segment);
 		return new SysVS390xVaList(copySegment, gpRegSaveArea, fpRegSaveArea, overflowAreaCursor);
 	}
 
 	@Override
-	public MemoryAddress address() {
-		return segment.address();
+	public MemorySegment segment() {
+		/* The returned segment cannot be accessed. */
+		return segment.asSlice(0, 0);
 	}
 
 	@Override
@@ -442,18 +432,18 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 				+ '}';
 	}
 
-	static SysVS390xVaList.Builder builder(MemorySession session) {
+	static SysVS390xVaList.Builder builder(SegmentScope session) {
 		return new SysVS390xVaList.Builder(session);
 	}
 
 	public static non-sealed class Builder implements VaList.Builder {
-		private final MemorySession session;
+		private final SegmentScope session;
 		private final List<SimpleVaArg> gprArgs = new ArrayList<>();
 		private final List<SimpleVaArg> fprArgs = new ArrayList<>();
 		private final List<SimpleVaArg> overflowArgs = new ArrayList<>();
 
-		public Builder(MemorySession session) {
-			MemorySessionImpl.toSessionImpl(session).checkValidState();
+		public Builder(SegmentScope session) {
+			((MemorySessionImpl)session).checkValidState();
 			this.session = session;
 		}
 
@@ -473,8 +463,8 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 		}
 
 		@Override
-		public Builder addVarg(ValueLayout.OfAddress layout, Addressable value) {
-			return setArg(layout, value.address());
+		public Builder addVarg(ValueLayout.OfAddress layout, MemorySegment value) {
+			return setArg(layout, value);
 		}
 
 		@Override
@@ -541,7 +531,7 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 							 *   on the left when the struct's size is 1, 2, 4, 8 bytes.
 							 */
 							if (isStruAddrRequired((GroupLayout)layout)) {
-								argHandle.set(argAreaCursor, struArgValue.address());
+								argHandle.set(argAreaCursor, struArgValue.asSlice(0, 0));
 							} else {
 								argAreaCursor.asSlice(VA_LIST_SLOT_BYTES - struArgSize, struArgSize).copyFrom(struArgValue);
 							}
@@ -553,7 +543,7 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 					default -> throw new IllegalStateException("Unsupported TypeClass: " + typeClass);
 				}
 
-				/* Move to the next argument by 8 bytes */
+				/* Move to the next argument by 8 bytes. */
 				argAreaCursor = argAreaCursor.asSlice(VA_LIST_SLOT_BYTES);
 			}
 		}
@@ -565,10 +555,9 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 
 			long regSaveAreaSize = LAYOUT_REG_SAVE_AREA.byteSize();
 			long overflowAreaSize = overflowArgs.size() * VA_LIST_SLOT_BYTES;
-			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(session);
 			MemorySegment vaListSegment = allocator.allocate(LAYOUT_VA_LIST);
 			MemorySegment vaArgArea = allocator.allocate(regSaveAreaSize + overflowAreaSize);
-			MemoryAddress vaArgAreaAddr = vaArgArea.address();
 
 			MemorySegment regSaveArea = vaArgArea.asSlice(0, regSaveAreaSize);
 			MemorySegment gpRegSaveArea = regSaveArea.asSlice(GPR_OFFSET, gprArgs.size() * VA_LIST_SLOT_BYTES);
@@ -580,11 +569,11 @@ public non-sealed class SysVS390xVaList implements VaList, Scoped {
 			storeArgToMemoryArea(fprArgs, fpRegSaveArea, false);
 			storeArgToMemoryArea(overflowArgs, overflowArgArea, true);
 
-			/* Set va_list with all required information so as to ensure va_list is correctly accessed in native */
+			/* Set va_list with all required information so as to ensure va_list is correctly accessed in native. */
 			VH_GPR_NO.set(vaListSegment, 0);
 			VH_FPR_NO.set(vaListSegment, 0);
-			VH_OVERFLOW_ARG_AREA.set(vaListSegment, overflowArgArea.address());
-			VH_REG_SAVE_AREA.set(vaListSegment, regSaveArea.address());
+			VH_OVERFLOW_ARG_AREA.set(vaListSegment, overflowArgArea.asSlice(0, 0));
+			VH_REG_SAVE_AREA.set(vaListSegment, regSaveArea.asSlice(0, 0));
 
 			return new SysVS390xVaList(vaListSegment, gpRegSaveArea, fpRegSaveArea, overflowArgArea);
 		}

@@ -805,3 +805,12 @@ AC_DEFUN([UTIL_CHECK_STRING_NON_EMPTY],
     FAILURE="Value cannot be empty"
   fi
 ])
+
+AC_DEFUN([UTIL_CHECK_STRING_NON_EMPTY_PRINTABLE],
+[
+  if test "x$RESULT" = x; then
+    FAILURE="Value cannot be empty"
+  elif [ ! [[ $RESULT =~ ^[[:print:]]*$ ]] ]; then
+    FAILURE="Value contains non-printing characters: $RESULT"
+  fi
+])

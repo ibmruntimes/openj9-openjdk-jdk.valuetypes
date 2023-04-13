@@ -1,6 +1,6 @@
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2018, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2018, 2023 All Rights Reserved
  * ===========================================================================
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,10 @@ import jdk.internal.reflect.CallerSensitive;
 
 import sun.security.action.GetPropertyAction;
 
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.InternalCRIUSupport;
+/*[ENDIF] CRIU_SUPPORT */
+
 public class NativeCrypto {
 
     /* Define constants for the native digest algorithm indices. */
@@ -44,6 +48,10 @@ public class NativeCrypto {
     public static final int SHA5_384 = 3;
     public static final int SHA5_512 = 4;
 
+    public static final long OPENSSL_VERSION_1_0_0 = 0x1_00_00_000L;
+    public static final long OPENSSL_VERSION_1_1_0 = 0x1_01_00_000L;
+    public static final long OPENSSL_VERSION_3_0_0 = 0x3_00_00_000L;
+
     private static final Cleaner ECKeyCleaner = CleanerFactory.cleaner();
 
     private static final boolean useNativeCrypto = Boolean.parseBoolean(
@@ -52,34 +60,68 @@ public class NativeCrypto {
     private static final boolean traceEnabled = Boolean.parseBoolean(
             GetPropertyAction.privilegedGetProperty("jdk.nativeCryptoTrace", "false"));
 
-    //ossl_vers:
-    // -1 : library load failed
-    //  0 : openssl 1.0.x
-    //  1 : openssl 1.1.x or newer
-    private static final int ossl_ver = AccessController.doPrivileged(
-            (PrivilegedAction<Integer>) () -> {
-                int ossl_ver;
-                try {
-                    System.loadLibrary("jncrypto"); // check for native library
-                    // load OpenSSL crypto library dynamically
-                    ossl_ver = loadCrypto(traceEnabled);
-                } catch (UnsatisfiedLinkError usle) {
-                    if (traceEnabled) {
-                        System.err.println("UnsatisfiedLinkError: Failure attempting to load jncrypto JNI library");
-                    }
-                    // signal load failure
-                    ossl_ver = -1;
-                }
-
-                return ossl_ver;
-            }).intValue();
-
-    public static final boolean isLoaded() {
-        return ossl_ver != -1;
+    private static final class InstanceHolder {
+        private static final NativeCrypto instance = new NativeCrypto();
     }
 
-    public static final int getVersion() {
-        return ossl_ver;
+    //ossl_vers will be either:
+    // -1 : library load failed
+    // or one of the OPENSSL_VERSION_x_x_x constants
+    private final long ossl_ver;
+
+    private static long loadCryptoLibraries() {
+        long osslVersion;
+
+        try {
+            // load jncrypto JNI library
+            System.loadLibrary("jncrypto");
+            // load OpenSSL crypto library dynamically
+            osslVersion = loadCrypto(traceEnabled);
+            if (traceEnabled && (osslVersion != -1)) {
+                System.err.println("Native crypto library load succeeded - using native crypto library.");
+            }
+        } catch (UnsatisfiedLinkError usle) {
+            if (traceEnabled) {
+                System.err.println("UnsatisfiedLinkError: Failure attempting to load jncrypto JNI library");
+                System.err.println("Warning: Native crypto library load failed." +
+                        " Using Java crypto implementation.");
+            }
+            // signal load failure
+            osslVersion = -1;
+        }
+        return osslVersion;
+    }
+
+    @SuppressWarnings("removal")
+    private NativeCrypto() {
+        ossl_ver = AccessController.doPrivileged((PrivilegedAction<Long>) () -> loadCryptoLibraries()).longValue();
+    }
+
+    /**
+     * Check whether the native crypto libraries are loaded successfully.
+     * If CRIU is enabled and a checkpoint is allowed, the library loading
+     * is disallowed, and this returns false.
+     *
+     * @return whether the native crypto libraries have been loaded successfully
+     */
+    public static final boolean isAllowedAndLoaded() {
+        return getVersionIfAvailable() >= 0;
+    }
+
+    /**
+     * Return the OpenSSL version.
+     * -1 is returned if CRIU is enabled and the checkpoint is allowed.
+     * The libraries are to be loaded for the first reference of InstanceHolder.instance.
+     *
+     * @return the OpenSSL library version if it is available
+     */
+    public static final long getVersionIfAvailable() {
+/*[IF CRIU_SUPPORT]*/
+        if (InternalCRIUSupport.isCheckpointAllowed()) {
+            return -1;
+        }
+/*[ENDIF] CRIU_SUPPORT */
+        return InstanceHolder.instance.ossl_ver;
     }
 
     /**
@@ -97,62 +139,19 @@ public class NativeCrypto {
      * @return whether the given native crypto algorithm is enabled
      */
     public static final boolean isAlgorithmEnabled(String property, String name) {
-        return isAlgorithmEnabled(property, name, true, null);
-    }
-
-    /**
-     * Check whether native crypto is enabled. Note that, by default, native
-     * crypto is enabled (the native crypto library implementation is used).
-     *
-     * The property 'jdk.nativeCrypto' is used to control enablement of all
-     * native cryptos (Digest, CBC, GCM, RSA, ChaCha20, EC, and PBE), while
-     * the given property should be used to control enablement of the given
-     * native crypto algorithm.
-     *
-     * This method is used for native cryptos that have additional requirements
-     * in order to load.
-     *
-     * @param property the property used to control enablement of the given
-     *                 algorithm
-     * @param name the name of the class or the algorithm
-     * @param satisfied whether the additional requirements are met
-     * @param explanation explanation if the native crypto is not loaded
-     *                    due to the additional requirements not being met
-     * @return whether the given native crypto algorithm is enabled
-     */
-    public static final boolean isAlgorithmEnabled(String property, String name, boolean satisfied, String explanation) {
         boolean useNativeAlgorithm = false;
         if (useNativeCrypto) {
             useNativeAlgorithm = Boolean.parseBoolean(
                     GetPropertyAction.privilegedGetProperty(property, "true"));
         }
-        if (useNativeAlgorithm) {
-            /*
-             * User wants to use the native crypto implementation. Ensure that the
-             * native crypto library is loaded successfully. Otherwise, issue a warning
-             * message and fall back to the built-in java crypto implementation.
-             */
-            if (isLoaded()) {
-                if (satisfied) {
-                    if (traceEnabled) {
-                        System.err.println(name + " - using native crypto library.");
-                    }
-                } else {
-                    useNativeAlgorithm = false;
-                    if (traceEnabled) {
-                        System.err.println("Warning: " + name + " native requirements not satisfied. " +
-                                explanation + " Using Java crypto implementation.");
-                    }
-                }
+        /*
+         * User wants to use the native crypto implementation. Ensure that the native crypto library is enabled.
+         * Otherwise, issue a warning message.
+         */
+        if (traceEnabled) {
+            if (useNativeAlgorithm) {
+                System.err.println(name + " native crypto implementation enabled.");
             } else {
-                useNativeAlgorithm = false;
-                if (traceEnabled) {
-                    System.err.println("Warning: Native crypto library load failed." +
-                            " Using Java crypto implementation.");
-                }
-            }
-        } else {
-            if (traceEnabled) {
                 System.err.println(name + " native crypto implementation disabled." +
                         " Using Java crypto implementation.");
             }
@@ -168,16 +167,12 @@ public class NativeCrypto {
         return traceEnabled;
     }
 
-    private NativeCrypto() {
-        // empty
-    }
-
     @CallerSensitive
     public static NativeCrypto getNativeCrypto() {
         ClassLoader callerClassLoader = Reflection.getCallerClass().getClassLoader();
 
         if ((callerClassLoader == null) || (callerClassLoader == VM.getVMLangAccess().getExtClassLoader())) {
-            return new NativeCrypto();
+            return InstanceHolder.instance;
         }
 
         throw new SecurityException("NativeCrypto");
@@ -194,7 +189,7 @@ public class NativeCrypto {
 
     /* Native digest interfaces */
 
-    private static final native int loadCrypto(boolean trace);
+    private static final native long loadCrypto(boolean trace);
 
     public final native long DigestCreateContext(long nativeBuffer,
                                                  int algoIndex);

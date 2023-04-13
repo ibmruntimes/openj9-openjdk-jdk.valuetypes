@@ -1,5 +1,5 @@
 # ===========================================================================
-# (c) Copyright IBM Corp. 2017, 2022 All Rights Reserved
+# (c) Copyright IBM Corp. 2017, 2023 All Rights Reserved
 # ===========================================================================
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
@@ -348,7 +348,15 @@ AC_DEFUN([OPENJ9_CONFIGURE_CRIU_SUPPORT],
   elif test "x$enable_criu_support" = xno ; then
     AC_MSG_RESULT([no (explicitly disabled)])
   elif test "x$enable_criu_support" = x ; then
-    AC_MSG_RESULT([no (default)])
+    case "$OPENJ9_PLATFORM_CODE" in
+      xa64|xz64)
+        AC_MSG_RESULT([yes (default)])
+        OPENJ9_ENABLE_CRIU_SUPPORT=true
+        ;;
+      *)
+        AC_MSG_RESULT([no (default)])
+        ;;
+    esac
   else
     AC_MSG_ERROR([--enable-criu-support accepts no argument])
   fi

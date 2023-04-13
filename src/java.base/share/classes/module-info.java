@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -159,6 +159,7 @@ module java.base {
         jdk.compiler,
         jdk.incubator.concurrent, // participates in preview features
         jdk.incubator.vector, // participates in preview features
+        jdk.jartool, // participates in preview features
         jdk.jdi,
         jdk.jfr,
         jdk.jshell,
@@ -197,11 +198,19 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.logger to
         java.logging;
-    exports jdk.internal.org.objectweb.asm to
+    exports jdk.internal.classfile to
         jdk.jartool,
-        jdk.jfr,
         jdk.jlink,
         jdk.jshell;
+    exports jdk.internal.classfile.attribute to
+        jdk.jartool;
+    exports jdk.internal.classfile.constantpool to
+        jdk.jartool;
+    exports jdk.internal.classfile.instruction to
+        jdk.jshell;
+    exports jdk.internal.org.objectweb.asm to
+        jdk.jfr,
+        jdk.jlink;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jfr,
         jdk.jlink;
@@ -281,6 +290,8 @@ module java.base {
         jdk.random;
     exports jdk.internal.value to  // Needed by Unsafe
         jdk.unsupported;
+    exports jdk.internal.util to
+        java.desktop;
     exports sun.net to
         java.net.http,
         jdk.naming.dns;
@@ -387,6 +398,7 @@ module java.base {
     exports sun.util.resources to
         jdk.localedata;
     exports openj9.internal.security to
+        jdk.crypto.cryptoki,
         jdk.crypto.ec;
 
     // the service types defined by the APIs in this module

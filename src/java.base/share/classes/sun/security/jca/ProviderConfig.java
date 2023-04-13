@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * ===========================================================================
+ */
+
 package sun.security.jca;
 
 import java.io.File;
@@ -32,6 +38,8 @@ import java.util.*;
 import java.security.*;
 
 import sun.security.util.PropertyExpander;
+
+import openj9.internal.security.RestrictedSecurity;
 
 /**
  * Class representing a configured provider which encapsulates configuration
@@ -161,6 +169,11 @@ final class ProviderConfig {
      */
     @SuppressWarnings("deprecation")
     Provider getProvider() {
+        if (!RestrictedSecurity.isProviderAllowed(provName)) {
+            // We're in restricted security mode which does not allow this provider,
+            // return without loading.
+            return null;
+        }
         // volatile variable load
         Provider p = provider;
         if (p != null) {
@@ -313,6 +326,12 @@ final class ProviderConfig {
             }
         });
     }
+
+/*[IF CRIU_SUPPORT]*/
+    static void reloadServices() {
+        ProviderLoader.INSTANCE.services.reload();
+    }
+/*[ENDIF] CRIU_SUPPORT */
 
     // Inner class for loading security providers listed in java.security file
     private static final class ProviderLoader {

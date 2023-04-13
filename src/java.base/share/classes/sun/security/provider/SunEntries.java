@@ -24,7 +24,7 @@
  */
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2018, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2018, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -49,8 +49,6 @@ import sun.security.action.GetBooleanAction;
 import sun.security.action.GetPropertyAction;
 import sun.security.util.SecurityProviderConstants;
 import static sun.security.util.SecurityProviderConstants.getAliases;
-
-import openj9.internal.security.FIPSConfigurator;
 
 /**
  * Defines the entries of the SUN provider.
@@ -156,10 +154,6 @@ public final class SunEntries {
         add(p, "CertPathValidator", "PKIX",
                 "sun.security.provider.certpath.PKIXCertPathValidator",
                 attrs);
-
-        if (FIPSConfigurator.enableFIPS()) {
-            return;
-        }
 
         attrs.clear();
         /*
@@ -287,7 +281,7 @@ public final class SunEntries {
          * Set the digest provider based on whether native crypto is
          * enabled or not.
          */
-        if (useNativeDigest) {
+        if (useNativeDigest && NativeCrypto.isAllowedAndLoaded()) {
             providerSHA = "sun.security.provider.NativeSHA";
             providerSHA224 = "sun.security.provider.NativeSHA2$SHA224";
             providerSHA256 = "sun.security.provider.NativeSHA2$SHA256";

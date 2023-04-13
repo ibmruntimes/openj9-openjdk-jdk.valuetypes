@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * ===========================================================================
+ */
+
 package sun.security.jca;
 
 import java.util.*;
@@ -32,6 +38,8 @@ import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.Provider.Service;
 import java.security.Security;
+
+import openj9.internal.security.RestrictedSecurity;
 
 /**
  * List of Providers. Used to represent the provider preferences.
@@ -93,6 +101,10 @@ public final class ProviderList {
         return AccessController.doPrivileged(
                         new PrivilegedAction<ProviderList>() {
             public ProviderList run() {
+/*[IF CRIU_SUPPORT]*/
+                // ensure the providers are reloaded from scratch
+                ProviderConfig.reloadServices();
+/*[ENDIF] CRIU_SUPPORT */
                 return new ProviderList();
             }
         });
@@ -104,7 +116,13 @@ public final class ProviderList {
 
     public static ProviderList insertAt(ProviderList providerList, Provider p,
             int position) {
-        if (providerList.getProvider(p.getName()) != null) {
+        String providerName = p.getName();
+        if (providerList.getProvider(providerName) != null) {
+            return providerList;
+        }
+        if (!RestrictedSecurity.isProviderAllowed(providerName)) {
+            // We're in restricted security mode which does not allow this provider,
+            // return without adding.
             return providerList;
         }
         List<ProviderConfig> list = new ArrayList<>
@@ -136,6 +154,16 @@ public final class ProviderList {
     // Create a new ProviderList from the specified Providers.
     // This method is for use by SunJSSE.
     public static ProviderList newList(Provider ... providers) {
+        if (RestrictedSecurity.isEnabled()) {
+            List<Provider> allowedProviders = new ArrayList<>();
+            for (Provider p : providers) {
+                if (RestrictedSecurity.isProviderAllowed(p.getName())) {
+                    // This provider is allowed, add it the list.
+                    allowedProviders.add(p);
+                }
+            }
+            providers = allowedProviders.toArray(new Provider[allowedProviders.size()]);
+        }
         ProviderConfig[] configs = new ProviderConfig[providers.length];
         for (int i = 0; i < providers.length; i++) {
             configs[i] = new ProviderConfig(providers[i]);
@@ -374,7 +402,8 @@ public final class ProviderList {
             for (i = 0; i < pList.size(); i++) {
                 Provider p = getProvider(pList.get(i).provider);
                 Service s = p.getService(type, name);
-                if (s != null) {
+                if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
+                    // We found a service that is allowed in restricted security mode.
                     return s;
                 }
             }
@@ -383,7 +412,8 @@ public final class ProviderList {
         for (i = 0; i < configs.length; i++) {
             Provider p = getProvider(i);
             Service s = p.getService(type, name);
-            if (s != null) {
+            if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
+                // We found a service that is allowed in restricted security mode.
                 return s;
             }
         }
@@ -519,14 +549,14 @@ public final class ProviderList {
                 if (type != null) {
                     // simple lookup
                     Service s = p.getService(type, algorithm);
-                    if (s != null) {
+                    if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
                         addService(s);
                     }
                 } else {
                     // parallel lookup
                     for (ServiceId id : ids) {
                         Service s = p.getService(id.type, id.algorithm);
-                        if (s != null) {
+                        if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
                             addService(s);
                         }
                     }

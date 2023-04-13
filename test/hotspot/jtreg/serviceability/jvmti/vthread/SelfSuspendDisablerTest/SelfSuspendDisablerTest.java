@@ -28,12 +28,19 @@
  */
 
 /*
- * @test
+ * @test id=default
  * @summary Test verifies that selfsuspend doesn' block unmount by VTMTDisabler
- * @requires vm.continuations
  * @library /test/lib
  * @compile --enable-preview -source ${jdk.version} SelfSuspendDisablerTest.java
  * @run main/othervm/native --enable-preview -agentlib:SelfSuspendDisablerTest SelfSuspendDisablerTest
+ */
+
+/*
+ * @test id=no-vmcontinuations
+ * @requires vm.continuations
+ * @library /test/lib
+ * @compile --enable-preview -source ${jdk.version} SelfSuspendDisablerTest.java
+ * @run main/othervm/native --enable-preview -agentlib:SelfSuspendDisablerTest -XX:+UnlockExperimentalVMOptions -XX:-VMContinuations SelfSuspendDisablerTest
  */
 
 public class SelfSuspendDisablerTest {
@@ -66,10 +73,27 @@ public class SelfSuspendDisablerTest {
     private static void testJvmtiThreadState(Thread thread, int expectedState) {
         String kindStr = thread.isVirtual()? "virtual " : "platform";
         int state = getThreadState(thread);
+        boolean pass = true;
 
         System.out.printf("Expected %s thread state: %06X got: %06X\n",
                           kindStr, expectedState, state);
-        if ((state & expectedState) != expectedState) {
+        if (expectedState == SUSPENDED) {
+            if ((state & expectedState) != expectedState) {
+                /* Fail if the required bits are not set. */
+                pass = false;
+            }
+            /* SUSPENDED_OPTIONAL = JVMTI_THREAD_STATE_INTERRUPTED | JVMTI_THREAD_STATE_IN_NATIVE */
+            int SUSPENDED_OPTIONAL = 0x200000 | 0x400000;
+            if ((state & ~(SUSPENDED | SUSPENDED_OPTIONAL)) != 0) {
+                /* Fail if any unexpected bit is set. */
+                pass = false;
+            }
+        } else {
+            if (state != expectedState) {
+                pass = false;
+            }
+        }
+        if (!pass) {
             throw new RuntimeException("Test FAILED: Unexpected thread state");
         }
     }

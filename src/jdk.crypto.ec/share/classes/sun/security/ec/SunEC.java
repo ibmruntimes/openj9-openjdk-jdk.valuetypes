@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
  * ===========================================================================
  */
 
@@ -50,8 +50,6 @@ import sun.security.util.NamedCurve;
 
 import static sun.security.util.SecurityConstants.PROVIDER_VER;
 import static sun.security.util.SecurityProviderConstants.*;
-
-import openj9.internal.security.FIPSConfigurator;
 
 /**
  * Provider class for the Elliptic Curve provider.
@@ -177,7 +175,7 @@ public final class SunEC extends Provider {
                     }
                 } else  if (type.equals("KeyAgreement")) {
                     if (algo.equals("ECDH")) {
-                        if (useNativeEC) {
+                        if (useNativeEC && NativeCrypto.isAllowedAndLoaded()) {
                             return new NativeECDHKeyAgreement();
                         } else {
                             return new ECDHKeyAgreement();
@@ -259,10 +257,6 @@ public final class SunEC extends Provider {
         putService(new ProviderServiceA(this, "AlgorithmParameters",
             "EC", "sun.security.util.ECParameters", apAttrs));
 
-        if (FIPSConfigurator.enableFIPS()) {
-            return;
-        }
-
         putXDHEntries();
         putEdDSAEntries();
 
@@ -341,7 +335,7 @@ public final class SunEC extends Provider {
         /*
          * Key Agreement engine
          */
-        if (useNativeEC) {
+        if (useNativeEC && NativeCrypto.isAllowedAndLoaded()) {
             putService(new ProviderService(this, "KeyAgreement",
                 "ECDH", "sun.security.ec.NativeECDHKeyAgreement", null, ATTRS));
         } else {
