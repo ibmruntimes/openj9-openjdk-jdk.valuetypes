@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,7 @@ import jdk.internal.value.PrimitiveClass;
 
 import java.lang.invoke.MethodHandles;
 
-import static java.lang.constant.ConstantUtils.dropFirstAndLastChar;
-import static java.lang.constant.ConstantUtils.internalToBinary;
+import static java.lang.constant.ConstantUtils.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -43,7 +42,7 @@ final class ClassDescImpl implements ClassDesc {
 
     /**
      * Creates a {@linkplain ClassDesc} from a descriptor string for a class or
-     * interface type
+     * interface type or an array type.
      *
      * @param descriptor a field descriptor string for a class or interface type
      * @throws IllegalArgumentException if the descriptor string is not a valid
@@ -87,6 +86,16 @@ final class ClassDescImpl implements ClassDesc {
                 clazz = clazz.arrayType();
             return clazz;
         }
+    }
+
+    /**
+     * Whether the descriptor is one of a primitive array, given this is
+     * already a valid reference type descriptor.
+     */
+    private boolean isPrimitiveArray() {
+        // All L-type descriptors must end with a semicolon; same for reference
+        // arrays, leaving primitive arrays the only ones without a final semicolon
+        return descriptor.charAt(descriptor.length() - 1) != ';';
     }
 
     /**

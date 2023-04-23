@@ -29,3 +29,4 @@ JAVAC_FLAGS += -XDstringConcat=inline
 CLEAN_FILES += $(wildcard \
     $(patsubst %, $(TOPDIR)/src/jdk.compiler/share/classes/%/*.properties, \
         sun/tools/serialver/resources))
+DISABLED_WARNINGS_java += this-escape
