@@ -280,8 +280,10 @@ endif
 # Adjust Inline-Types enablement flags.
 ifeq (true,$(OPENJ9_ENABLE_INLINE_TYPES))
   SPEC_SED_SCRIPT += $(call SedEnable,opt_valhallaValueTypes)
+  SPEC_SED_SCRIPT += $(call SedEnable,opt_valhallaFlattenableValueTypes)
 else
   SPEC_SED_SCRIPT += $(call SedDisable,opt_valhallaValueTypes)
+  SPEC_SED_SCRIPT += $(call SedDisable,opt_valhallaFlattenableValueTypes)
 endif
 
 # Adjust CRIU Support enablement flags.
@@ -441,8 +443,10 @@ ifeq (true,$(OPENJ9_ENABLE_CMAKE))
 
   ifeq (true,$(OPENJ9_ENABLE_INLINE_TYPES))
     CMAKE_ARGS += -DJ9VM_OPT_VALHALLA_VALUE_TYPES=ON
+    CMAKE_ARGS += -DJ9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES=ON
   else # OPENJ9_ENABLE_INLINE_TYPES
     CMAKE_ARGS += -DJ9VM_OPT_VALHALLA_VALUE_TYPES=OFF
+    CMAKE_ARGS += -DJ9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES=OFF
   endif # OPENJ9_ENABLE_INLINE_TYPES
   
   ifeq (true,$(OPENJ9_ENABLE_CRIU_SUPPORT))
