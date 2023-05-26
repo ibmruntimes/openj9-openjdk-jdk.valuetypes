@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@ import javax.lang.model.element.NestingKind;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
+import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.code.Type.ClassType.Flavor;
 import com.sun.tools.javac.comp.Annotate;
@@ -63,8 +64,10 @@ import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.resources.CompilerProperties.Fragments;
 import com.sun.tools.javac.resources.CompilerProperties.Warnings;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.ByteBuffer.UnderflowException;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
+import com.sun.tools.javac.util.JCDiagnostic.Fragment;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
@@ -125,6 +128,10 @@ public class ClassReader {
    /** Lint option: warn about classfile issues
      */
     boolean lintClassfile;
+
+    /** Switch: warn (instead of error) on illegal UTF-8
+     */
+    boolean warnOnIllegalUtf8;
 
     /** Switch: preserve parameter names from the variable table.
      */
@@ -198,6 +205,9 @@ public class ClassReader {
     /** The minor version number of the class file being read. */
     int minorVersion;
 
+    /** UTF-8 validation level */
+    Convert.Validation utf8validation;
+
     /** A table to hold the constant pool indices for method parameter
      * names, as given in LocalVariableTable attributes.
      */
@@ -247,13 +257,13 @@ public class ClassReader {
 
     /**
      * The prototype @Target Attribute.Compound if this class is an annotation annotated with
-     * @Target
+     * {@code @Target}
      */
     CompoundAnnotationProxy target;
 
     /**
      * The prototype @Repeatable Attribute.Compound if this class is an annotation annotated with
-     * @Repeatable
+     * {@code @Repeatable}
      */
     CompoundAnnotationProxy repeatable;
 
@@ -266,6 +276,7 @@ public class ClassReader {
     }
 
     /** Construct a new class reader. */
+    @SuppressWarnings("this-escape")
     protected ClassReader(Context context) {
         context.put(classReaderKey, this);
         annotate = Annotate.instance(context);
@@ -290,6 +301,7 @@ public class ClassReader {
         allowValueClasses = Feature.VALUE_CLASSES.allowedInSource(source);
         allowRecords = Feature.RECORDS.allowedInSource(source);
         allowSealedTypes = Feature.SEALED_CLASSES.allowedInSource(source);
+        warnOnIllegalUtf8 = Feature.WARN_ON_ILLEGAL_UTF8.allowedInSource(source);
 
         saveParameterNames = options.isSet(PARAMETERS);
 
@@ -316,10 +328,18 @@ public class ClassReader {
  ***********************************************************************/
 
     public ClassFinder.BadClassFile badClassFile(String key, Object... args) {
+        return badClassFile(diagFactory.fragment(key, args));
+    }
+
+    public ClassFinder.BadClassFile badClassFile(Fragment fragment) {
+        return badClassFile(diagFactory.fragment(fragment));
+    }
+
+    public ClassFinder.BadClassFile badClassFile(JCDiagnostic diagnostic) {
         return new ClassFinder.BadClassFile (
             currentOwner.enclClass(),
             currentClassFile,
-            diagFactory.fragment(key, args),
+            diagnostic,
             diagFactory,
             dcfh);
     }
@@ -340,7 +360,12 @@ public class ClassReader {
     /** Read a character.
      */
     char nextChar() {
-        char res = buf.getChar(bp);
+        char res;
+        try {
+            res = buf.getChar(bp);
+        } catch (UnderflowException e) {
+            throw badClassFile(Fragments.BadClassTruncatedAtOffset(e.getLength()));
+        }
         bp += 2;
         return res;
     }
@@ -348,13 +373,22 @@ public class ClassReader {
     /** Read a byte.
      */
     int nextByte() {
-        return buf.getByte(bp++) & 0xFF;
+        try {
+            return buf.getByte(bp++) & 0xFF;
+        } catch (UnderflowException e) {
+            throw badClassFile(Fragments.BadClassTruncatedAtOffset(e.getLength()));
+        }
     }
 
     /** Read an integer.
      */
     int nextInt() {
-        int res = buf.getInt(bp);
+        int res;
+        try {
+            res = buf.getInt(bp);
+        } catch (UnderflowException e) {
+            throw badClassFile(Fragments.BadClassTruncatedAtOffset(e.getLength()));
+        }
         bp += 4;
         return res;
     }
@@ -450,7 +484,7 @@ public class ClassReader {
             sigp++;
             return sigEnterPhase
                 ? Type.noType
-                : findTypeVar(names.fromUtf(signature, start, sigp - 1 - start));
+                : findTypeVar(readName(signature, start, sigp - 1 - start));
         case '+': {
             sigp++;
             Type t = sigToType();
@@ -489,7 +523,7 @@ public class ClassReader {
                 // int oldsigp = sigp;
                 if ((char) signature[sigp] == 'Q' && !allowPrimitiveClasses) {
                     throw badClassFile("bad.class.signature",
-                            Convert.utf2string(signature, sigp, 10));
+                                       quoteBadSignature());
                 }
                 Type t = classSigToType();
                 if (sigp < siglimit && signature[sigp] == '.')
@@ -539,8 +573,7 @@ public class ClassReader {
             typevars = typevars.leave();
             return poly;
         default:
-            throw badClassFile("bad.signature",
-                               Convert.utf2string(signature, sigp, 10));
+            throw badClassFile("bad.signature", quoteBadSignature());
         }
     }
 
@@ -551,8 +584,7 @@ public class ClassReader {
     Type classSigToType() {
         byte prefix = signature[sigp];
         if (prefix != 'L' && (!allowPrimitiveClasses || prefix != 'Q'))
-            throw badClassFile("bad.class.signature",
-                               Convert.utf2string(signature, sigp, 10));
+            throw badClassFile("bad.class.signature", quoteBadSignature());
         sigp++;
         Type outer = Type.noType;
         Name name;
@@ -564,7 +596,7 @@ public class ClassReader {
             switch (c) {
 
             case ';': {         // end
-                ClassSymbol t = enterClass(names.fromUtf(signatureBuffer,
+                ClassSymbol t = enterClass(readName(signatureBuffer,
                                                          startSbp,
                                                          sbp - startSbp));
 
@@ -576,19 +608,19 @@ public class ClassReader {
                         // Todo: This spews out more objects than before, i.e no reuse with identical flavor
                         return new ClassType(et.getEnclosingType(), List.nil(), et.tsym, et.getMetadata(), flavor);
                     }
-                    return new ClassType(outer, List.nil(), t, TypeMetadata.EMPTY, flavor);
+                    return new ClassType(outer, List.nil(), t, List.nil(), flavor);
                 } finally {
                     sbp = startSbp;
                 }
             }
 
             case '<':           // generic arguments
-                ClassSymbol t = enterClass(names.fromUtf(signatureBuffer,
+                ClassSymbol t = enterClass(readName(signatureBuffer,
                                                          startSbp,
                                                          sbp - startSbp));
                 // We are seeing QFoo; or LFoo; The name itself does not shine any light on default val-refness
                 flavor = prefix == 'L' ? Flavor.L_TypeOf_X : Flavor.Q_TypeOf_X;
-                outer = new ClassType(outer, sigToTypes('>'), t, TypeMetadata.EMPTY, flavor) {
+                outer = new ClassType(outer, sigToTypes('>'), t, List.nil(), flavor) {
                         boolean completed = false;
                         @Override @DefinedBy(Api.LANGUAGE_MODEL)
                         public Type getEnclosingType() {
@@ -648,12 +680,12 @@ public class ClassReader {
             case '.':
                 //we have seen an enclosing non-generic class
                 if (outer != Type.noType) {
-                    t = enterClass(names.fromUtf(signatureBuffer,
+                    t = enterClass(readName(signatureBuffer,
                                                  startSbp,
                                                  sbp - startSbp));
                     // We are seeing QFoo; or LFoo; The name itself does not shine any light on default val-refness
                     flavor = prefix == 'L' ? Flavor.L_TypeOf_X : Flavor.Q_TypeOf_X;
-                    outer = new ClassType(outer, List.nil(), t, TypeMetadata.EMPTY, flavor);
+                    outer = new ClassType(outer, List.nil(), t, List.nil(), flavor);
                 }
                 signatureBuffer[sbp++] = (byte)'$';
                 continue;
@@ -665,6 +697,20 @@ public class ClassReader {
                 continue;
             }
         }
+    }
+
+    /** Quote a bogus signature for display inside an error message.
+     */
+    String quoteBadSignature() {
+        String sigString;
+        try {
+            sigString = Convert.utf2string(signature, sigp, siglimit - sigp, Convert.Validation.NONE);
+        } catch (InvalidUtfException e) {
+            throw new AssertionError(e);
+        }
+        if (sigString.length() > 32)
+            sigString = sigString.substring(0, 32) + "...";
+        return "\"" + sigString + "\"";
     }
 
     /** Convert (implicit) signature to list of types
@@ -713,7 +759,7 @@ public class ClassReader {
     Type sigToTypeParam() {
         int start = sigp;
         while (signature[sigp] != ':') sigp++;
-        Name name = names.fromUtf(signature, start, sigp - start);
+        Name name = readName(signature, start, sigp - start);
         TypeVar tvar;
         if (sigEnterPhase) {
             tvar = new TypeVar(name, currentOwner, syms.botType);
@@ -761,6 +807,19 @@ public class ClassReader {
                 return t;
             }
             throw badClassFile("undecl.type.var", name);
+        }
+    }
+
+    private Name readName(byte[] buf, int off, int len) {
+        try {
+            return names.fromUtf(buf, off, len, utf8validation);
+        } catch (InvalidUtfException e) {
+            if (warnOnIllegalUtf8) {
+                log.warning(Warnings.InvalidUtf8InClassfile(currentClassFile,
+                    Fragments.BadUtf8ByteSequenceAt(sigp)));
+                return names.fromUtfLax(buf, off, len);
+            }
+            throw badClassFile(Fragments.BadUtf8ByteSequenceAt(sigp));
         }
     }
 
@@ -819,12 +878,16 @@ public class ClassReader {
             new AttributeReader(names.Code, V45_3, MEMBER_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
                     if (sym.isInitOrVNew() && sym.type.getParameterTypes().size() == 0) {
-                        int code_length = buf.getInt(bp + 4);
-                        if ((code_length == 1 && buf.getByte(bp + 8) == (byte) ByteCodes.return_) ||
+                        try {
+                            int code_length = buf.getInt(bp + 4);
+                            if ((code_length == 1 && buf.getByte(bp + 8) == (byte) ByteCodes.return_) ||
                                 (code_length == 5 && buf.getByte(bp + 8) == ByteCodes.aload_0 &&
                                     buf.getByte(bp + 9) == (byte) ByteCodes.invokespecial &&
                                             buf.getByte(bp + 12) == (byte) ByteCodes.return_)) {
                                 sym.flags_field |= EMPTYNOARGCONSTR;
+                            }
+                        } catch (UnderflowException e) {
+                            throw badClassFile("bad.class.truncated.at.offset", Integer.toString(e.getLength()));
                         }
                     }
                     if (saveParameterNames)
@@ -1134,7 +1197,7 @@ public class ClassReader {
                         ModuleSymbol msym = (ModuleSymbol) sym.owner;
                         ListBuffer<Directive> directives = new ListBuffer<>();
 
-                        Name moduleName = poolReader.peekModuleName(nextChar(), names::fromUtf);
+                        Name moduleName = poolReader.peekModuleName(nextChar(), ClassReader.this::readName);
                         if (currentModule.name != moduleName) {
                             throw badClassFile("module.name.mismatch", moduleName, currentModule.name);
                         }
@@ -1229,8 +1292,18 @@ public class ClassReader {
                     }
                 }
 
-                private Name classNameMapper(byte[] arr, int offset, int length) {
-                    return names.fromUtf(ClassFile.internalize(arr, offset, length));
+                private Name classNameMapper(byte[] arr, int offset, int length) throws InvalidUtfException {
+                    byte[] buf = ClassFile.internalize(arr, offset, length);
+                    try {
+                        return names.fromUtf(buf, 0, buf.length, utf8validation);
+                    } catch (InvalidUtfException e) {
+                        if (warnOnIllegalUtf8) {
+                            log.warning(Warnings.InvalidUtf8InClassfile(currentClassFile,
+                                Fragments.BadUtf8ByteSequenceAt(e.getOffset())));
+                            return names.fromUtfLax(buf, 0, buf.length);
+                        }
+                        throw e;
+                    }
                 }
             },
 
@@ -1526,7 +1599,12 @@ public class ClassReader {
     /** Read parameter annotations.
      */
     void readParameterAnnotations(Symbol meth) {
-        int numParameters = buf.getByte(bp++) & 0xFF;
+        int numParameters;
+        try {
+            numParameters = buf.getByte(bp++) & 0xFF;
+        } catch (UnderflowException e) {
+            throw badClassFile(Fragments.BadClassTruncatedAtOffset(e.getLength()));
+        }
         if (parameterAnnotations == null) {
             parameterAnnotations = new ParameterAnnotations[numParameters];
         } else if (parameterAnnotations.length != numParameters) {
@@ -1815,7 +1893,12 @@ public class ClassReader {
     }
 
     Attribute readAttributeValue() {
-        char c = (char) buf.getByte(bp++);
+        char c;
+        try {
+            c = (char)buf.getByte(bp++);
+        } catch (UnderflowException e) {
+            throw badClassFile(Fragments.BadClassTruncatedAtOffset(e.getLength()));
+        }
         switch (c) {
         case 'B':
             return new Attribute.Constant(syms.byteType, poolReader.getConstant(nextChar()));
@@ -2692,6 +2775,7 @@ public class ClassReader {
                                    Integer.toString(maxMajor),
                                    Integer.toString(maxMinor));
         }
+        utf8validation = majorVersion < V48.major ? Convert.Validation.PREJDK14 : Convert.Validation.STRICT;
 
         if (previewClassFile) {
             if (!preview.isEnabled()) {
@@ -2720,7 +2804,9 @@ public class ClassReader {
         try {
             bp = 0;
             buf.reset();
-            buf.appendStream(c.classfile.openInputStream());
+            try (InputStream input = c.classfile.openInputStream()) {
+                buf.appendStream(input);
+            }
             readClassBuffer(c);
             if (!missingTypeVariables.isEmpty() && !foundTypeVariables.isEmpty()) {
                 List<Type> missing = missingTypeVariables;
@@ -2978,18 +3064,13 @@ public class ClassReader {
         private final Name name;
 
         public ProxyType(int index) {
-            super(syms.noSymbol, TypeMetadata.EMPTY);
+            super(syms.noSymbol, List.nil());
             this.name = poolReader.getName(index);
         }
 
         @Override
         public TypeTag getTag() {
             return TypeTag.NONE;
-        }
-
-        @Override
-        public Type cloneWithMetadata(TypeMetadata metadata) {
-            throw new UnsupportedOperationException();
         }
 
         public Type resolve() {

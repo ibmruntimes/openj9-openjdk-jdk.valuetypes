@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,7 +90,6 @@ import jdk.internal.vm.ThreadContainer;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
 import jdk.internal.vm.annotation.Stable;
-import jdk.internal.vm.annotation.ChangesCurrentThread;
 import sun.nio.fs.DefaultFileSystemProvider;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
@@ -762,8 +761,6 @@ public final class System {
      *     <td>List of paths to search when loading libraries</td></tr>
      * <tr><th scope="row">{@systemProperty java.io.tmpdir}</th>
      *     <td>Default temp file path</td></tr>
-     * <tr><th scope="row">{@systemProperty java.compiler}</th>
-     *     <td>Name of JIT compiler to use</td></tr>
      * <tr><th scope="row">{@systemProperty os.name}</th>
      *     <td>Operating system name</td></tr>
      * <tr><th scope="row">{@systemProperty os.arch}</th>
@@ -1903,6 +1900,9 @@ public final class System {
      * Runtime.getRuntime().exit(n)
      * </pre></blockquote>
      *
+     * @implNote
+     * The initiation of the shutdown sequence is logged by {@link Runtime#exit(int)}.
+     *
      * @param  status exit status.
      * @throws SecurityException
      *         if a security manager exists and its {@code checkExit} method
@@ -2008,6 +2008,8 @@ public final class System {
      *             linked with the VM, or the library cannot be mapped to
      *             a native library image by the host system.
      * @throws     NullPointerException if {@code filename} is {@code null}
+     *
+     * @spec jni/index.html Java Native Interface Specification
      * @see        java.lang.Runtime#load(java.lang.String)
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
@@ -2044,6 +2046,8 @@ public final class System {
      *             linked with the VM,  or the library cannot be mapped to a
      *             native library image by the host system.
      * @throws     NullPointerException if {@code libname} is {@code null}
+     *
+     * @spec jni/index.html Java Native Interface Specification
      * @see        java.lang.Runtime#loadLibrary(java.lang.String)
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
@@ -2462,16 +2466,21 @@ public final class System {
                 return ModuleLayer.layers(loader);
             }
 
+            public int countPositives(byte[] bytes, int offset, int length) {
+                return StringCoding.countPositives(bytes, offset, length);
+            }
             public String newStringNoRepl(byte[] bytes, Charset cs) throws CharacterCodingException  {
                 return String.newStringNoRepl(bytes, cs);
             }
-
+            public char getUTF16Char(byte[] bytes, int index) {
+                return StringUTF16.getChar(bytes, index);
+            }
             public byte[] getBytesNoRepl(String s, Charset cs) throws CharacterCodingException {
                 return String.getBytesNoRepl(s, cs);
             }
 
             public String newStringUTF8NoRepl(byte[] bytes, int off, int len) {
-                return String.newStringUTF8NoRepl(bytes, off, len);
+                return String.newStringUTF8NoRepl(bytes, off, len, true);
             }
 
             public byte[] getBytesUTF8NoRepl(String s) {
@@ -2556,17 +2565,9 @@ public final class System {
                 return Thread.currentCarrierThread();
             }
 
-            @ChangesCurrentThread
             public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
-                Thread thread = Thread.currentThread();
-                if (thread.isVirtual()) {
-                    Thread carrier = Thread.currentCarrierThread();
-                    carrier.setCurrentThread(carrier);
-                    try {
-                        return task.call();
-                    } finally {
-                        carrier.setCurrentThread(thread);
-                    }
+                if (Thread.currentThread() instanceof VirtualThread vthread) {
+                    return vthread.executeOnCarrierThread(task);
                 } else {
                     return task.call();
                 }
@@ -2677,6 +2678,10 @@ public final class System {
 
             public int classFileFormatVersion(Class<?> clazz) {
                 return clazz.getClassFileVersion();
+            }
+
+            public String getLoaderNameID(ClassLoader loader) {
+                return loader.nameAndId();
             }
         });
     }
