@@ -144,7 +144,7 @@ public interface ExecutableElement extends Element, Parameterizable {
      * returned, for a value class static factory method, the name
      * {@code "<vnew>"} is returned, for a static initializer, the
      * name {@code "<clinit>"} is returned, and for an anonymous class
-     * or instance initializer, an <a href=Name.html#empty_name>empty name</a> is
+     * or instance initializer, an {@linkplain Name##empty_name empty name} is
      * returned.
      */
     @Override

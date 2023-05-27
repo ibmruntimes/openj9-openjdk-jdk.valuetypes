@@ -215,7 +215,7 @@ compiler.err.preview.without.source.or.release
 compiler.misc.illegal.signature                               # the compiler can now detect more non-denotable types before class writing
 
 # this one needs a forged class file to be reproduced
-compiler.err.annotation.unrecognized.attribute.name     
+compiler.err.annotation.unrecognized.attribute.name
 
 # Value Objects
 compiler.misc.feature.value.classes

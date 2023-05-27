@@ -2568,7 +2568,7 @@ public class Types {
                     Type erased = t.tsym.erasure(Types.this);
                     if (recurse) {
                         erased = new ErasedClassType(erased.getEnclosingType(), erased.tsym,
-                                t.dropMetadata(Annotations.class).getMetadata());
+                                                     t.dropMetadata(Annotations.class).getMetadata());
                         return erased;
                     } else {
                         return combineMetadata(erased, t);

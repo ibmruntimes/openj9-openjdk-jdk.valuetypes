@@ -27,7 +27,6 @@ package java.lang.reflect;
 
 import jdk.internal.misc.PreviewFeatures;
 import jdk.internal.value.PrimitiveClass;
-import jdk.internal.misc.VM;
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassWriter;

@@ -2682,6 +2682,10 @@ public final class System {
             public String getLoaderNameID(ClassLoader loader) {
                 return loader.nameAndId();
             }
+
+            public String getLoaderNameID(ClassLoader loader) {
+                return loader.nameAndId();
+            }
         });
     }
 }

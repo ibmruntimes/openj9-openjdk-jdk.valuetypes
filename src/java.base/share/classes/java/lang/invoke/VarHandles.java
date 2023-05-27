@@ -131,9 +131,9 @@ final class VarHandles {
                             ? new VarHandleValues.FieldStaticReadOnly(decl, refc, foffset, type)
                             : new VarHandleValues.FieldStaticReadWrite(decl, refc, foffset, type));
                 } else {
-                    return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
+                    return f.isFinal() && !isWriteAllowedOnFinalFields
                             ? new VarHandleReferences.FieldStaticReadOnly(decl, base, foffset, type)
-                            : new VarHandleReferences.FieldStaticReadWrite(decl, base, foffset, type));
+                            : new VarHandleReferences.FieldStaticReadWrite(decl, base, foffset, type);
                 }
             }
             else if (type == boolean.class) {

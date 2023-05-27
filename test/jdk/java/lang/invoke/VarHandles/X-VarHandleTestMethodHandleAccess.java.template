@@ -29,7 +29,9 @@
  *          to hit compilation thresholds
 #if[Value]
  * @compile -XDenablePrimitiveClasses Point.java Value.java VarHandleTestMethodHandleAccess$Type$.java
- * @run testng/othervm -XX:+EnableValhalla -XX:+EnablePrimitiveClasses -Diters=2000 -XX:CompileThresholdScaling=0.1 VarHandleTestMethodHandleAccess$Type$
+ * @comment Set CompileThresholdScaling to 0.1 so that the warmup loop sets to 2000 iterations
+ *          to hit compilation thresholds
+ * @run testng/othervm -XX:+EnableValhalla -XX:+EnablePrimitiveClasses -Diters=200 -XX:CompileThresholdScaling=0.1 VarHandleTestMethodHandleAccess$Type$
 #else[Value]
  * @run testng/othervm -Diters=2000 -XX:CompileThresholdScaling=0.1 VarHandleTestMethodHandleAccess$Type$
 #end[Value]

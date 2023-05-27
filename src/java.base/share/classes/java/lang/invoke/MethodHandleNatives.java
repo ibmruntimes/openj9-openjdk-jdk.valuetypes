@@ -110,15 +110,15 @@ class MethodHandleNatives {
         Constants() { } // static only
 
         static final int
-            MN_IS_METHOD           = 0x00010000, // method (not constructor)
-            MN_IS_OBJECT_CONSTRUCTOR = 0x00020000, // constructor
-            MN_IS_FIELD            = 0x00040000, // field
-            MN_IS_TYPE             = 0x00080000, // nested type
-            MN_CALLER_SENSITIVE    = 0x00100000, // @CallerSensitive annotation detected
-            MN_TRUSTED_FINAL       = 0x00200000, // trusted final field
-            MN_FLATTENED           = 0x00400000, // flattened field
-            MN_REFERENCE_KIND_SHIFT = 24, // refKind
-            MN_REFERENCE_KIND_MASK = 0x0F000000 >> MN_REFERENCE_KIND_SHIFT;
+            MN_IS_METHOD             = 0x00010000, // method (not object constructor)
+            MN_IS_OBJECT_CONSTRUCTOR = 0x00020000, // object constructor
+            MN_IS_FIELD              = 0x00040000, // field
+            MN_IS_TYPE               = 0x00080000, // nested type
+            MN_CALLER_SENSITIVE      = 0x00100000, // @CallerSensitive annotation detected
+            MN_TRUSTED_FINAL         = 0x00200000, // trusted final field
+            MN_FLATTENED             = 0x00400000, // flattened field
+            MN_REFERENCE_KIND_SHIFT  = 24, // refKind
+            MN_REFERENCE_KIND_MASK   = 0x0F000000 >> MN_REFERENCE_KIND_SHIFT;
 
         /**
          * Constant pool reference-kind codes, as used by CONSTANT_MethodHandle CP entries.

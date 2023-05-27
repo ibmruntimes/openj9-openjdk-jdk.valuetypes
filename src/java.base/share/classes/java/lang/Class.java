@@ -1692,7 +1692,7 @@ public final class Class<T> implements java.io.Serializable,
 
         boolean isObjectConstructor() { return !isPartial() && ConstantDescs.INIT_NAME.equals(name); }
 
-        boolean isValueFactoryMethod() { return !isPartial() && "<vnew>".equals(name); }
+        boolean isValueFactoryMethod() { return !isPartial() && ConstantDescs.VNEW_NAME.equals(name); }
 
         boolean isMethod() { return !isPartial() && !isObjectConstructor()
                                         && !isValueFactoryMethod()

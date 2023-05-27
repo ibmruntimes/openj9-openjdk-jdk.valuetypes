@@ -188,6 +188,12 @@ public class Gen extends JCTree.Visitor {
      */
     Map<Type, Symbol> qualifiedSymbolCache;
 
+    /** Cache the symbol to reflect the qualifying type.
+     *  key: corresponding type
+     *  value: qualified symbol
+     */
+    Map<Type, Symbol> qualifiedSymbolCache;
+
     /** Generate code to load an integer constant.
      *  @param n     The integer to be loaded.
      */

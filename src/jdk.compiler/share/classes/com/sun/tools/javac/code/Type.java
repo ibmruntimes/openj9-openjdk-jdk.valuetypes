@@ -1213,6 +1213,10 @@ public abstract class Type extends AnnoConstruct implements TypeMirror, PoolCons
             this(outer, typarams, tsym, List.nil(), Flavor.L_TypeOf_L);
         }
 
+        public ClassType(Type outer, List<Type> typarams, TypeSymbol tsym, Flavor flavor) {
+            this(outer, typarams, tsym, List.nil(), flavor);
+        }
+
         public ClassType(Type outer, List<Type> typarams, TypeSymbol tsym,
                          List<TypeMetadata> metadata, Flavor flavor) {
             super(tsym, metadata);
@@ -1229,7 +1233,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror, PoolCons
         }
 
         @Override
-        protected ClassType cloneWithMetadata(List<TypeMetadata> md) {
+        public ClassType cloneWithMetadata(List<TypeMetadata> md) {
             return new ClassType(outer_field, typarams_field, tsym, md, flavor) {
                 @Override
                 public Type baseType() { return ClassType.this.baseType(); }
@@ -2629,7 +2633,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror, PoolCons
         }
 
         @Override
-        protected ErrorType cloneWithMetadata(List<TypeMetadata> md) {
+        public ErrorType cloneWithMetadata(List<TypeMetadata> md) {
             return new ErrorType(originalType, tsym, md, getFlavor()) {
                 @Override
                 public Type baseType() { return ErrorType.this.baseType(); }

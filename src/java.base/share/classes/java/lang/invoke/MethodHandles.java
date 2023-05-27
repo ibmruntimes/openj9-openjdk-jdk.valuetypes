@@ -721,8 +721,8 @@ public class MethodHandles {
      * (See the Java Virtual Machine Specification, section {@jvms 4.10.1.9}.)
      * <p>
      * The JVM represents constructors and static initializer blocks as internal methods
-     * with special names ({@value ConstantDescs#INIT_NAME}, {@code "<vnew>"} and {@value
-     * ConstantDescs#CLASS_INIT_NAME}).
+     * with special names ({@value ConstantDescs#INIT_NAME},
+     * {@value ConstantDescs#VNEW_NAME} and {@value ConstantDescs#CLASS_INIT_NAME}).
      * The internal syntax of invocation instructions allows them to refer to such internal
      * methods as if they were normal methods, but the JVM bytecode verifier rejects them.
      * A lookup of such an internal method will produce a {@code NoSuchMethodException}.

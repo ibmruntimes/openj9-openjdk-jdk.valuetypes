@@ -522,7 +522,8 @@ public class ClassReader {
             {
                 // int oldsigp = sigp;
                 if ((char) signature[sigp] == 'Q' && !allowPrimitiveClasses) {
-                    throw badClassFile("bad.class.signature", quoteBadSignature());
+                    throw badClassFile("bad.class.signature",
+                                       quoteBadSignature());
                 }
                 Type t = classSigToType();
                 if (sigp < siglimit && signature[sigp] == '.')
@@ -877,9 +878,8 @@ public class ClassReader {
             new AttributeReader(names.Code, V45_3, MEMBER_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
                     if (sym.isInitOrVNew() && sym.type.getParameterTypes().size() == 0) {
-                        int code_length;
                         try {
-                            code_length = buf.getInt(bp + 4);
+                            int code_length = buf.getInt(bp + 4);
                             if ((code_length == 1 && buf.getByte(bp + 8) == (byte) ByteCodes.return_) ||
                                 (code_length == 5 && buf.getByte(bp + 8) == ByteCodes.aload_0 &&
                                     buf.getByte(bp + 9) == (byte) ByteCodes.invokespecial &&
