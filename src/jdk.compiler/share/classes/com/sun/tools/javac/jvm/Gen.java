@@ -182,11 +182,6 @@ public class Gen extends JCTree.Visitor {
     ListBuffer<int[]> patternMatchingInvocationRanges;
 
     boolean allowPrimitiveClasses;
-    /** Cache the symbol to reflect the qualifying type.
-     *  key: corresponding type
-     *  value: qualified symbol
-     */
-    Map<Type, Symbol> qualifiedSymbolCache;
 
     /** Cache the symbol to reflect the qualifying type.
      *  key: corresponding type

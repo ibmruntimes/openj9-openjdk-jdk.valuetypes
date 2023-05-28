@@ -98,16 +98,6 @@ final class ClassDescImpl implements ClassDesc {
     }
 
     /**
-     * Whether the descriptor is one of a primitive array, given this is
-     * already a valid reference type descriptor.
-     */
-    private boolean isPrimitiveArray() {
-        // All L-type descriptors must end with a semicolon; same for reference
-        // arrays, leaving primitive arrays the only ones without a final semicolon
-        return descriptor.charAt(descriptor.length() - 1) != ';';
-    }
-
-    /**
      * Returns {@code true} if this {@linkplain ClassDescImpl} is
      * equal to another {@linkplain ClassDescImpl}.  Equality is
      * determined by the two class descriptors having equal class descriptor
