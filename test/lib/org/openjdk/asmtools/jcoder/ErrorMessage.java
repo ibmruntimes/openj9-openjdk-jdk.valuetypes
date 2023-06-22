@@ -1,5 +1,9 @@
 /*
+<<<<<<<< HEAD:test/lib/org/openjdk/asmtools/jcoder/ErrorMessage.java
  * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+========
+ * Copyright (c) 1999, 2023, Oracle and/or its affiliates. All rights reserved.
+>>>>>>>> d04974410fa8de945586663016667fc7bb89c054:test/jdk/javax/swing/JTable/bug4243159.java
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +26,7 @@
  */
 package org.openjdk.asmtools.jcoder;
 
+<<<<<<<< HEAD:test/lib/org/openjdk/asmtools/jcoder/ErrorMessage.java
 /**
  * A sorted list of error messages
  */
@@ -37,5 +42,20 @@ final class ErrorMessage {
     ErrorMessage(int where, String message) {
         this.where = where;
         this.message = message;
+========
+/*
+   @test
+   @bug 4243159
+   @summary Tests that JTable() do not throw ArrayIndexOutOfBoundsException
+*/
+
+import javax.swing.JTable;
+
+public class bug4243159 {
+
+    /* Looks boring, but tests the no-args constructor works */
+    public static void main(String[] argv) {
+        JTable table = new JTable();
+>>>>>>>> d04974410fa8de945586663016667fc7bb89c054:test/jdk/javax/swing/JTable/bug4243159.java
     }
 }
