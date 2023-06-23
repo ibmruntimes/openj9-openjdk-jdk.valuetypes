@@ -536,12 +536,11 @@ void jBooleanArrayToCKBBoolArray(JNIEnv *env, const jbooleanArray jArray, CK_BBO
     jboolean* jpTemp;
     CK_ULONG i;
 
-    if (jArray == NULL) {
+    *ckpLength = jArray == NULL ? 0L : (*env)->GetArrayLength(env, jArray);
+    if(*ckpLength == 0L) {
         *ckpArray = NULL_PTR;
-        *ckpLength = 0UL;
         return;
     }
-    *ckpLength = (*env)->GetArrayLength(env, jArray);
     jpTemp = (jboolean*) calloc(*ckpLength, sizeof(jboolean));
     if (jpTemp == NULL && *ckpLength != 0UL) {
         p11ThrowOutOfMemoryError(env, 0);
@@ -578,12 +577,11 @@ void jByteArrayToCKByteArray(JNIEnv *env, const jbyteArray jArray, CK_BYTE_PTR *
     jbyte* jpTemp;
     CK_ULONG i;
 
-    if (jArray == NULL) {
+    *ckpLength = jArray == NULL ? 0L : (*env)->GetArrayLength(env, jArray);
+    if(*ckpLength == 0L) {
         *ckpArray = NULL_PTR;
-        *ckpLength = 0UL;
         return;
     }
-    *ckpLength = (*env)->GetArrayLength(env, jArray);
     jpTemp = (jbyte*) calloc(*ckpLength, sizeof(jbyte));
     if (jpTemp == NULL && *ckpLength != 0UL) {
         p11ThrowOutOfMemoryError(env, 0);
@@ -625,12 +623,11 @@ void jLongArrayToCKULongArray(JNIEnv *env, const jlongArray jArray, CK_ULONG_PTR
     jlong* jTemp;
     CK_ULONG i;
 
-    if (jArray == NULL) {
+    *ckpLength = jArray == NULL ? 0L : (*env)->GetArrayLength(env, jArray);
+    if(*ckpLength == 0L) {
         *ckpArray = NULL_PTR;
-        *ckpLength = 0UL;
         return;
     }
-    *ckpLength = (*env)->GetArrayLength(env, jArray);
     jTemp = (jlong*) calloc(*ckpLength, sizeof(jlong));
     if (jTemp == NULL && *ckpLength != 0UL) {
         p11ThrowOutOfMemoryError(env, 0);
@@ -667,12 +664,11 @@ void jCharArrayToCKCharArray(JNIEnv *env, const jcharArray jArray, CK_CHAR_PTR *
     jchar* jpTemp;
     CK_ULONG i;
 
-    if (jArray == NULL) {
+    *ckpLength = jArray == NULL ? 0L : (*env)->GetArrayLength(env, jArray);
+    if(*ckpLength == 0L) {
         *ckpArray = NULL_PTR;
-        *ckpLength = 0UL;
         return;
     }
-    *ckpLength = (*env)->GetArrayLength(env, jArray);
     jpTemp = (jchar*) calloc(*ckpLength, sizeof(jchar));
     if (jpTemp == NULL && *ckpLength != 0UL) {
         p11ThrowOutOfMemoryError(env, 0);
@@ -709,12 +705,11 @@ void jCharArrayToCKUTF8CharArray(JNIEnv *env, const jcharArray jArray, CK_UTF8CH
     jchar* jTemp;
     CK_ULONG i;
 
-    if (jArray == NULL) {
+    *ckpLength = jArray == NULL ? 0L : (*env)->GetArrayLength(env, jArray);
+    if(*ckpLength == 0L) {
         *ckpArray = NULL_PTR;
-        *ckpLength = 0UL;
         return;
     }
-    *ckpLength = (*env)->GetArrayLength(env, jArray);
     jTemp = (jchar*) calloc(*ckpLength, sizeof(jchar));
     if (jTemp == NULL && *ckpLength != 0UL) {
         p11ThrowOutOfMemoryError(env, 0);
@@ -726,7 +721,7 @@ void jCharArrayToCKUTF8CharArray(JNIEnv *env, const jcharArray jArray, CK_UTF8CH
     }
 
     *ckpArray = (CK_UTF8CHAR_PTR) calloc(*ckpLength, sizeof(CK_UTF8CHAR));
-    if (*ckpArray == NULL && *ckpLength != 0UL) {
+    if (*ckpArray == NULL) {
         p11ThrowOutOfMemoryError(env, 0);
         goto cleanup;
     }

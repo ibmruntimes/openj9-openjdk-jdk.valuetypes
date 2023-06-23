@@ -47,7 +47,6 @@ import javax.crypto.spec.PBEKeySpec;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import jdk.crypto.jniprovider.NativeCrypto;
 import jdk.internal.ref.CleanerFactory;
 
 import openj9.internal.security.RestrictedSecurity;
@@ -117,7 +116,11 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
             } else if (keyLength < 0) {
                 throw new InvalidKeySpecException("Key length is negative");
             }
-            this.prf = Mac.getInstance(prfAlgo);
+            if (RestrictedSecurity.isFIPSEnabled()) {
+                this.prf = Mac.getInstance(prfAlgo);
+            } else {
+                this.prf = Mac.getInstance(prfAlgo, SunJCE.getInstance());
+            }
             this.key = deriveKey(prf, passwdBytes, salt, iterCount, keyLength);
         } catch (NoSuchAlgorithmException nsae) {
             // not gonna happen; re-throw just in case

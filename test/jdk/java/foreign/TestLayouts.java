@@ -94,7 +94,7 @@ public class TestLayouts {
     public void testEqualities(MemoryLayout layout) {
 
         // Use another Type
-        MemoryLayout differentType = MemoryLayout.paddingLayout(8);
+        MemoryLayout differentType = MemoryLayout.paddingLayout(1);
         assertFalse(layout.equals(differentType));
 
         // Use another name
@@ -102,7 +102,7 @@ public class TestLayouts {
         assertFalse(layout.equals(differentName));
 
         // Use another alignment
-        MemoryLayout differentAlignment = layout.withBitAlignment(layout.bitAlignment() * 2);
+        MemoryLayout differentAlignment = layout.withByteAlignment(layout.byteAlignment() * 2);
         assertFalse(layout.equals(differentAlignment));
 
         // Swap endian
@@ -120,7 +120,7 @@ public class TestLayouts {
 
         assertFalse(layout.equals(MemoryLayout.sequenceLayout(13, JAVA_LONG)));
 
-        MemoryLayout other = layout.withBitAlignment(128).withBitAlignment(layout.bitAlignment());
+        MemoryLayout other = layout.withByteAlignment(16).withByteAlignment(layout.byteAlignment());
         assertTrue(layout.equals(other));
 
     }

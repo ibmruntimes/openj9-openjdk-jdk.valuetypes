@@ -222,6 +222,7 @@ public sealed interface MemoryLayout permits SequenceLayout, GroupLayout, Paddin
      */
     long byteAlignment();
 
+
     /**
      * Returns a memory layout of the same type with the same size and name as this layout,
      * but with the specified alignment constraint (in bytes).
