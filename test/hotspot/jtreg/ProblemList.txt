@@ -116,6 +116,7 @@ runtime/cds/appcds/cacheObject/ArchivedEnumTest.java 8292499 generic-all
 
 # Valhalla
 runtime/AccModule/ConstModule.java 8294051 generic-all
+runtime/valhalla/inlinetypes/InlineOops.java 8313607 generic-aarch64
 
 #############################################################################
 
