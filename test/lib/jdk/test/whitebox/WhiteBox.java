@@ -151,19 +151,17 @@ public class WhiteBox {
     return encodeConstantPoolIndyIndex0(index);
   }
 
-  private native Object[] getObjectsViaKlassOopMaps0(Object thing);
-  public Object[] getObjectsViaKlassOopMaps(Object thing) {
-    Objects.requireNonNull(thing);
-    return getObjectsViaKlassOopMaps0(thing);
+  private native int getFieldEntriesLength0(Class<?> aClass);
+  public         int getFieldEntriesLength(Class<?> aClass) {
+    Objects.requireNonNull(aClass);
+    return getFieldEntriesLength0(aClass);
   }
 
-  private native Object[] getObjectsViaOopIterator0(Object thing);
-  public Object[] getObjectsViaOopIterator(Object thing) {
-    Objects.requireNonNull(thing);
-    return getObjectsViaOopIterator0(thing);
+  private native int getFieldCPIndex0(Class<?> aClass, int index);
+  public         int getFieldCPIndex(Class<?> aClass, int index) {
+    Objects.requireNonNull(aClass);
+    return getFieldCPIndex0(aClass, index);
   }
-
-  public native Object[] getObjectsViaFrameOopIterator(int depth);
 
   private native int getIndyInfoLength0(Class<?> aClass);
   public         int getIndyInfoLength(Class<?> aClass) {
