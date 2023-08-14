@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,18 @@
  */
 
 /*
- * @test
- * @summary run CTW for all classes from jdk.crypto.ec module
- *
- * @library /test/lib / /testlibrary/ctw/src
- * @modules java.base/jdk.internal.access
- *          java.base/jdk.internal.jimage
- *          java.base/jdk.internal.misc
- *          java.base/jdk.internal.reflect
- * @modules jdk.crypto.ec
- *
- * @build jdk.test.whitebox.WhiteBox
- * @run driver jdk.test.lib.helpers.ClassFileInstaller jdk.test.whitebox.WhiteBox
- * @run driver/timeout=7200 sun.hotspot.tools.ctw.CtwRunner modules:jdk.crypto.ec
+ * @test T8312814
+ * @summary Verify proper behavior of TransType w.r.t. templated Strings
+ * @enablePreview
+ * @compile T8312814.java
  */
+
+
+import java.util.List;
+
+public class T8312814 {
+    void x(List<? extends StringTemplate.Processor<String, RuntimeException>> list) {
+        list.get(0)."";
+    }
+}
+
