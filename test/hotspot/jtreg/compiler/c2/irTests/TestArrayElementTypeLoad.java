@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,30 +21,38 @@
  * questions.
  */
 
-package gc.startup_warnings;
+package compiler.c2.irTests;
+
+import compiler.lib.ir_framework.*;
 
 /*
- * @test TestG1
- * @bug 8006398
- * @requires vm.gc.G1
- * @summary Test that the G1 collector does not print a warning message
- * @library /test/lib
- * @modules java.base/jdk.internal.misc
- *          java.management
- * @run driver gc.startup_warnings.TestG1
+ * @test
+ * @library /test/lib /
+ * @run driver compiler.c2.irTests.TestArrayElementTypeLoad
  */
 
-import jdk.test.lib.process.ProcessTools;
-import jdk.test.lib.process.OutputAnalyzer;
+public class TestArrayElementTypeLoad {
+    public static void main(String[] args) {
+        TestFramework.run();
+    }
 
-public class TestG1 {
+    static final A[] array = new A[1];
 
-  public static void main(String args[]) throws Exception {
-    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:+UseG1GC", "-version");
-    OutputAnalyzer output = new OutputAnalyzer(pb.start());
-    output.shouldNotContain("deprecated");
-    output.shouldNotContain("error");
-    output.shouldHaveExitValue(0);
-  }
+    @Test
+    @IR(phase = { CompilePhase.ITER_GVN1 }, failOn = { IRNode.SUBTYPE_CHECK })
+    public static void test1(A a) {
+        array[0] = a;
+    }
 
+    @Run(test = "test1")
+    private void test1Runner() {
+        test1(new A());
+        test1(new B());
+    }
+
+    static class A {
+    }
+
+    static class B extends A {
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,30 +21,28 @@
  * questions.
  */
 
-package gc.startup_warnings;
-
 /*
-* @test TestShenandoah
-* @requires vm.gc.Shenandoah
-* @bug 8006398
-* @summary Test that the Shenandoah collector does not print a warning message
-* @library /test/lib
-* @modules java.base/jdk.internal.misc
-*          java.management
-* @run driver gc.startup_warnings.TestShenandoah
-*/
+ * @test
+ * @bug 6277243
+ * @summary Verify that there is Locale.ROOT constant, and it is equal to Locale("", "", "")
+ * @run junit RootLocale
+ */
 
-import jdk.test.lib.process.ProcessTools;
-import jdk.test.lib.process.OutputAnalyzer;
+import java.util.Locale;
 
-public class TestShenandoah {
+import org.junit.jupiter.api.Test;
 
-  public static void main(String args[]) throws Exception {
-    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:+UnlockExperimentalVMOptions", "-XX:+UseShenandoahGC", "-version");
-    OutputAnalyzer output = new OutputAnalyzer(pb.start());
-    output.shouldNotContain("deprecated");
-    output.shouldNotContain("error");
-    output.shouldHaveExitValue(0);
-  }
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+public class RootLocale {
+
+    /**
+     * Locale.ROOT should exist and match an empty Locale given as
+     * Locale("", "", "").
+     */
+    @Test
+    public void rootTest() {
+        Locale root = Locale.of("", "", "");
+        assertEquals(Locale.ROOT, root, "Locale.ROOT is not equal to Locale(\"\", \"\", \"\")");
+    }
 }
