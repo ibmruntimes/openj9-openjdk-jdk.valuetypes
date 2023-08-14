@@ -699,6 +699,10 @@ com/sun/jdi/RepStep.java                                        8043571 generic-
 
 com/sun/jdi/InvokeHangTest.java                                 8218463 linux-all
 
+com/sun/jdi/cds/CDSBreakpointTest.java                          8304168 generic-all
+com/sun/jdi/cds/CDSDeleteAllBkptsTest.java                      8304168 generic-all
+com/sun/jdi/cds/CDSFieldWatchpoints.java                        8304168 generic-all
+
 ############################################################################
 
 # jdk_time

@@ -55,11 +55,6 @@ JDK_MODULES_LIST := $(call CommaList, $(JDK_MODULES))
 
 BASE_RELEASE_FILE := $(JDK_OUTPUTDIR)/release
 
-$(JDK_IMAGE_DIR)/README: $(TOPDIR)/src/README
-	$(install-file)
-
-JDK_TARGETS += $(JDK_IMAGE_DIR)/README
-
 JMODS_DIRS := $(EXTRA_JMODS_DIR) $(IMAGES_OUTPUTDIR)/jmods
 
 JDK_JMODS := $(foreach m, $(JDK_MODULES), $(firstword $(wildcard $(addsuffix /$m.jmod, $(JMODS_DIRS)))))

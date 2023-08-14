@@ -71,6 +71,9 @@ compiler/vectorapi/VectorLogicalOpIdentityTest.java 8302459 linux-x64,windows-x6
 
 compiler/jvmci/TestUncaughtErrorInCompileMethod.java 8309073 generic-all
 
+compiler/gcbarriers/TestZGCBarrierElision.java#ZGen 8313737 generic-all
+compiler/valhalla/inlinetypes/TestArrays.java 8313667 generic-all
+
 #############################################################################
 
 # :hotspot_gc
@@ -115,7 +118,7 @@ runtime/cds/appcds/cacheObject/ArchivedEnumTest.java 8292499 generic-all
 
 # Valhalla
 runtime/AccModule/ConstModule.java 8294051 generic-all
-runtime/valhalla/inlinetypes/InlineOops.java 8313607 generic-aarch64
+runtime/valhalla/inlinetypes/InlineOops.java#ZGen 8313607 linux-aarch64,macosx-aarch64
 
 #############################################################################
 
