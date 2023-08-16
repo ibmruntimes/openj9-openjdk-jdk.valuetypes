@@ -225,3 +225,4 @@ compiler.misc.feature.value.classes
 compiler.err.cyclic.primitive.class.membership
 compiler.misc.feature.primitive.classes
 compiler.err.generic.parameterization.with.primitive.class
+
