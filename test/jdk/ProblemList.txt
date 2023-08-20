@@ -772,8 +772,6 @@ jdk/classfile/PrimitiveClassConstantTest.java                   8310649 generic-
 
 # jdk_foreign
 
-java/foreign/TestByteBuffer.java 8309475 aix-ppc64
-
 ############################################################################
 # Client manual tests
 
