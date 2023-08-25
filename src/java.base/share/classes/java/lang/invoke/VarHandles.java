@@ -127,9 +127,15 @@ final class VarHandles {
         long foffset = MethodHandleNatives.staticFieldOffset(f);
         Class<?> type = f.getFieldType();
         if (!type.isPrimitive()) {
-            return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
-                    ? new VarHandleReferences.FieldStaticReadOnly(decl, base, foffset, type)
-                    : new VarHandleReferences.FieldStaticReadWrite(decl, base, foffset, type));
+            if (f.isFlattened()) {
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
+                        ? new VarHandleValues.FieldStaticReadOnly(decl, base, foffset, type)
+                        : new VarHandleValues.FieldStaticReadWrite(decl, base, foffset, type));
+            } else {
+                return f.isFinal() && !isWriteAllowedOnFinalFields
+                        ? new VarHandleReferences.FieldStaticReadOnly(decl, base, foffset, type)
+                        : new VarHandleReferences.FieldStaticReadWrite(decl, base, foffset, type);
+            }
         }
         else if (type == boolean.class) {
             return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
