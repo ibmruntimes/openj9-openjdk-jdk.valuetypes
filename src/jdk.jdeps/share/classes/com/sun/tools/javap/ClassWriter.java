@@ -493,12 +493,12 @@ public class ClassWriter extends BasicWriter {
                     print(getJavaParameterTypes(d, flags));
                     break;
                 case "<vnew>":
-                    String returnType = getJavaReturnType(d);
+                    String returnType = getJavaName(sigPrinter.print(d.result()));
                     if (!returnType.equals("void")) { // static factories for primitive classes
                         print(returnType);
                         print(" ");
                     }
-                    print(getJavaName(classFile));
+                    print(getJavaName(classModel.thisClass().asInternalName()));
                     print(getJavaParameterTypes(d, flags));
                     break;
                 case "<clinit>":

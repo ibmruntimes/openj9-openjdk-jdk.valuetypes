@@ -3555,7 +3555,7 @@ return mh1;
          */
         /* package-private */ MethodHandle serializableConstructor(Class<?> decl, Constructor<?> c) throws IllegalAccessException {
             MemberName ctor = new MemberName(c);
-            assert(ctor.isConstructor() && constructorInSuperclass(decl, c));
+            assert(ctor.isObjectConstructor() && constructorInSuperclass(decl, c));
             checkAccess(REF_newInvokeSpecial, decl, ctor);
             assert(!MethodHandleNatives.isCallerSensitive(ctor));  // maybeBindCaller not relevant here
             return DirectMethodHandle.makeAllocator(decl, ctor).setVarargs(ctor);
