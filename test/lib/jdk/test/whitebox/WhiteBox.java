@@ -140,6 +140,12 @@ public class WhiteBox {
     return getConstantPoolCacheLength0(aClass);
   }
 
+  private native Object[] getResolvedReferences0(Class<?> aClass);
+  public         Object[] getResolvedReferences(Class<?> aClass) {
+    Objects.requireNonNull(aClass);
+    return getResolvedReferences0(aClass);
+  }
+
   private native int remapInstructionOperandFromCPCache0(Class<?> aClass, int index);
   public         int remapInstructionOperandFromCPCache(Class<?> aClass, int index) {
     Objects.requireNonNull(aClass);
@@ -150,6 +156,20 @@ public class WhiteBox {
   public         int encodeConstantPoolIndyIndex(int index) {
     return encodeConstantPoolIndyIndex0(index);
   }
+
+  private native Object[] getObjectsViaKlassOopMaps0(Object thing);
+  public Object[] getObjectsViaKlassOopMaps(Object thing) {
+    Objects.requireNonNull(thing);
+    return getObjectsViaKlassOopMaps0(thing);
+  }
+
+  private native Object[] getObjectsViaOopIterator0(Object thing);
+  public Object[] getObjectsViaOopIterator(Object thing) {
+    Objects.requireNonNull(thing);
+    return getObjectsViaOopIterator0(thing);
+  }
+
+  public native Object[] getObjectsViaFrameOopIterator(int depth);
 
   private native int getFieldEntriesLength0(Class<?> aClass);
   public         int getFieldEntriesLength(Class<?> aClass) {
