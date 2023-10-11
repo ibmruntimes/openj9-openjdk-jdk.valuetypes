@@ -2969,7 +2969,7 @@ public class JavacParser implements Parser {
             }
         }
         if ((isPrimitiveModifier() && allowPrimitiveClasses) || (isValueModifier() || isIdentityModifier()) && allowValueClasses) {
-            dc = token.comment(CommentStyle.JAVADOC);
+            dc = token.docComment();
             return List.of(classOrRecordOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
         }
         if (isRecordStart() && allowRecords) {
