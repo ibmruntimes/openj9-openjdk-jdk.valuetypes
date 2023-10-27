@@ -49,7 +49,6 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.List;
@@ -75,7 +74,9 @@ public class CallArranger {
         new VMStorage[] { xmm0 },
         0,
         new VMStorage[] { rax, r10, r11 },
-        new VMStorage[] { xmm4, xmm5 },
+        new VMStorage[] { xmm4, xmm5,
+                          xmm16, xmm17, xmm18, xmm19, xmm20, xmm21, xmm22, xmm23,
+                          xmm24, xmm25, xmm26, xmm27, xmm28, xmm29, xmm30, xmm31 },
         16,
         32,
         r10, r11 // scratch 1 & 2
@@ -127,12 +128,12 @@ public class CallArranger {
         return new Bindings(csb.csb.build(), returnInMemory);
     }
 
-    /* Replace DowncallLinker in OpenJDK with the implementation of DowncallLinker specific to OpenJ9 */
+    /* Replace DowncallLinker in OpenJDK with the implementation of DowncallLinker specific to OpenJ9. */
     public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
         return DowncallLinker.getBoundMethodHandle(mt, cDesc, options);
     }
 
-    /* Replace UpcallLinker in OpenJDK with the implementation of UpcallLinker specific to OpenJ9 */
+    /* Replace UpcallLinker in OpenJDK with the implementation of UpcallLinker specific to OpenJ9. */
     public static UpcallStubFactory arrangeUpcall(MethodType mt, FunctionDescriptor cDesc, LinkerOptions options) {
         return UpcallLinker.makeFactory(mt, cDesc, options);
     }

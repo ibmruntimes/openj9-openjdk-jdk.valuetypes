@@ -23,6 +23,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * ===========================================================================
+ */
+
 package jdk.internal.foreign.abi.s390.linux;
 
 import java.lang.foreign.AddressLayout;
@@ -37,19 +44,16 @@ import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.DowncallLinker;
 import jdk.internal.foreign.abi.LinkerOptions;
-import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.UpcallLinker;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.Utils;
 
-import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import static jdk.internal.foreign.abi.s390.linux.TypeClass.*;
 import static jdk.internal.foreign.abi.s390.S390Architecture.*;
 import static jdk.internal.foreign.abi.s390.S390Architecture.Regs.*;
 
