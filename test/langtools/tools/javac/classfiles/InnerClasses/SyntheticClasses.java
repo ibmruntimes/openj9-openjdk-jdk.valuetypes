@@ -50,6 +50,11 @@ public class SyntheticClasses {
         File testClasses = new File(System.getProperty("test.classes"));
         for (File classFile : Objects.requireNonNull(testClasses.listFiles(f -> f.getName().endsWith(".class")))) {
             ClassModel cf = Classfile.of().parse(classFile.toPath());
+            if ((cf.flags().flagsMask() & (Classfile.ACC_SYNTHETIC | Classfile.ACC_ABSTRACT)) == Classfile.ACC_SYNTHETIC) {
+                if ((cf.flags().flagsMask() & Classfile.ACC_IDENTITY) == 0) {
+                    throw new IllegalStateException("Missing ACC_IDENTITY on synthetic concrete identity class: " + cf.thisClass().asInternalName());
+                }
+            }
             if (cf.thisClass().asInternalName().matches(".*\\$[0-9]+")) {
                 EnclosingMethodAttribute encl = cf.findAttribute(Attributes.ENCLOSING_METHOD).orElse(null);
                 if (encl != null) {

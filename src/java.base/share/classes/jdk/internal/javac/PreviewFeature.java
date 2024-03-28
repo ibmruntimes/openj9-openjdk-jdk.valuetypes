@@ -67,10 +67,10 @@ public @interface PreviewFeature {
         // not used, but required for interim javac to not warn.
         VIRTUAL_THREADS,
         FOREIGN,
-
-        @JEP(number=8277163, title="Value Objects")
+        @JEP(number=401, title="Value Classes and Objects", status = "Preview")
         VALUE_OBJECTS,
-        @JEP(number=430, title="String Templates")
+
+        @JEP(number=459, title="String Templates", status="Second Preview")
         STRING_TEMPLATES,
         @JEP(number=445, title="Unnamed Classes and Instance Main Methods")
         UNNAMED_CLASSES,

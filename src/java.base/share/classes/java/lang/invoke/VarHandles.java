@@ -25,7 +25,6 @@
 
 package java.lang.invoke;
 
-import jdk.internal.value.PrimitiveClass;
 import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
@@ -60,14 +59,14 @@ final class VarHandles {
             long foffset = MethodHandleNatives.objectFieldOffset(f);
             Class<?> type = f.getFieldType();
             if (!type.isPrimitive()) {
-                if (f.isFlattened()) {
+                if (f.isFlat()) {
                     return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
-                        ? new VarHandleValues.FieldInstanceReadOnly(refc, foffset, type)
-                        : new VarHandleValues.FieldInstanceReadWrite(refc, foffset, type));
+                        ? new VarHandleValues.FieldInstanceReadOnly(refc, foffset, type, f.getCheckedFieldType())
+                        : new VarHandleValues.FieldInstanceReadWrite(refc, foffset, type, f.getCheckedFieldType()));
                 } else {
                     return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
-                       ? new VarHandleReferences.FieldInstanceReadOnly(refc, foffset, type)
-                       : new VarHandleReferences.FieldInstanceReadWrite(refc, foffset, type));
+                       ? new VarHandleReferences.FieldInstanceReadOnly(refc, foffset, type, f.getCheckedFieldType())
+                       : new VarHandleReferences.FieldInstanceReadWrite(refc, foffset, type, f.getCheckedFieldType()));
                 }
             }
             else if (type == boolean.class) {
@@ -128,14 +127,14 @@ final class VarHandles {
         long foffset = MethodHandleNatives.staticFieldOffset(f);
         Class<?> type = f.getFieldType();
         if (!type.isPrimitive()) {
-            if (f.isFlattened()) {
+            if (f.isFlat()) {
                 return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
-                        ? new VarHandleValues.FieldStaticReadOnly(decl, base, foffset, type)
-                        : new VarHandleValues.FieldStaticReadWrite(decl, base, foffset, type));
+                        ? new VarHandleValues.FieldStaticReadOnly(decl, base, foffset, type, f.getCheckedFieldType())
+                        : new VarHandleValues.FieldStaticReadWrite(decl, base, foffset, type, f.getCheckedFieldType()));
             } else {
                 return f.isFinal() && !isWriteAllowedOnFinalFields
-                        ? new VarHandleReferences.FieldStaticReadOnly(decl, base, foffset, type)
-                        : new VarHandleReferences.FieldStaticReadWrite(decl, base, foffset, type);
+                        ? new VarHandleReferences.FieldStaticReadOnly(decl, base, foffset, type, f.getCheckedFieldType())
+                        : new VarHandleReferences.FieldStaticReadWrite(decl, base, foffset, type, f.getCheckedFieldType());
             }
         }
         else if (type == boolean.class) {
@@ -224,7 +223,7 @@ final class VarHandles {
         int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
 
         if (!componentType.isPrimitive()) {
-            return maybeAdapt(UNSAFE.isFlattenedArray(arrayClass)
+            return maybeAdapt(UNSAFE.isFlatArray(arrayClass)
                 ? new VarHandleValues.Array(aoffset, ashift, arrayClass)
                 : new VarHandleReferences.Array(aoffset, ashift, arrayClass));
         }
@@ -645,7 +644,7 @@ final class VarHandles {
                         .getExceptionTypes();
             } else if (MethodHandleNatives.refKindIsField(refKind)) {
                 return new Class<?>[0];
-            } else if (MethodHandleNatives.refKindIsObjectConstructor(refKind)) {
+            } else if (MethodHandleNatives.refKindIsConstructor(refKind)) {
                 return info.reflectAs(Constructor.class, MethodHandles.Lookup.IMPL_LOOKUP)
                         .getExceptionTypes();
             } else {

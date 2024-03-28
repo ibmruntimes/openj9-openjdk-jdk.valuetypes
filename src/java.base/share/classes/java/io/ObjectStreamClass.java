@@ -1967,6 +1967,7 @@ public final class ObjectStreamClass implements Serializable {
          */
         static Object newValueInstance(Class<?> clazz) throws InstantiationException{
             assert clazz.isValue() : "Should be a value class";
+            // may not be implicitly constructible; so allocate with Unsafe
             Object obj = UNSAFE.uninitializedDefaultValue(clazz);
             return UNSAFE.makePrivateBuffer(obj);
         }
@@ -2104,7 +2105,7 @@ public final class ObjectStreamClass implements Serializable {
                 Field f = fields[i].getField();
                 vals[offsets[i]] = switch (typeCodes[i]) {
                     case 'L', '[' ->
-                            UNSAFE.isFlattened(f)
+                            UNSAFE.isFlatField(f)
                                     ? UNSAFE.getValue(obj, readKeys[i], f.getType())
                                     : UNSAFE.getReference(obj, readKeys[i]);
                     default       -> throw new InternalError();
@@ -2157,7 +2158,7 @@ public final class ObjectStreamClass implements Serializable {
                                 obj.getClass().getName());
                         }
                         if (!dryRun) {
-                            if (UNSAFE.isFlattened(f)) {
+                            if (UNSAFE.isFlatField(f)) {
                                 UNSAFE.putValue(obj, key, f.getType(), val);
                             } else {
                                 UNSAFE.putReference(obj, key, val);
