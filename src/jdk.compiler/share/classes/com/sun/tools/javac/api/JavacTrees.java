@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -601,8 +601,7 @@ public class JavacTrees extends DocTrees {
     }
 
     MethodSymbol findConstructor(ClassSymbol tsym, List<Type> paramTypes, boolean strict) {
-        Name constructorName = tsym.isConcreteValueClass() ? names.vnew : names.init;
-        for (Symbol sym : tsym.members().getSymbolsByName(constructorName)) {
+        for (Symbol sym : tsym.members().getSymbolsByName(names.init)) {
             if (sym.kind == MTH) {
                 if (hasParameterTypes((MethodSymbol) sym, paramTypes, strict)) {
                     return (MethodSymbol) sym;
@@ -622,7 +621,7 @@ public class JavacTrees extends DocTrees {
         //### Note that this search is not necessarily what the compiler would do!
 
         // do not match constructors
-        if (names.isInitOrVNew(methodName))
+        if (methodName == names.init)
             return null;
 
         if (searched.contains(tsym))
@@ -1138,7 +1137,7 @@ public class JavacTrees extends DocTrees {
             errorType.getKind() == TypeKind.ERROR) {
             return extraType2OriginalMap.computeIfAbsent(classType, tt ->
                     new ClassType(classType.getEnclosingType(), classType.typarams_field,
-                                  classType.tsym, classType.getMetadata(), classType.getFlavor()) {
+                            classType.tsym, classType.getMetadata()) {
                         @Override
                         public Type baseType() { return classType; }
                         @Override
@@ -1175,13 +1174,17 @@ public class JavacTrees extends DocTrees {
         printMessage(kind, msg, ((DCTree) t).pos((DCDocComment) c), root);
     }
 
+    public void printMessage(Diagnostic.Kind kind, CharSequence msg) {
+        printMessage(kind, msg, (JCDiagnostic.DiagnosticPosition) null, null);
+    }
+
     private void printMessage(Diagnostic.Kind kind, CharSequence msg,
             JCDiagnostic.DiagnosticPosition pos,
             com.sun.source.tree.CompilationUnitTree root) {
         JavaFileObject oldSource = null;
         JavaFileObject newSource = null;
 
-        newSource = root.getSourceFile();
+        newSource = root == null ? null : root.getSourceFile();
         if (newSource == null) {
             pos = null;
         } else {

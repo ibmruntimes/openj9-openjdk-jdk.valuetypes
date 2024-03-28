@@ -1051,12 +1051,12 @@ public final class ObjectStreamClass implements Serializable {
                                    new AccessControlContext(domains));
                     } catch (UndeclaredThrowableException x) {
                         Throwable cause = x.getCause();
-                        if (cause instanceof InstantiationException)
-                            throw (InstantiationException) cause;
-                        if (cause instanceof InvocationTargetException)
-                            throw (InvocationTargetException) cause;
-                        if (cause instanceof IllegalAccessException)
-                            throw (IllegalAccessException) cause;
+                        if (cause instanceof InstantiationException ie)
+                            throw ie;
+                        if (cause instanceof InvocationTargetException ite)
+                            throw ite;
+                        if (cause instanceof IllegalAccessException iae)
+                            throw iae;
                         // not supposed to happen
                         throw x;
                     }
@@ -1064,6 +1064,12 @@ public final class ObjectStreamClass implements Serializable {
             } catch (IllegalAccessException ex) {
                 // should not occur, as access checks have been suppressed
                 throw new InternalError(ex);
+            } catch (InvocationTargetException ex) {
+                Throwable cause = ex.getCause();
+                if (cause instanceof Error err)
+                    throw err;
+                else
+                    throw ex;
             } catch (InstantiationError err) {
                 var ex = new InstantiationException();
                 ex.initCause(err);
@@ -1961,6 +1967,7 @@ public final class ObjectStreamClass implements Serializable {
          */
         static Object newValueInstance(Class<?> clazz) throws InstantiationException{
             assert clazz.isValue() : "Should be a value class";
+            // may not be implicitly constructible; so allocate with Unsafe
             Object obj = UNSAFE.uninitializedDefaultValue(clazz);
             return UNSAFE.makePrivateBuffer(obj);
         }
@@ -2098,7 +2105,7 @@ public final class ObjectStreamClass implements Serializable {
                 Field f = fields[i].getField();
                 vals[offsets[i]] = switch (typeCodes[i]) {
                     case 'L', '[' ->
-                            UNSAFE.isFlattened(f)
+                            UNSAFE.isFlatField(f)
                                     ? UNSAFE.getValue(obj, readKeys[i], f.getType())
                                     : UNSAFE.getReference(obj, readKeys[i]);
                     default       -> throw new InternalError();
@@ -2151,7 +2158,7 @@ public final class ObjectStreamClass implements Serializable {
                                 obj.getClass().getName());
                         }
                         if (!dryRun) {
-                            if (UNSAFE.isFlattened(f)) {
+                            if (UNSAFE.isFlatField(f)) {
                                 UNSAFE.putValue(obj, key, f.getType(), val);
                             } else {
                                 UNSAFE.putReference(obj, key, val);

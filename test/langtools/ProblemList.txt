@@ -78,18 +78,11 @@ tools/javac/modules/SourceInSymlinkTest.java                                    
 tools/javac/lambda/bytecode/TestLambdaBytecodeTargetRelease14.java              8312534    linux-i586     fails with assert "g1ConcurrentMark.cpp: Overflow during reference processing"
 tools/javac/varargs/warning/Warn5.java                                          8312534    linux-i586     fails with assert "g1ConcurrentMark.cpp: Overflow during reference processing"
 
-# javac Valhalla
-tools/javac/Diagnostics/8043251/T8043251.java                                   8301662    generic-all
-tools/javac/annotations/SyntheticParameters.java                                8317415    generic-all
-tools/javac/annotations/typeAnnotations/classfile/SyntheticParameters.java      8317415    generic-all
-
-
 ###########################################################################
 #
 # javap
 
 tools/javap/output/RepeatingTypeAnnotations.java                                8057687    generic-all    emit correct byte code an attributes for type annotations
-
 ###########################################################################
 #
 # jdeps

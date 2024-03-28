@@ -57,6 +57,7 @@ JVM_DumpAllStacks
 JVM_DumpClassListToFile
 JVM_DumpDynamicArchive
 JVM_DumpThreads
+JVM_ExpandStackFrameInfo
 JVM_FillInStackTrace
 JVM_FindClassFromCaller
 JVM_FindClassFromClass
@@ -155,7 +156,9 @@ JVM_IsDumpingClassList
 JVM_IsFinalizationEnabled
 JVM_IsHiddenClass
 JVM_IsIdentityClass
+JVM_IsImplicitlyConstructibleClass
 JVM_IsInterface
+JVM_IsNullRestrictedArray
 JVM_IsPreviewEnabled
 JVM_IsValhallaEnabled
 JVM_IsContinuationsSupported
@@ -182,6 +185,7 @@ JVM_NativePath
 JVM_NewArray
 JVM_NewInstanceFromConstructor
 JVM_NewMultiArray
+JVM_NewNullRestrictedArray
 JVM_PhantomReferenceRefersTo
 JVM_PrintWarningAtDynamicAgentLoad
 JVM_RaiseSignal

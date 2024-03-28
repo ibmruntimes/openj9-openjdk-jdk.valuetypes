@@ -30,7 +30,7 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.ReadOnlyFileSystemException;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -41,6 +41,7 @@ import java.util.Queue;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 import javax.annotation.processing.Processor;
 import javax.lang.model.SourceVersion;
@@ -915,8 +916,6 @@ public class JavaCompiler {
             taskListener.started(new TaskEvent(TaskEvent.Kind.COMPILATION));
         }
 
-        if (processors != null && processors.iterator().hasNext())
-            explicitAnnotationProcessingRequested = true;
         // as a JavaCompiler can only be used once, throw an exception if
         // it has been used before.
         if (hasBeenUsed)
@@ -1143,21 +1142,21 @@ public class JavaCompiler {
     public void initProcessAnnotations(Iterable<? extends Processor> processors,
                                        Collection<? extends JavaFileObject> initialFiles,
                                        Collection<String> initialClassNames) {
-        // Process annotations if processing is not disabled and there
-        // is at least one Processor available.
+        if (processors != null && processors.iterator().hasNext())
+            explicitAnnotationProcessingRequested = true;
+
         if (options.isSet(PROC, "none")) {
             processAnnotations = false;
         } else if (procEnvImpl == null) {
             procEnvImpl = JavacProcessingEnvironment.instance(context);
             procEnvImpl.setProcessors(processors);
-            processAnnotations = procEnvImpl.atLeastOneProcessor();
+
+            // Process annotations if processing is requested and there
+            // is at least one Processor available.
+            processAnnotations = procEnvImpl.atLeastOneProcessor() &&
+                explicitAnnotationProcessingRequested();
 
             if (processAnnotations) {
-                if (!explicitAnnotationProcessingRequested() &&
-                    !optionsCheckingInitiallyDisabled) {
-                    log.note(Notes.ImplicitAnnotationProcessing);
-                }
-
                 options.put("parameters", "parameters");
                 reader.saveParameterNames = true;
                 keepComments = true;
@@ -1166,9 +1165,9 @@ public class JavaCompiler {
                     taskListener.started(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING));
                 deferredDiagnosticHandler = new Log.DeferredDiagnosticHandler(log);
                 procEnvImpl.getFiler().setInitialState(initialFiles, initialClassNames);
-            } else { // free resources
-                procEnvImpl.close();
             }
+        } else { // free resources
+            procEnvImpl.close();
         }
     }
 
@@ -1783,7 +1782,7 @@ public class JavaCompiler {
                         case METHODDEF:
                             if (isInterface ||
                                 (((JCMethodDecl) t).mods.flags & (Flags.PROTECTED|Flags.PUBLIC)) != 0 ||
-                                names.isInitOrVNew(((JCMethodDecl) t).sym.name) ||
+                                ((JCMethodDecl) t).sym.name == names.init ||
                                 (((JCMethodDecl) t).mods.flags & (Flags.PRIVATE)) == 0 && ((JCMethodDecl) t).sym.packge().getQualifiedName() == names.java_lang)
                                 newdefs.append(t);
                             break;
