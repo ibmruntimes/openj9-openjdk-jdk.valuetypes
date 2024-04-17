@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2017 SAP SE and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +21,18 @@
  * questions.
  */
 
-#include "jni.h"
+/*
+ * @test
+ * @bug 8318913
+ * @summary Ensure release and enable-preview work well together.
+ * @modules jdk.compiler
+ * @compile --release ${jdk.version} --enable-preview ReleaseAndEnablePreview.java
+ */
 
-JNIEXPORT jint JNICALL
-Java_gc_stress_TestJNIBlockFullGC_TestJNIBlockFullGC_TestCriticalArray0(JNIEnv *env, jclass jCls, jintArray jIn) {
-  jint *bufIn = NULL;
-  jint jInLen = (*env)->GetArrayLength(env, jIn);
-  jint result = 0;
-  jint i;
+public class ReleaseAndEnablePreview {
 
-  if (jInLen != 0) {
-    bufIn = (jint*)(*env)->GetPrimitiveArrayCritical(env, jIn, 0);
-  }
+    public String evt(String str) {
+        return str.length() + "" + str.charAt(0);
+    }
 
-  for (i = 0; i < jInLen; ++i) {
-    result += bufIn[i]; // result = sum of all array elements
-  }
-
-  if (bufIn != NULL) {
-    (*env)->ReleasePrimitiveArrayCritical(env, jIn, bufIn, 0);
-  }
-
-  return result;
 }
