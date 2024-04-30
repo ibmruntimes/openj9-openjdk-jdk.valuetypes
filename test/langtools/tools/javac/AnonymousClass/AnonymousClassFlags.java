@@ -106,7 +106,7 @@ public class AnonymousClassFlags {
     static void assertClassFlags(ClassModel classFile, String name, int expected) {
         int mask = ClassFile.ACC_PUBLIC | ClassFile.ACC_FINAL | ClassFile.ACC_INTERFACE | ClassFile.ACC_ABSTRACT |
                    ClassFile.ACC_SYNTHETIC | ClassFile.ACC_ANNOTATION | ClassFile.ACC_ENUM | ClassFile.ACC_IDENTITY;
-        int classExpected = (expected & mask);
+        int classExpected = (expected & mask) | ClassFile.ACC_SUPER;
         int classActual = classFile.flags().flagsMask();
         if (classActual != classExpected) {
             throw new AssertionError("Incorrect access_flags for class " + name +

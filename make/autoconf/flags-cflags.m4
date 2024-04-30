@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2023, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2024, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
 # Setup flags for C/C++ compiler
 #
 
-###############################################################################
+################################################################################
 #
 # How to compile shared libraries.
 #
@@ -37,10 +37,12 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
     # Default works for linux, might work on other platforms as well.
     SHARED_LIBRARY_FLAGS='-shared'
-    SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN[$]1'
+    # --disable-new-dtags forces use of RPATH instead of RUNPATH for rpaths.
+    # This protects internal library dependencies within the JDK from being
+    # overridden using LD_LIBRARY_PATH. See JDK-8326891 for more information.
+    SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN[$]1 -Wl,--disable-new-dtags'
     SET_SHARED_LIBRARY_ORIGIN="-Wl,-z,origin $SET_EXECUTABLE_ORIGIN"
     SET_SHARED_LIBRARY_NAME='-Wl,-soname=[$]1'
-    SET_SHARED_LIBRARY_MAPFILE='-Wl,-version-script=[$]1'
 
   elif test "x$TOOLCHAIN_TYPE" = xclang; then
     if test "x$OPENJDK_TARGET_OS" = xmacosx; then
@@ -49,7 +51,6 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
       SET_EXECUTABLE_ORIGIN='-Wl,-rpath,@loader_path$(or [$]1,/.)'
       SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Wl,-install_name,@rpath/[$]1'
-      SET_SHARED_LIBRARY_MAPFILE='-Wl,-exported_symbols_list,[$]1'
 
     elif test "x$OPENJDK_TARGET_OS" = xaix; then
       # Linking is different on aix
@@ -57,14 +58,15 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
       SET_EXECUTABLE_ORIGIN=""
       SET_SHARED_LIBRARY_ORIGIN=''
       SET_SHARED_LIBRARY_NAME=''
-      SET_SHARED_LIBRARY_MAPFILE=''
 
     else
       # Default works for linux, might work on other platforms as well.
       SHARED_LIBRARY_FLAGS='-shared'
       SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN[$]1'
+      if test "x$OPENJDK_TARGET_OS" = xlinux; then
+        SET_EXECUTABLE_ORIGIN="$SET_EXECUTABLE_ORIGIN -Wl,--disable-new-dtags"
+      fi
       SET_SHARED_LIBRARY_NAME='-Wl,-soname=[$]1'
-      SET_SHARED_LIBRARY_MAPFILE='-Wl,-version-script=[$]1'
 
       # arm specific settings
       if test "x$OPENJDK_TARGET_CPU" = "xarm"; then
@@ -80,20 +82,17 @@ AC_DEFUN([FLAGS_SETUP_SHARED_LIBS],
     SET_EXECUTABLE_ORIGIN=""
     SET_SHARED_LIBRARY_ORIGIN=''
     SET_SHARED_LIBRARY_NAME=''
-    SET_SHARED_LIBRARY_MAPFILE=''
 
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     SHARED_LIBRARY_FLAGS="-dll"
     SET_EXECUTABLE_ORIGIN=''
     SET_SHARED_LIBRARY_ORIGIN=''
     SET_SHARED_LIBRARY_NAME=''
-    SET_SHARED_LIBRARY_MAPFILE='-def:[$]1'
   fi
 
   AC_SUBST(SET_EXECUTABLE_ORIGIN)
   AC_SUBST(SET_SHARED_LIBRARY_ORIGIN)
   AC_SUBST(SET_SHARED_LIBRARY_NAME)
-  AC_SUBST(SET_SHARED_LIBRARY_MAPFILE)
   AC_SUBST(SHARED_LIBRARY_FLAGS)
 ])
 
@@ -117,6 +116,16 @@ AC_DEFUN([FLAGS_SETUP_DEBUG_SYMBOLS],
       FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [${DEBUG_PREFIX_CFLAGS}],
         IF_FALSE: [
             DEBUG_PREFIX_CFLAGS=
+        ],
+        IF_TRUE: [
+            # Add debug prefix map gcc system include paths, as they cause
+            # non-deterministic debug paths depending on gcc path location.
+            DEBUG_PREFIX_MAP_GCC_INCLUDE_PATHS
+
+            # Add debug prefix map for OUTPUTDIR to handle the scenario when
+            # it is not located within WORKSPACE_ROOT
+            outputdir_slash="${OUTPUTDIR%/}/"
+            DEBUG_PREFIX_CFLAGS="$DEBUG_PREFIX_CFLAGS -fdebug-prefix-map=${outputdir_slash}="
         ]
       )
     fi
@@ -156,6 +165,55 @@ AC_DEFUN([FLAGS_SETUP_DEBUG_SYMBOLS],
 
   AC_SUBST(CFLAGS_DEBUG_SYMBOLS)
   AC_SUBST(ASFLAGS_DEBUG_SYMBOLS)
+])
+
+# gcc will embed the full system include paths in the debug info
+# resulting in non-deterministic debug symbol files and thus
+# non-reproducible native libraries if gcc includes are located
+# in different paths.
+# Add -fdebug-prefix-map'ings for root and gcc include paths,
+# pointing to a common set of folders so that the binaries are deterministic:
+#  root include : /usr/include
+#  gcc include  : /usr/local/gcc_include
+#  g++ include  : /usr/local/gxx_include
+AC_DEFUN([DEBUG_PREFIX_MAP_GCC_INCLUDE_PATHS],
+[
+    # Determine gcc system include paths.
+    # Assume default roots to start with:
+    GCC_ROOT_INCLUDE="/usr/include"
+
+    # Determine is sysroot or devkit specified?
+    if test "x$SYSROOT" != "x"; then
+      GCC_ROOT_INCLUDE="${SYSROOT%/}/usr/include"
+    fi
+
+    # Add root include mapping => /usr/include
+    GCC_INCLUDE_DEBUG_MAP_FLAGS="-fdebug-prefix-map=${GCC_ROOT_INCLUDE}/=/usr/include/"
+
+    # Add gcc system include mapping => /usr/local/gcc_include
+    #   Find location of stddef.h using build C compiler
+    GCC_SYSTEM_INCLUDE=`$ECHO "#include <stddef.h>" | \
+                        $CC $CFLAGS -v -E - 2>&1 | \
+                        $GREP stddef | $TAIL -1 | $TR -s " " | $CUT -d'"' -f2`
+    if test "x$GCC_SYSTEM_INCLUDE" != "x"; then
+      GCC_SYSTEM_INCLUDE=`$DIRNAME $GCC_SYSTEM_INCLUDE`
+      GCC_INCLUDE_DEBUG_MAP_FLAGS="$GCC_INCLUDE_DEBUG_MAP_FLAGS \
+          -fdebug-prefix-map=${GCC_SYSTEM_INCLUDE}/=/usr/local/gcc_include/"
+    fi
+
+    # Add g++ system include mapping => /usr/local/gxx_include
+    #   Find location of cstddef using build C++ compiler
+    GXX_SYSTEM_INCLUDE=`$ECHO "#include <cstddef>" | \
+                        $CXX $CXXFLAGS -v -E -x c++ - 2>&1 | \
+                        $GREP cstddef | $TAIL -1 | $TR -s " " | $CUT -d'"' -f2`
+    if test "x$GXX_SYSTEM_INCLUDE" != "x"; then
+      GXX_SYSTEM_INCLUDE=`$DIRNAME $GXX_SYSTEM_INCLUDE`
+      GCC_INCLUDE_DEBUG_MAP_FLAGS="$GCC_INCLUDE_DEBUG_MAP_FLAGS \
+          -fdebug-prefix-map=${GXX_SYSTEM_INCLUDE}/=/usr/local/gxx_include/"
+    fi
+
+    # Add to debug prefix cflags
+    DEBUG_PREFIX_CFLAGS="$DEBUG_PREFIX_CFLAGS $GCC_INCLUDE_DEBUG_MAP_FLAGS"
 ])
 
 AC_DEFUN([FLAGS_SETUP_WARNINGS],
@@ -425,13 +483,14 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
 [
   #### OS DEFINES, these should be independent on toolchain
   if test "x$OPENJDK_TARGET_OS" = xlinux; then
-    CFLAGS_OS_DEF_JVM="-DLINUX"
-    CFLAGS_OS_DEF_JDK="-D_GNU_SOURCE -D_REENTRANT -D_LARGEFILE64_SOURCE"
+    CFLAGS_OS_DEF_JVM="-DLINUX -D_FILE_OFFSET_BITS=64"
+    CFLAGS_OS_DEF_JDK="-D_GNU_SOURCE -D_REENTRANT -D_FILE_OFFSET_BITS=64"
   elif test "x$OPENJDK_TARGET_OS" = xmacosx; then
     CFLAGS_OS_DEF_JVM="-D_ALLBSD_SOURCE -D_DARWIN_C_SOURCE -D_XOPEN_SOURCE"
     CFLAGS_OS_DEF_JDK="-D_ALLBSD_SOURCE -D_DARWIN_UNLIMITED_SELECT"
   elif test "x$OPENJDK_TARGET_OS" = xaix; then
-    CFLAGS_OS_DEF_JVM="-DAIX"
+    CFLAGS_OS_DEF_JVM="-DAIX -Dalloca'(size)'=__builtin_alloca'(size)' -D_LARGE_FILES"
+    CFLAGS_OS_DEF_JDK="-D_LARGE_FILES"
   elif test "x$OPENJDK_TARGET_OS" = xbsd; then
     CFLAGS_OS_DEF_JDK="-D_ALLBSD_SOURCE"
   elif test "x$OPENJDK_TARGET_OS" = xwindows; then
@@ -446,15 +505,6 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
 
   # Always enable optional macros for VM.
   ALWAYS_CFLAGS_JVM="-D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS"
-
-  # Setup some hard coded includes
-  ALWAYS_CFLAGS_JDK=" \
-      -I\$(SUPPORT_OUTPUTDIR)/modules_include/java.base \
-      -I\$(SUPPORT_OUTPUTDIR)/modules_include/java.base/\$(OPENJDK_TARGET_OS_INCLUDE_SUBDIR) \
-      -I${TOPDIR}/src/java.base/share/native/libjava \
-      -I${TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/libjava \
-      -I${TOPDIR}/src/hotspot/share/include \
-      -I${TOPDIR}/src/hotspot/os/${HOTSPOT_TARGET_OS_TYPE}/include"
 
   ###############################################################################
 
@@ -489,7 +539,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
     ALWAYS_DEFINES_JVM="-D_GNU_SOURCE"
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     ALWAYS_DEFINES_JVM="-D_REENTRANT"
-    ALWAYS_DEFINES_JDK="-D_GNU_SOURCE -D_REENTRANT -D_LARGEFILE64_SOURCE -DSTDC"
+    ALWAYS_DEFINES_JDK="-D_GNU_SOURCE -D_REENTRANT -DSTDC"
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     # Access APIs for Windows 8 and above
     # see https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
@@ -517,7 +567,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
 
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
     TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM -fstack-protector"
-    TOOLCHAIN_CFLAGS_JDK="-pipe -fstack-protector"
+    TOOLCHAIN_CFLAGS_JDK="-fvisibility=hidden -pipe -fstack-protector"
     # reduce lib size on linux in link step, this needs also special compile flags
     # do this on s390x also for libjvm (where serviceability agent is not supported)
     if test "x$ENABLE_LINKTIME_GC" = xtrue; then
@@ -552,6 +602,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
       TOOLCHAIN_CFLAGS_JDK="-pipe"
       TOOLCHAIN_CFLAGS_JDK_CONLY="-fno-strict-aliasing" # technically NOT for CXX
     fi
+    TOOLCHAIN_CFLAGS_JDK="$TOOLCHAIN_CFLAGS_JDK -fvisibility=hidden"
 
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     # Suggested additions: -qsrcmsg to get improved error reporting
@@ -562,8 +613,8 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     # The -utf-8 option sets source and execution character sets to UTF-8 to enable correct
     # compilation of all source files regardless of the active code page on Windows.
-    TOOLCHAIN_CFLAGS_JVM="-nologo -MD -Zc:preprocessor -Zc:strictStrings -Zc:inline -permissive- -utf-8 -MP"
-    TOOLCHAIN_CFLAGS_JDK="-nologo -MD -Zc:preprocessor -Zc:strictStrings -Zc:inline -utf-8 -Zc:wchar_t-"
+    TOOLCHAIN_CFLAGS_JVM="-nologo -MD -Zc:preprocessor -Zc:inline -permissive- -utf-8 -MP"
+    TOOLCHAIN_CFLAGS_JDK="-nologo -MD -Zc:preprocessor -Zc:inline -permissive- -utf-8 -Zc:wchar_t-"
   fi
 
   # CFLAGS C language level for JDK sources (hotspot only uses C++)
@@ -879,7 +930,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
       $WARNING_CFLAGS $WARNING_CFLAGS_JVM $JVM_PICFLAG $FILE_MACRO_CFLAGS \
       $REPRODUCIBLE_CFLAGS $BRANCH_PROTECTION_CFLAGS"
 
-  CFLAGS_JDK_COMMON="$ALWAYS_CFLAGS_JDK $ALWAYS_DEFINES_JDK $TOOLCHAIN_CFLAGS_JDK \
+  CFLAGS_JDK_COMMON="$ALWAYS_DEFINES_JDK $TOOLCHAIN_CFLAGS_JDK \
       $OS_CFLAGS $CFLAGS_OS_DEF_JDK $DEBUG_CFLAGS_JDK $DEBUG_OPTIONS_FLAGS_JDK \
       $WARNING_CFLAGS $WARNING_CFLAGS_JDK $DEBUG_SYMBOLS_CFLAGS_JDK \
       $FILE_MACRO_CFLAGS $REPRODUCIBLE_CFLAGS $BRANCH_PROTECTION_CFLAGS"

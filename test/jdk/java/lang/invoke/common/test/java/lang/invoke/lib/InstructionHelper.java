@@ -25,7 +25,6 @@ package test.java.lang.invoke.lib;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
-import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.TypeKind;
 
 import java.lang.constant.*;

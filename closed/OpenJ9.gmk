@@ -1,5 +1,5 @@
 # ===========================================================================
-# (c) Copyright IBM Corp. 2017, 2023 All Rights Reserved
+# (c) Copyright IBM Corp. 2017, 2024 All Rights Reserved
 # ===========================================================================
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
@@ -108,8 +108,9 @@ ifeq (windows,$(OPENJDK_TARGET_OS))
   # convert windows path to unix path
   UnixPath = $(shell $(PATHTOOL) -u $1)
   # set Visual Studio environment
-  # wrap PATH in quotes as it contains spaces (unix path)
-  EXPORT_COMPILER_ENV_VARS := PATH="$(PATH)"
+  # - wrap LIB in single-quotes to hide backslashes from make
+  # - wrap PATH in double-quotes as it may contain spaces (unix path)
+  EXPORT_COMPILER_ENV_VARS := LIB='$(OPENJ9_VS_LIB)' PATH="$(PATH)"
 else ifeq (zos,$(OPENJDK_TARGET_OS))
   UnixPath = $1
   # Allow options to follow the input file name
@@ -194,7 +195,7 @@ $(foreach file, \
 		vmLifecyleTests \
 		vmtest \
 		) \
-	$(patsubst %, $(OPENJ9_VM_BUILD_DIR)/$(call SHARED_LIBRARY,%), \
+	$(patsubst %, $(OPENJ9_VM_BUILD_DIR)/$(LIBRARY_PREFIX)%$(SHARED_LIBRARY_SUFFIX), \
 		access \
 		anntests \
 		balloon29 \
@@ -227,7 +228,7 @@ $(foreach file, \
 		vmruntimestateagent29 \
 		) \
 	$(OPENJ9_VM_BUILD_DIR)/libloadLibraryTest.jnilib \
-	$(SUPPORT_OUTPUTDIR)/test/agct/lib/$(call SHARED_LIBRARY,AsyncGetCallTraceTest), \
+	$(SUPPORT_OUTPUTDIR)/test/agct/lib/$(LIBRARY_PREFIX)AsyncGetCallTraceTest$(SHARED_LIBRARY_SUFFIX), \
 	$(if $(wildcard $(file)), \
 		$(eval $(call openj9_test_image_rules, $(file)))))
 
@@ -270,6 +271,13 @@ ifeq (true,$(OPENJ9_ENABLE_DDR))
 else
   FEATURE_SED_SCRIPT += $(call SedDisable,opt_useOmrDdr)
   SPEC_SED_SCRIPT    += $(call SedDisable,module_ddr)
+endif
+
+# Adjust JFR enablement flags.
+ifeq (true,$(OPENJ9_ENABLE_JFR))
+  FEATURE_SED_SCRIPT += $(call SedEnable,opt_jfr)
+else
+  FEATURE_SED_SCRIPT += $(call SedDisable,opt_jfr)
 endif
 
 # Adjust JITServer enablement flags.
@@ -434,6 +442,12 @@ ifeq (true,$(OPENJ9_ENABLE_CMAKE))
     CMAKE_ARGS += -DCMAKE_CXX_COMPILER_LAUNCHER="$(ESCAPED_CCACHE)"
   endif # CCACHE
 
+  ifeq (true,$(OPENJ9_ENABLE_JFR))
+    CMAKE_ARGS += -DJ9VM_OPT_JFR=ON
+  else # OPENJ9_ENABLE_JFR
+    CMAKE_ARGS += -DJ9VM_OPT_JFR=OFF
+  endif # OPENJ9_ENABLE_JFR
+
   ifeq (true,$(OPENJ9_ENABLE_JITSERVER))
     CMAKE_ARGS += -DJ9VM_OPT_JITSERVER=ON
 
@@ -465,7 +479,7 @@ ifeq (true,$(OPENJ9_ENABLE_CMAKE))
     CMAKE_ARGS += -DJ9VM_OPT_VALHALLA_VALUE_TYPES=OFF
     CMAKE_ARGS += -DJ9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES=OFF
   endif # OPENJ9_ENABLE_INLINE_TYPES
-  
+
   ifeq (true,$(OPENJ9_ENABLE_CRAC_SUPPORT))
     CMAKE_ARGS += -DJ9VM_OPT_CRAC_SUPPORT=ON
   else # OPENJ9_ENABLE_CRAC_SUPPORT

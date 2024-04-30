@@ -47,7 +47,6 @@ import java.lang.classfile.attribute.ModuleTargetAttribute;
 import java.lang.classfile.attribute.NestHostAttribute;
 import java.lang.classfile.attribute.NestMembersAttribute;
 import java.lang.classfile.attribute.PermittedSubclassesAttribute;
-import java.lang.classfile.attribute.PreloadAttribute;
 import java.lang.classfile.attribute.RecordAttribute;
 import java.lang.classfile.attribute.RuntimeInvisibleAnnotationsAttribute;
 import java.lang.classfile.attribute.RuntimeInvisibleParameterAnnotationsAttribute;
@@ -90,7 +89,7 @@ public sealed interface Attribute<A extends Attribute<A>>
                 MethodParametersAttribute, ModuleAttribute, ModuleHashesAttribute,
                 ModuleMainClassAttribute, ModulePackagesAttribute, ModuleResolutionAttribute,
                 ModuleTargetAttribute, NestHostAttribute, NestMembersAttribute,
-                PermittedSubclassesAttribute, PreloadAttribute,
+                PermittedSubclassesAttribute,
                 RecordAttribute, RuntimeInvisibleAnnotationsAttribute,
                 RuntimeInvisibleParameterAnnotationsAttribute, RuntimeInvisibleTypeAnnotationsAttribute,
                 RuntimeVisibleAnnotationsAttribute, RuntimeVisibleParameterAnnotationsAttribute,

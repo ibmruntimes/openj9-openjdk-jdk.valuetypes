@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -197,7 +197,15 @@ final class VirtualThread extends BaseVirtualThread {
         protected void onPinned(Continuation.Pinned reason) {
             if (TRACE_PINNING_MODE > 0) {
                 boolean printAll = (TRACE_PINNING_MODE == 1);
-                PinnedThreadPrinter.printStackTrace(System.out, printAll);
+                VirtualThread vthread = (VirtualThread) Thread.currentThread();
+                int oldState = vthread.state();
+                try {
+                    // avoid printing when in transition states
+                    vthread.setState(RUNNING);
+                    PinnedThreadPrinter.printStackTrace(System.out, reason, printAll);
+                } finally {
+                    vthread.setState(oldState);
+                }
             }
         }
         private static Runnable wrap(VirtualThread vthread, Runnable task) {
@@ -749,11 +757,16 @@ final class VirtualThread extends BaseVirtualThread {
                 }
             } else if ((s == PINNED) || (s == TIMED_PINNED)) {
                 // unpark carrier thread when pinned
-                synchronized (carrierThreadAccessLock()) {
-                    Thread carrier = carrierThread;
-                    if (carrier != null && ((s = state()) == PINNED || s == TIMED_PINNED)) {
-                        U.unpark(carrier);
+                notifyJvmtiDisableSuspend(true);
+                try {
+                    synchronized (carrierThreadAccessLock()) {
+                        Thread carrier = carrierThread;
+                        if (carrier != null && ((s = state()) == PINNED || s == TIMED_PINNED)) {
+                            U.unpark(carrier);
+                        }
                     }
+                } finally {
+                    notifyJvmtiDisableSuspend(false);
                 }
             }
         }
@@ -846,20 +859,44 @@ final class VirtualThread extends BaseVirtualThread {
     }
 
     @Override
+    void blockedOn(Interruptible b) {
+        notifyJvmtiDisableSuspend(true);
+        try {
+            super.blockedOn(b);
+        } finally {
+            notifyJvmtiDisableSuspend(false);
+        }
+    }
+
+    @Override
     @SuppressWarnings("removal")
     public void interrupt() {
         if (Thread.currentThread() != this) {
             checkAccess();
-            synchronized (interruptLock) {
-                interrupted = true;
-                Interruptible b = nioBlocker;
-                if (b != null) {
-                    b.interrupt(this);
-                }
 
-                // interrupt carrier thread if mounted
-                Thread carrier = carrierThread;
-                if (carrier != null) carrier.setInterrupt();
+            // if current thread is a virtual thread then prevent it from being
+            // suspended when entering or holding interruptLock
+            Interruptible blocker;
+            notifyJvmtiDisableSuspend(true);
+            try {
+                synchronized (interruptLock) {
+                    interrupted = true;
+                    blocker = nioBlocker();
+                    if (blocker != null) {
+                        blocker.interrupt(this);
+                    }
+
+                    // interrupt carrier thread if mounted
+                    Thread carrier = carrierThread;
+                    if (carrier != null) carrier.setInterrupt();
+                }
+            } finally {
+                notifyJvmtiDisableSuspend(false);
+            }
+
+            // notify blocker after releasing interruptLock
+            if (blocker != null) {
+                blocker.postInterrupt();
             }
         } else {
             interrupted = true;
@@ -878,9 +915,14 @@ final class VirtualThread extends BaseVirtualThread {
         assert Thread.currentThread() == this;
         boolean oldValue = interrupted;
         if (oldValue) {
-            synchronized (interruptLock) {
-                interrupted = false;
-                carrierThread.clearInterrupt();
+            notifyJvmtiDisableSuspend(true);
+            try {
+                synchronized (interruptLock) {
+                    interrupted = false;
+                    carrierThread.clearInterrupt();
+                }
+            } finally {
+                notifyJvmtiDisableSuspend(false);
             }
         }
         return oldValue;
@@ -905,11 +947,16 @@ final class VirtualThread extends BaseVirtualThread {
                 return Thread.State.RUNNABLE;
             case RUNNING:
                 // if mounted then return state of carrier thread
-                synchronized (carrierThreadAccessLock()) {
-                    Thread carrierThread = this.carrierThread;
-                    if (carrierThread != null) {
-                        return carrierThread.threadState();
+                notifyJvmtiDisableSuspend(true);
+                try {
+                    synchronized (carrierThreadAccessLock()) {
+                        Thread carrierThread = this.carrierThread;
+                        if (carrierThread != null) {
+                            return carrierThread.threadState();
+                        }
                     }
+                } finally {
+                    notifyJvmtiDisableSuspend(false);
                 }
                 // runnable, mounted
                 return Thread.State.RUNNABLE;
@@ -961,12 +1008,12 @@ final class VirtualThread extends BaseVirtualThread {
      * Returns null if the thread is mounted or in transition.
      */
     private StackTraceElement[] tryGetStackTrace() {
-        int initialState = state();
+        int initialState = state() & ~SUSPENDED;
         switch (initialState) {
             case NEW, STARTED, TERMINATED -> {
                 return new StackTraceElement[0];  // unmounted, empty stack
             }
-            case RUNNING, PINNED -> {
+            case RUNNING, PINNED, TIMED_PINNED -> {
                 return null;   // mounted
             }
             case PARKED, TIMED_PARKED -> {
@@ -978,7 +1025,7 @@ final class VirtualThread extends BaseVirtualThread {
             case PARKING, TIMED_PARKING, YIELDING -> {
                 return null;  // in transition
             }
-            default -> throw new InternalError();
+            default -> throw new InternalError("" + initialState);
         }
 
         // thread is unmounted, prevent it from continuing
@@ -1025,14 +1072,19 @@ final class VirtualThread extends BaseVirtualThread {
         Thread carrier = carrierThread;
         if (carrier != null) {
             // include the carrier thread state and name when mounted
-            synchronized (carrierThreadAccessLock()) {
-                carrier = carrierThread;
-                if (carrier != null) {
-                    String stateAsString = carrier.threadState().toString();
-                    sb.append(stateAsString.toLowerCase(Locale.ROOT));
-                    sb.append('@');
-                    sb.append(carrier.getName());
+            notifyJvmtiDisableSuspend(true);
+            try {
+                synchronized (carrierThreadAccessLock()) {
+                    carrier = carrierThread;
+                    if (carrier != null) {
+                        String stateAsString = carrier.threadState().toString();
+                        sb.append(stateAsString.toLowerCase(Locale.ROOT));
+                        sb.append('@');
+                        sb.append(carrier.getName());
+                    }
                 }
+            } finally {
+                notifyJvmtiDisableSuspend(false);
             }
         }
         // include virtual thread state when not mounted
@@ -1129,7 +1181,10 @@ final class VirtualThread extends BaseVirtualThread {
 
     @IntrinsicCandidate
     @JvmtiMountTransition
-    private native void notifyJvmtiHideFrames(boolean hide);
+    private static native void notifyJvmtiHideFrames(boolean hide);
+
+    @IntrinsicCandidate
+    private static native void notifyJvmtiDisableSuspend(boolean enter);
 
     private static native void registerNatives();
     static {

@@ -36,9 +36,6 @@ import java.lang.classfile.attribute.*;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.classfile.attribute.StackMapFrameInfo.*;
 
-import com.sun.tools.javac.util.Assert;
-import com.sun.tools.javac.util.StringUtils;
-
 /*
  *  A writer for writing Attributes as text.
  *
@@ -523,14 +520,6 @@ public class AttributeWriter extends BasicWriter {
                 println("PermittedSubclasses:");
                 indent(+1);
                 for (var sc : attr.permittedSubclasses()) {
-                    println(constantWriter.stringValue(sc));
-                }
-                indent(-1);
-            }
-            case PreloadAttribute attr -> {
-                println("Preload:");
-                indent(+1);
-                for (var sc : attr.preloads()) {
                     println(constantWriter.stringValue(sc));
                 }
                 indent(-1);

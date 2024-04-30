@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,13 @@
  * questions.
  */
 
-#ifdef _WIN64
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
-#ifdef _AIX
-#pragma align (natural)
-#endif
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2024, 2024 All Rights Reserved
+ * ===========================================================================
+ */
+
+#include "export.h"
 
 struct S1{ double f0; long long f1; double f2; int f3; };
 union U1{ short f0; long long f1; short f2; char f3[4][3]; };
@@ -95,7 +94,3 @@ EXPORT struct S13 test_S13(struct S13 arg, struct S13(*cb)(struct S13)) { return
 EXPORT struct S14 test_S14(struct S14 arg, struct S14(*cb)(struct S14)) { return cb(arg); }
 EXPORT union U16 test_U16(union U16 arg, union U16(*cb)(union U16)) { return cb(arg); }
 EXPORT struct S15 test_S15(struct S15 arg, struct S15(*cb)(struct S15)) { return cb(arg); }
-
-#ifdef _AIX
-#pragma align (reset)
-#endif

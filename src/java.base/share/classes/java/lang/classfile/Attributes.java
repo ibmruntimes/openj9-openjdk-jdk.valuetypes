@@ -64,7 +64,6 @@ import java.lang.classfile.attribute.ModuleTargetAttribute;
 import java.lang.classfile.attribute.NestHostAttribute;
 import java.lang.classfile.attribute.NestMembersAttribute;
 import java.lang.classfile.attribute.PermittedSubclassesAttribute;
-import java.lang.classfile.attribute.PreloadAttribute;
 import java.lang.classfile.attribute.RecordAttribute;
 import java.lang.classfile.attribute.RecordComponentInfo;
 import java.lang.classfile.attribute.RuntimeInvisibleAnnotationsAttribute;
@@ -724,25 +723,6 @@ public class Attributes {
                 }
             };
 
-    /** Attribute mapper for the {@code Preload} attribute */
-    public static final AttributeMapper<PreloadAttribute>
-            PRELOAD = new AbstractAttributeMapper<>(NAME_PRELOAD) {
-                @Override
-                public PreloadAttribute readAttribute(AttributedElement e, ClassReader cf, int p) {
-                    return new BoundAttribute.BoundPreloadAttribute(cf, this, p);
-                }
-
-                @Override
-                protected void writeBody(BufWriter buf, PreloadAttribute attr) {
-                    buf.writeListIndices(attr.preloads());
-                }
-
-                @Override
-                public AttributeMapper.AttributeStability stability() {
-                    return AttributeStability.CP_REFS;
-                }
-            };
-
     /** Attribute mapper for the {@code Record} attribute */
     public static final AttributeMapper<RecordAttribute>
             RECORD = new AbstractAttributeMapper<>(NAME_RECORD) {
@@ -1039,7 +1019,6 @@ public class Attributes {
             NEST_HOST,
             NEST_MEMBERS,
             PERMITTED_SUBCLASSES,
-            PRELOAD,
             RECORD,
             RUNTIME_INVISIBLE_ANNOTATIONS,
             RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS,

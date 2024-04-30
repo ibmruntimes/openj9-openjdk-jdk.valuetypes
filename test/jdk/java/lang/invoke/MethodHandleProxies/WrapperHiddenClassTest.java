@@ -40,17 +40,12 @@ import static java.lang.constant.ConstantDescs.*;
 import static java.lang.invoke.MethodHandleProxies.*;
 import static java.lang.invoke.MethodType.methodType;
 import static java.lang.classfile.ClassFile.*;
-
-import jdk.internal.misc.PreviewFeatures;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /*
  * @test
  * @bug 6983726
  * @library /test/lib
- * @modules java.base/jdk.internal.misc
- * @enablePreview
  * @summary Tests on implementation hidden classes spinned by MethodHandleProxies
  * @build WrapperHiddenClassTest Client jdk.test.lib.util.ForceGC
  * @run junit WrapperHiddenClassTest

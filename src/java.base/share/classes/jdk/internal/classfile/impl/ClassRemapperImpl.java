@@ -56,7 +56,6 @@ import java.lang.classfile.attribute.ModuleAttribute;
 import java.lang.classfile.attribute.ModuleProvideInfo;
 import java.lang.classfile.attribute.NestHostAttribute;
 import java.lang.classfile.attribute.NestMembersAttribute;
-import java.lang.classfile.attribute.PreloadAttribute;
 import java.lang.classfile.attribute.PermittedSubclassesAttribute;
 import java.lang.classfile.attribute.RecordAttribute;
 import java.lang.classfile.attribute.RecordComponentInfo;
@@ -143,10 +142,6 @@ public record ClassRemapperImpl(Function<ClassDesc, ClassDesc> mapFunction) impl
                 clb.with(PermittedSubclassesAttribute.ofSymbols(
                         psa.permittedSubclasses().stream().map(ps ->
                                 map(ps.asSymbol())).toList()));
-            case PreloadAttribute pa ->
-                clb.with(PreloadAttribute.ofSymbols(
-                        pa.preloads().stream().map(pc ->
-                                map(pc.asSymbol())).toList()));
             case RuntimeVisibleAnnotationsAttribute aa ->
                 clb.with(RuntimeVisibleAnnotationsAttribute.of(
                         mapAnnotations(aa.annotations())));
@@ -296,7 +291,7 @@ public record ClassRemapperImpl(Function<ClassDesc, ClassDesc> mapFunction) impl
         return ClassSignature.of(mapTypeParams(signature.typeParameters()),
                 mapSignature(signature.superclassSignature()),
                 signature.superinterfaceSignatures().stream()
-                        .map(this::mapSignature).toArray(Signature.RefTypeSig[]::new));
+                        .map(this::mapSignature).toArray(Signature.ClassTypeSig[]::new));
     }
 
     MethodSignature mapMethodSignature(MethodSignature signature) {

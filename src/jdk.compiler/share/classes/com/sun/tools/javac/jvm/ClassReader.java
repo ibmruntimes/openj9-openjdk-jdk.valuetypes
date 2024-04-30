@@ -317,7 +317,7 @@ public class ClassReader {
             c.members_field.enter(sym);
     }
 
-/************************************************************************
+/* **********************************************************************
  * Error Diagnoses
  ***********************************************************************/
 
@@ -347,7 +347,7 @@ public class ClassReader {
             dcfh);
     }
 
-/************************************************************************
+/* **********************************************************************
  * Buffer Access
  ***********************************************************************/
 
@@ -387,7 +387,7 @@ public class ClassReader {
         return res;
     }
 
-/************************************************************************
+/* **********************************************************************
  * Constant Pool Access
  ***********************************************************************/
 
@@ -446,7 +446,7 @@ public class ClassReader {
         return set;
     }
 
-/************************************************************************
+/* **********************************************************************
  * Reading Types
  ***********************************************************************/
 
@@ -803,7 +803,7 @@ public class ClassReader {
         }
     }
 
-/************************************************************************
+/* **********************************************************************
  * Reading Attributes
  ***********************************************************************/
 
@@ -1310,7 +1310,7 @@ public class ClassReader {
                         for (int i = 0; i < numberOfPermittedSubtypes; i++) {
                             subtypes.add(poolReader.getClass(nextChar()));
                         }
-                        ((ClassSymbol)sym).permitted = subtypes.toList();
+                        ((ClassSymbol)sym).setPermittedSubclasses(subtypes.toList());
                     }
                 }
             },
@@ -1474,7 +1474,7 @@ public class ClassReader {
         return null;
     }
 
-/************************************************************************
+/* **********************************************************************
  * Reading Java-language annotations
  ***********************************************************************/
 
@@ -2591,7 +2591,7 @@ public class ClassReader {
         }
     }
 
-/************************************************************************
+/* **********************************************************************
  * Reading Symbols
  ***********************************************************************/
 
@@ -2814,7 +2814,7 @@ public class ClassReader {
                 && parameterAccessFlags[mpIndex] != 0) {
             flags |= parameterAccessFlags[mpIndex];
         }
-        if (parameterNameIndicesMp != null
+        if (parameterNameIndicesMp != null && mpIndex < parameterNameIndicesMp.length
                 // if name_index is 0, then we might still get a name from the LocalVariableTable
                 && parameterNameIndicesMp[mpIndex] != 0) {
             argName = optPoolEntry(parameterNameIndicesMp[mpIndex], poolReader::getName, names.empty);
@@ -2942,7 +2942,7 @@ public class ClassReader {
         for (int i = 0; i < methodCount; i++) skipMember();
         readClassAttrs(c);
 
-        if (c.permitted != null && !c.permitted.isEmpty()) {
+        if (!c.getPermittedSubclasses().isEmpty()) {
             c.flags_field |= SEALED;
         }
 
@@ -3134,7 +3134,7 @@ public class ClassReader {
      */
     public boolean filling = false;
 
-/************************************************************************
+/* **********************************************************************
  * Adjusting flags
  ***********************************************************************/
 

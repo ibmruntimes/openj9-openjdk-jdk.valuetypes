@@ -72,7 +72,6 @@ import java.lang.classfile.attribute.ModuleTargetAttribute;
 import java.lang.classfile.attribute.NestHostAttribute;
 import java.lang.classfile.attribute.NestMembersAttribute;
 import java.lang.classfile.attribute.PermittedSubclassesAttribute;
-import java.lang.classfile.attribute.PreloadAttribute;
 import java.lang.classfile.attribute.RecordAttribute;
 import java.lang.classfile.attribute.RecordComponentInfo;
 import java.lang.classfile.attribute.RuntimeInvisibleAnnotationsAttribute;
@@ -427,22 +426,6 @@ public abstract sealed class UnboundAttribute<T extends Attribute<T>>
         @Override
         public List<ClassEntry> permittedSubclasses() {
             return permittedSubclasses;
-        }
-    }
-
-    public static final class UnboundPreloadAttribute
-            extends UnboundAttribute<PreloadAttribute>
-            implements PreloadAttribute {
-        private final List<ClassEntry> preloads;
-
-        public UnboundPreloadAttribute(List<ClassEntry> preloads) {
-            super(Attributes.PRELOAD);
-            this.preloads = List.copyOf(preloads);
-        }
-
-        @Override
-        public List<ClassEntry> preloads() {
-            return preloads;
         }
     }
 
@@ -914,7 +897,7 @@ public abstract sealed class UnboundAttribute<T extends Attribute<T>>
         }
     }
 
-    public static abstract non-sealed class AdHocAttribute<T extends Attribute<T>>
+    public abstract static non-sealed class AdHocAttribute<T extends Attribute<T>>
             extends UnboundAttribute<T> {
 
         public AdHocAttribute(AttributeMapper<T> mapper) {
