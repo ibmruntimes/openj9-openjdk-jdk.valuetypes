@@ -29,15 +29,12 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
-import jdk.internal.classfile.*;
+import java.lang.classfile.*;
 import java.lang.reflect.AccessFlag;
-import jdk.internal.classfile.constantpool.*;
-import jdk.internal.classfile.attribute.*;
-import static jdk.internal.classfile.Classfile.*;
-import static jdk.internal.classfile.attribute.StackMapFrameInfo.*;
-
-import com.sun.tools.javac.util.Assert;
-import com.sun.tools.javac.util.StringUtils;
+import java.lang.classfile.constantpool.*;
+import java.lang.classfile.attribute.*;
+import static java.lang.classfile.ClassFile.*;
+import static java.lang.classfile.attribute.StackMapFrameInfo.*;
 
 /*
  *  A writer for writing Attributes as text.
@@ -523,14 +520,6 @@ public class AttributeWriter extends BasicWriter {
                 println("PermittedSubclasses:");
                 indent(+1);
                 for (var sc : attr.permittedSubclasses()) {
-                    println(constantWriter.stringValue(sc));
-                }
-                indent(-1);
-            }
-            case PreloadAttribute attr -> {
-                println("Preload:");
-                indent(+1);
-                for (var sc : attr.preloads()) {
                     println(constantWriter.stringValue(sc));
                 }
                 indent(-1);

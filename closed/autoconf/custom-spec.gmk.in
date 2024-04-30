@@ -1,5 +1,5 @@
 # ===========================================================================
-# (c) Copyright IBM Corp. 2017, 2023 All Rights Reserved
+# (c) Copyright IBM Corp. 2017, 2024 All Rights Reserved
 # ===========================================================================
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
@@ -52,6 +52,7 @@ WARNING_MODULES := \
 	openj9.dtfj \
 	openj9.dtfjview \
 	openj9.traceformat \
+	openjceplus \
 	#
 
 ifneq (,$(filter $(WARNING_MODULES),$(MODULE)))
@@ -74,6 +75,7 @@ OPENJ9_ENABLE_CRIU_SUPPORT           := @OPENJ9_ENABLE_CRIU_SUPPORT@
 OPENJ9_ENABLE_DDR                    := @OPENJ9_ENABLE_DDR@
 OPENJ9_ENABLE_DEMOS                  := @OPENJ9_ENABLE_DEMOS@
 OPENJ9_ENABLE_INLINE_TYPES           := @OPENJ9_ENABLE_INLINE_TYPES@
+OPENJ9_ENABLE_JFR                    := @OPENJ9_ENABLE_JFR@
 OPENJ9_ENABLE_JITSERVER              := @OPENJ9_ENABLE_JITSERVER@
 
 # for constructing version output
@@ -110,7 +112,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   # Set environment variables for Microsoft Visual Studio toolchain.
   # Note that PATH is set in spec.gmk.
   export INCLUDE := @OPENJ9_VS_INCLUDE@
-  export LIB := @OPENJ9_VS_LIB@
+  OPENJ9_VS_LIB := @OPENJ9_VS_LIB@
   export MSVC_VERSION := @TOOLCHAIN_VERSION@
 endif
 
@@ -181,5 +183,6 @@ $(foreach var, \
 J9JCL_SOURCES_DIR      := $(SUPPORT_OUTPUTDIR)/j9jcl
 J9JCL_SOURCES_DONEFILE := $(MAKESUPPORT_OUTPUTDIR)/j9jcl.done
 
-# Disable all hotspot features.
-JVM_FEATURES_server :=
+# Required by OpenJCEPlus.
+BUILD_OPENJCEPLUS  := @BUILD_OPENJCEPLUS@
+OPENJCEPLUS_TOPDIR := $(TOPDIR)/OpenJCEPlus

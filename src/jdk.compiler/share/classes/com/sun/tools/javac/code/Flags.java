@@ -111,7 +111,7 @@ public class Flags {
     public static final int ACC_STRICT   = 0x0800;
     public static final int ACC_MODULE   = 0x8000;
 
-    /*****************************************
+    /* ***************************************
      * Internal compiler flags (no bits in the lower 16).
      *****************************************/
 
@@ -131,9 +131,9 @@ public class Flags {
      */
     public static final int IDENTITY_TYPE            = 1<<19;
 
-    /** Class is a unnamed top level class.
+    /** Class is an implicitly declared top level class.
      */
-    public static final int UNNAMED_CLASS    = 1<<23;
+    public static final int IMPLICIT_CLASS    = 1<<23;
 
     /** Flag is set for compiler-generated anonymous method symbols
      *  that `own' an initializer block.
@@ -289,7 +289,7 @@ public class Flags {
      */
     public static final long THROWS = 1L<<47;
 
-    /**
+    /*
      * Currently available: Bit 48.
      */
 
@@ -525,7 +525,7 @@ public class Flags {
             }
         },
         VALUE(Flags.VALUE_CLASS),
-        UNNAMED_CLASS(Flags.UNNAMED_CLASS),
+        IMPLICIT_CLASS(Flags.IMPLICIT_CLASS),
         BLOCK(Flags.BLOCK),
         FROM_SOURCE(Flags.FROM_SOURCE),
         ENUM(Flags.ENUM),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2021, 2023 All Rights Reserved
+ * (c) Copyright IBM Corp. 2021, 2024 All Rights Reserved
  * ===========================================================================
  */
 
@@ -352,15 +352,20 @@ public class Thread implements Runnable {
      * operation, if any.  The blocker's interrupt method should be invoked
      * after setting this thread's interrupt status.
      */
-    volatile Interruptible nioBlocker;
+    private Interruptible nioBlocker;
+
+    Interruptible nioBlocker() {
+        //assert Thread.holdsLock(interruptLock);
+        return nioBlocker;
+    }
 
     /* Set the blocker field; invoked via jdk.internal.access.SharedSecrets
      * from java.nio code
      */
-    static void blockedOn(Interruptible b) {
-        Thread me = Thread.currentThread();
-        synchronized (me.interruptLock) {
-            me.nioBlocker = b;
+    void blockedOn(Interruptible b) {
+        //assert Thread.currentThread() == this;
+        synchronized (interruptLock) {
+            nioBlocker = b;
         }
     }
 
@@ -1615,9 +1620,6 @@ public class Thread implements Runnable {
      */
     void exit() {
         try {
-            /* Refresh interrupted value so it is accurate when thread reference is removed. */
-            interrupted = interrupted();
-
             try {
                 // pop any remaining scopes from the stack, this may block
                 if (headStackableScopes != null) {
@@ -1669,7 +1671,7 @@ public class Thread implements Runnable {
      *       interrupt the wait.
      *       For more information, see
      *       <a href="{@docRoot}/java.base/java/lang/doc-files/threadPrimitiveDeprecation.html">Why
-     *       are Thread.stop, Thread.suspend and Thread.resume Deprecated?</a>.
+     *       is Thread.stop deprecated and the ability to stop a thread removed?</a>.
      */
     @Deprecated(since="1.2", forRemoval=true)
     public final void stop() {
@@ -1717,18 +1719,25 @@ public class Thread implements Runnable {
      *          if the current thread cannot modify this thread
      */
     public void interrupt() {
-        if (currentThread() != this) {
+        if (this != Thread.currentThread()) {
             checkAccess();
         }
 
-        synchronized (interruptLock) {
-            interrupted = true;
-            interrupt0();  // inform VM of interrupt
+        // Setting the interrupt status must be done before reading nioBlocker.
+        interrupted = true;
+        interrupt0();  // inform VM of interrupt
 
-            // thread may be blocked in an I/O operation
-            Interruptible b = nioBlocker;
-            if (b != null) {
-                b.interrupt(this);
+        // thread may be blocked in an I/O operation
+        if (this != Thread.currentThread()) {
+            Interruptible blocker;
+            synchronized (interruptLock) {
+                blocker = nioBlocker;
+                if (blocker != null) {
+                    blocker.interrupt(this);
+                }
+            }
+            if (blocker != null) {
+                blocker.postInterrupt();
             }
         }
     }
@@ -1788,6 +1797,9 @@ public class Thread implements Runnable {
         }
         synchronized (interruptLock) {
             boolean oldValue = interrupted;
+            // We may have been interrupted the moment after we read the field,
+            // so only clear the field if we saw that it was set and will return
+            // true; otherwise we could lose an interrupt.
             if (oldValue) {
                 interrupted = false;
                 clearInterruptEvent();

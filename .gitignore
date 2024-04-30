@@ -21,6 +21,7 @@
 # exclude all source directories
 /omr
 /openj9
+/OpenJCEPlus
 /openssl
 
 # openjdk gitignore
@@ -42,10 +43,7 @@ NashornProfile.txt
 **/JTreport/**
 **/JTwork/**
 /src/utils/LogCompilation/target/
-/.project/
-/.settings/
 /.project
-/.classpath
-/.cproject
+/.settings/
 /compile_commands.json
 /.cache

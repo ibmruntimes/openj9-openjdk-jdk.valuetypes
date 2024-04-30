@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2024 All Rights Reserved
  * ===========================================================================
  */
 
@@ -142,7 +142,8 @@ public final class Security {
 
         /*[IF CRIU_SUPPORT]*/
         // Check if CRIU checkpoint mode is enabled, if it is then reconfigure the security providers.
-        if (InternalCRIUSupport.isCheckpointAllowed()) {
+        // If -XX:-CRIUSecProvider is specified, we don't need to configure the CRIUSec provider.
+        if (InternalCRIUSupport.isCheckpointAllowed() && InternalCRIUSupport.enableCRIUSecProvider()) {
             CRIUConfigurator.setCRIUSecMode(props);
         }
         /*[ENDIF] CRIU_SUPPORT */
@@ -793,6 +794,10 @@ public final class Security {
      */
     public static void setProperty(String key, String datum) {
         check("setProperty." + key);
+
+        // Check whether the change to the property is allowed.
+        RestrictedSecurity.checkSetSecurityProperty(key);
+
         props.put(key, datum);
         invalidateSMCache(key);  /* See below. */
 

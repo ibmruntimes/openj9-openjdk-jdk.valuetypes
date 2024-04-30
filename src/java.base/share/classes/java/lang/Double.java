@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -234,7 +234,7 @@ import jdk.internal.vm.annotation.IntrinsicCandidate;
  * equivalent of 15 to 17 digits of decimal precision. (The
  * equivalent precision varies according to the different relative
  * densities of binary and decimal values at different points along the
- * real number line).
+ * real number line.)
  *
  * <p>This representation hazard of decimal fractions is one reason to
  * use caution when storing monetary values as {@code float} or {@code
@@ -316,7 +316,7 @@ import jdk.internal.vm.annotation.IntrinsicCandidate;
  *
  * {@snippet lang="java" :
  * double d = 0.0;
- * while(d != 1.0) { // Surprising infinite loop
+ * while (d != 1.0) { // Surprising infinite loop
  *   d += 0.1; // Sum never _exactly_ equals 1.0
  * }
  * }
@@ -325,7 +325,7 @@ import jdk.internal.vm.annotation.IntrinsicCandidate;
  *
  * {@snippet lang="java" :
  * double d = 0.0;
- * for(int i = 0; i < 10; i++) {
+ * for (int i = 0; i < 10; i++) {
  *   d += 0.1;
  * } // Value of d is equal to Math.nextDown(1.0).
  * }
@@ -335,7 +335,7 @@ import jdk.internal.vm.annotation.IntrinsicCandidate;
  *
  * {@snippet lang="java" :
  *  double d = 0.0;
- *  while(d <= 1.0) {
+ *  while (d <= 1.0) {
  *    d += 0.1;
  *  } // Value of d approximately 1.0999999999999999
  *  }
@@ -815,10 +815,6 @@ public final class Double extends Number
      * Finally, after rounding a {@code Double} object representing
      * this {@code double} value is returned.
      *
-     * <p> To interpret localized string representations of a
-     * floating-point value, use subclasses of {@link
-     * java.text.NumberFormat}.
-     *
      * <p>Note that trailing format specifiers, specifiers that
      * determine the type of a floating-point literal
      * ({@code 1.0f} is a {@code float} value;
@@ -888,6 +884,16 @@ public final class Double extends Number
      *      // Perform suitable alternative action
      *  }
      * }
+     *
+     * @apiNote To interpret localized string representations of a
+     * floating-point value, or string representations that have
+     * non-ASCII digits, use {@link java.text.NumberFormat}. For
+     * example,
+     * {@snippet lang="java" :
+     *     NumberFormat.getInstance(l).parse(s).doubleValue();
+     * }
+     * where {@code l} is the desired locale, or
+     * {@link java.util.Locale#ROOT} if locale insensitive.
      *
      * @param      s   the string to be parsed.
      * @return     a {@code Double} object holding the value

@@ -45,6 +45,12 @@
  *  POSSIBILITY  OF SUCH DAMAGE.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2024, 2024 All Rights Reserved
+ * ===========================================================================
+ */
+
 #include "pkcs11wrapper.h"
 
 #include <stdio.h>
@@ -148,6 +154,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_getNativeKeyInfo
     jbyte* nativeKeyInfoArrayRaw = NULL;
     jbyte* nativeKeyInfoWrappedKeyArrayRaw = NULL;
     unsigned int sensitiveAttributePosition = (unsigned int)-1;
+    unsigned int valueLenAttributePosition = (unsigned int)-1;
     unsigned int i = 0U;
     unsigned long totalDataSize = 0UL, attributesCount = 0UL;
     unsigned long totalCkAttributesSize = 0UL, totalNativeKeyInfoArraySize = 0UL;
@@ -217,6 +224,8 @@ Java_sun_security_pkcs11_wrapper_PKCS11_getNativeKeyInfo
             if ((ckpAttributes+i)->type == CKA_SENSITIVE) {
                  sensitiveAttributePosition = attributesCount;
                  TRACE0("DEBUG: GetNativeKeyInfo key is sensitive");
+            } else if ((ckpAttributes+i)->type == CKA_VALUE_LEN) {
+                valueLenAttributePosition = attributesCount;
             }
             attributesCount++;
         }
@@ -293,6 +302,14 @@ Java_sun_security_pkcs11_wrapper_PKCS11_getNativeKeyInfo
             (CK_ATTRIBUTE_PTR)nativeKeyInfoArrayRawCkAttributes,
             attributesCount);
     if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) {
+        goto cleanup;
+    }
+
+    if (class == CKO_SECRET_KEY && (valueLenAttributePosition != (unsigned int)-1) &&
+            *(CK_ULONG*)(((CK_ATTRIBUTE_PTR)(((CK_ATTRIBUTE_PTR)nativeKeyInfoArrayRawCkAttributes)
+                    +valueLenAttributePosition))->pValue) > 256UL) {
+        // NSS' NSC_UnwrapKey does not accept CKO_SECRET_KEY keys with length greater
+        // than 256 (MAX_KEY_LEN - pkcs11i.h). Handle these keys as non-extractable.
         goto cleanup;
     }
 
@@ -920,6 +937,9 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_C_1DeriveKey
     case CKM_TLS12_MASTER_KEY_DERIVE:
         tls12CopyBackClientVersion(env, ckpMechanism, jMechanism);
         break;
+    case CKM_NSS_TLS_EXTENDED_MASTER_KEY_DERIVE:
+        tlsEmsCopyBackClientVersion(env, ckpMechanism, jMechanism);
+        break;
     case CKM_SSL3_KEY_AND_MAC_DERIVE:
     case CKM_TLS_KEY_AND_MAC_DERIVE:
         /* we must copy back the unwrapped key info to the jMechanism object */
@@ -1036,6 +1056,24 @@ void tls12CopyBackClientVersion(JNIEnv *env, CK_MECHANISM_PTR ckpMechanism,
         copyBackClientVersion(env, ckpMechanism, jMechanism,
                 ckTLS12MasterKeyDeriveParams->pVersion,
                 CLASS_TLS12_MASTER_KEY_DERIVE_PARAMS);
+    }
+}
+
+/*
+ * Copy back the client version information from the native
+ * structure to the Java object. This is only used for
+ * CKM_NSS_TLS_EXTENDED_MASTER_KEY_DERIVE mechanism when used
+ * for deriving a key.
+ */
+void tlsEmsCopyBackClientVersion(JNIEnv *env, CK_MECHANISM_PTR ckpMechanism,
+        jobject jMechanism)
+{
+    CK_NSS_TLS_EXTENDED_MASTER_KEY_DERIVE_PARAMS *ckTLSEmsMasterKeyDeriveParams
+            = (CK_NSS_TLS_EXTENDED_MASTER_KEY_DERIVE_PARAMS *)ckpMechanism->pParameter;
+    if (NULL_PTR != ckTLSEmsMasterKeyDeriveParams) {
+        copyBackClientVersion(env, ckpMechanism, jMechanism,
+                ckTLSEmsMasterKeyDeriveParams->pVersion,
+                CLASS_NSS_TLS_EXTENDED_MASTER_KEY_DERIVE_PARAMS);
     }
 }
 

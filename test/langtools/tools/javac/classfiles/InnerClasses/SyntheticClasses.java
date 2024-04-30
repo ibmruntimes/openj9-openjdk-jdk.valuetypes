@@ -25,20 +25,16 @@
  *  @bug 8034854
  *  @summary Verify that the InnerClasses attribute has outer_class_info_index zero if it has
  *           inner_name_index zero (for synthetic classes)
- *  @modules java.base/jdk.internal.classfile
- *           java.base/jdk.internal.classfile.attribute
- *           java.base/jdk.internal.classfile.constantpool
- *           java.base/jdk.internal.classfile.instruction
- *           java.base/jdk.internal.classfile.components
- *           java.base/jdk.internal.classfile.impl
+ *  @enablePreview
+ *  @modules java.base/jdk.internal.classfile.impl
  *  @compile SyntheticClasses.java
  *  @run main SyntheticClasses
  */
 
 import java.io.*;
 import java.util.*;
-import jdk.internal.classfile.*;
-import jdk.internal.classfile.attribute.*;
+import java.lang.classfile.*;
+import java.lang.classfile.attribute.*;
 
 public class SyntheticClasses {
 
@@ -49,12 +45,7 @@ public class SyntheticClasses {
     private void run() throws IOException {
         File testClasses = new File(System.getProperty("test.classes"));
         for (File classFile : Objects.requireNonNull(testClasses.listFiles(f -> f.getName().endsWith(".class")))) {
-            ClassModel cf = Classfile.of().parse(classFile.toPath());
-            if ((cf.flags().flagsMask() & (Classfile.ACC_SYNTHETIC | Classfile.ACC_ABSTRACT)) == Classfile.ACC_SYNTHETIC) {
-                if ((cf.flags().flagsMask() & Classfile.ACC_IDENTITY) == 0) {
-                    throw new IllegalStateException("Missing ACC_IDENTITY on synthetic concrete identity class: " + cf.thisClass().asInternalName());
-                }
-            }
+            ClassModel cf = ClassFile.of().parse(classFile.toPath());
             if (cf.thisClass().asInternalName().matches(".*\\$[0-9]+")) {
                 EnclosingMethodAttribute encl = cf.findAttribute(Attributes.ENCLOSING_METHOD).orElse(null);
                 if (encl != null) {
