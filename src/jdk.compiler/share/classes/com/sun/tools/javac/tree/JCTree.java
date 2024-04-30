@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,10 +133,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         WHILELOOP,
 
-        /** Withfields, of type WithField.
-         */
-        WITHFIELD,
-
         /** For-loops, of type ForLoop.
          */
         FORLOOP,
@@ -261,10 +257,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         SELECT,
 
-        /** Default values, of type DefaultValueTree.
-         */
-        DEFAULT_VALUE,
-
         /** Member references, of type Reference.
          */
         REFERENCE,
@@ -276,10 +268,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         /** Literals, of type Literal.
          */
         LITERAL,
-
-        /** String template expression.
-         */
-        STRING_TEMPLATE,
 
         /** Basic type identifiers, of type TypeIdent.
          */
@@ -893,9 +881,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public JCExpression defaultValue;
         /** method symbol */
         public MethodSymbol sym;
-        /** nascent value that evolves into the return value for a value factory */
-        public VarSymbol factoryProduct;
-
         /** does this method completes normally */
         public boolean completesNormally;
 
@@ -962,10 +947,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         @Override
         public Tag getTag() {
             return METHODDEF;
-        }
-
-        public boolean isInitOrVNew() {
-            return name.table.names.isInitOrVNew(name);
         }
   }
 
@@ -1188,36 +1169,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     /**
-     * A withfield expression
-     */
-    public static class JCWithField extends JCExpression implements WithFieldTree {
-        public JCExpression field;
-        public JCExpression value;
-        protected JCWithField(JCExpression field, JCExpression value) {
-            this.field = field;
-            this.value = value;
-        }
-        @Override
-        public void accept(Visitor v) { v.visitWithField(this); }
-
-        @DefinedBy(Api.COMPILER_TREE)
-        public Kind getKind() { return Kind.WITH_FIELD; }
-        @DefinedBy(Api.COMPILER_TREE)
-        public JCExpression getField() { return field; }
-        @DefinedBy(Api.COMPILER_TREE)
-        public JCExpression getValue() { return value; }
-        @Override @DefinedBy(Api.COMPILER_TREE)
-        public <R,D> R accept(TreeVisitor<R,D> v, D d) {
-            return v.visitWithField(this, d);
-        }
-
-        @Override
-        public Tag getTag() {
-            return WITHFIELD;
-        }
-    }
-
-    /**
      * A for loop.
      */
     public static class JCForLoop extends JCStatement implements ForLoopTree {
@@ -1421,32 +1372,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         @Override
         public Tag getTag() {
             return CASE;
-        }
-    }
-
-    /**
-     * A "Identifier<TA1, TA2>.default" construction.
-     */
-    public static class JCDefaultValue extends JCPolyExpression implements DefaultValueTree {
-        public JCExpression clazz;
-
-        protected JCDefaultValue(JCExpression clazz) {
-            this.clazz = clazz;
-        }
-        @Override
-        public void accept(Visitor v) { v.visitDefaultValue(this); }
-
-        @DefinedBy(Api.COMPILER_TREE)
-        public Kind getKind() { return Kind.DEFAULT_VALUE; }
-        @Override @DefinedBy(Api.COMPILER_TREE)
-        public JCExpression getType() { return clazz; }
-        @Override @DefinedBy(Api.COMPILER_TREE)
-        public <R,D> R accept(TreeVisitor<R,D> v, D d) {
-            return v.visitDefaultValue(this, d);
-        }
-        @Override
-        public Tag getTag() {
-            return DEFAULT_VALUE;
         }
     }
 
@@ -2553,58 +2478,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     /**
-     * String template expression.
-     */
-    public static class JCStringTemplate extends JCExpression implements StringTemplateTree {
-        public JCExpression processor;
-        public List<String> fragments;
-        public List<JCExpression> expressions;
-
-        protected JCStringTemplate(JCExpression processor,
-                                   List<String> fragments,
-                                   List<JCExpression> expressions) {
-            this.processor = processor;
-            this.fragments = fragments;
-            this.expressions = expressions;
-        }
-
-        @Override
-        public ExpressionTree getProcessor() {
-            return processor;
-        }
-
-        @Override
-        public List<String> getFragments() {
-            return fragments;
-        }
-
-        @Override
-        public List<? extends ExpressionTree> getExpressions() {
-            return expressions;
-        }
-
-        @Override @DefinedBy(Api.COMPILER_TREE)
-        public Kind getKind() {
-            return Kind.TEMPLATE;
-        }
-
-        @Override @DefinedBy(Api.COMPILER_TREE)
-        public Tag getTag() {
-            return STRING_TEMPLATE;
-        }
-
-        @Override @DefinedBy(Api.COMPILER_TREE)
-        public void accept(Visitor v) {
-            v.visitStringTemplate(this);
-        }
-
-        @Override @DefinedBy(Api.COMPILER_TREE)
-        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-            return v.visitStringTemplate(this, d);
-        }
-    }
-
-    /**
      * An array selection
      */
     public static class JCArrayAccess extends JCExpression implements ArrayAccessTree {
@@ -3542,7 +3415,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCSwitchExpression SwitchExpression(JCExpression selector, List<JCCase> cases);
         JCCase Case(CaseTree.CaseKind caseKind, List<JCCaseLabel> labels, JCExpression guard,
                     List<JCStatement> stats, JCTree body);
-        JCDefaultValue DefaultValue(JCExpression type);
         JCSynchronized Synchronized(JCExpression lock, JCBlock body);
         JCTry Try(JCBlock body, List<JCCatch> catchers, JCBlock finalizer);
         JCTry Try(List<JCTree> resources,
@@ -3584,9 +3456,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCFieldAccess Select(JCExpression selected, Name selector);
         JCIdent Ident(Name idname);
         JCLiteral Literal(TypeTag tag, Object value);
-        JCStringTemplate StringTemplate(JCExpression processor,
-                                        List<String> fragments,
-                                        List<JCExpression> expressions);
         JCPrimitiveTypeTree TypeIdent(TypeTag typetag);
         JCArrayTypeTree TypeArray(JCExpression elemtype);
         JCTypeApply TypeApply(JCExpression clazz, List<JCExpression> arguments);
@@ -3618,13 +3487,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitBlock(JCBlock that)                 { visitTree(that); }
         public void visitDoLoop(JCDoWhileLoop that)          { visitTree(that); }
         public void visitWhileLoop(JCWhileLoop that)         { visitTree(that); }
-        public void visitWithField(JCWithField that)         { visitTree(that); }
         public void visitForLoop(JCForLoop that)             { visitTree(that); }
         public void visitForeachLoop(JCEnhancedForLoop that) { visitTree(that); }
         public void visitLabelled(JCLabeledStatement that)   { visitTree(that); }
         public void visitSwitch(JCSwitch that)               { visitTree(that); }
         public void visitCase(JCCase that)                   { visitTree(that); }
-        public void visitDefaultValue(JCDefaultValue that) { visitTree(that); }
         public void visitSwitchExpression(JCSwitchExpression that)               { visitTree(that); }
         public void visitSynchronized(JCSynchronized that)   { visitTree(that); }
         public void visitTry(JCTry that)                     { visitTree(that); }
@@ -3660,7 +3527,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitReference(JCMemberReference that)   { visitTree(that); }
         public void visitIdent(JCIdent that)                 { visitTree(that); }
         public void visitLiteral(JCLiteral that)             { visitTree(that); }
-        public void visitStringTemplate(JCStringTemplate that) { visitTree(that); }
         public void visitTypeIdent(JCPrimitiveTypeTree that) { visitTree(that); }
         public void visitTypeArray(JCArrayTypeTree that)     { visitTree(that); }
         public void visitTypeApply(JCTypeApply that)         { visitTree(that); }

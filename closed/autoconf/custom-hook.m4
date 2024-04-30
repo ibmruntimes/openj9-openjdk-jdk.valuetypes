@@ -1,5 +1,5 @@
 # ===========================================================================
-# (c) Copyright IBM Corp. 2017, 2023 All Rights Reserved
+# (c) Copyright IBM Corp. 2017, 2024 All Rights Reserved
 # ===========================================================================
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
@@ -47,10 +47,11 @@ AC_DEFUN_ONCE([CUSTOM_EARLY_HOOK],
   OPENJ9_CONFIGURE_DDR
   OPENJ9_CONFIGURE_DEMOS
   OPENJ9_CONFIGURE_HEALTHCENTER
+  OPENJ9_CONFIGURE_INLINE_TYPES
+  OPENJ9_CONFIGURE_JFR
+  OPENJ9_CONFIGURE_JITSERVER
   OPENJ9_CONFIGURE_NUMA
   OPENJ9_CONFIGURE_WARNINGS
-  OPENJ9_CONFIGURE_JITSERVER
-  OPENJ9_CONFIGURE_INLINE_TYPES
   OPENJ9_THIRD_PARTY_REQUIREMENTS
   OPENJ9_CHECK_NASM_VERSION
   OPENJCEPLUS_SETUP
@@ -412,14 +413,51 @@ AC_DEFUN([OPENJ9_CONFIGURE_INLINE_TYPES],
   AC_SUBST(OPENJ9_ENABLE_INLINE_TYPES)
 ])
 
+AC_DEFUN([OPENJ9_CONFIGURE_JFR],
+[
+  AC_ARG_ENABLE([jfr], [AS_HELP_STRING([--enable-jfr], [enable JFR support @<:@platform dependent@:>@])])
+
+  AC_MSG_CHECKING([for jfr])
+  OPENJ9_ENABLE_JFR=false
+  if test "x$enable_jfr" = xyes ; then
+    AC_MSG_RESULT([yes (explicitly enabled)])
+    OPENJ9_ENABLE_JFR=true
+  elif test "x$enable_jfr" = xno ; then
+    AC_MSG_RESULT([no (explicitly disabled)])
+  elif test "x$enable_jfr" = x ; then
+    case "$OPENJ9_PLATFORM_CODE" in
+      xa64)
+        AC_MSG_RESULT([yes (default)])
+        OPENJ9_ENABLE_JFR=true
+        ;;
+      *)
+        AC_MSG_RESULT([no (default)])
+        ;;
+    esac
+  else
+    AC_MSG_ERROR([--enable-jfr accepts no argument])
+  fi
+
+  AC_SUBST(OPENJ9_ENABLE_JFR)
+])
+
 AC_DEFUN([OPENJ9_CONFIGURE_JITSERVER],
 [
   AC_ARG_ENABLE([jitserver], [AS_HELP_STRING([--enable-jitserver], [enable JITServer support @<:@disabled@:>@])])
 
+  case "$OPENJ9_PLATFORM_CODE" in
+    xa64|xl64|xr64|xz64)
+      jitserver_supported=yes
+      ;;
+    *)
+      jitserver_supported=no
+      ;;
+  esac
+
   AC_MSG_CHECKING([for jitserver])
   OPENJ9_ENABLE_JITSERVER=false
   if test "x$enable_jitserver" = xyes ; then
-    if test "x$OPENJDK_TARGET_OS" = xlinux ; then
+    if test "x$jitserver_supported" = xyes ; then
       AC_MSG_RESULT([yes (explicitly enabled)])
       OPENJ9_ENABLE_JITSERVER=true
     else
@@ -429,15 +467,10 @@ AC_DEFUN([OPENJ9_CONFIGURE_JITSERVER],
   elif test "x$enable_jitserver" = xno ; then
     AC_MSG_RESULT([no (explicitly disabled)])
   elif test "x$enable_jitserver" = x ; then
-    case "$OPENJ9_PLATFORM_CODE" in
-      xa64|xl64|xr64|xz64)
-        AC_MSG_RESULT([yes (default)])
-        OPENJ9_ENABLE_JITSERVER=true
-        ;;
-      *)
-        AC_MSG_RESULT([no (default)])
-        ;;
-    esac
+    if test "x$jitserver_supported" = xyes ; then
+      OPENJ9_ENABLE_JITSERVER=true
+    fi
+    AC_MSG_RESULT([$jitserver_supported (default)])
   else
     AC_MSG_ERROR([--enable-jitserver accepts no argument])
   fi
@@ -646,16 +679,10 @@ AC_DEFUN_ONCE([CUSTOM_LATE_HOOK],
   # Create the custom-spec.gmk
   AC_CONFIG_FILES([$OUTPUTDIR/custom-spec.gmk:$CLOSED_AUTOCONF_DIR/custom-spec.gmk.in])
 
-  # explicitly disable CDS archive generation (OpenJ9 does not support '-Xshare:dump')
-  BUILD_CDS_ARCHIVE=false
-
   # Override the default for '--with-output-sync' to 'none' for better feedback during VM build.
   if test "x[$with_output_sync]" = x ; then
     OUTPUT_SYNC_SUPPORTED=false
   fi
-
-  # explicitly disable classlist generation
-  ENABLE_GENERATE_CLASSLIST=false
 
   if test "x$OPENJDK_BUILD_OS" = xwindows ; then
     OPENJ9_TOOL_DIR="$OUTPUTDIR/tools"
@@ -832,7 +859,7 @@ AC_DEFUN([OPENJ9_GENERATE_TOOL_WRAPPERS],
   OPENJ9_GENERATE_TOOL_WRAPPER([jar], [$JAR])
   OPENJ9_GENERATE_TOOL_WRAPPER([java], [$JAVA])
   OPENJ9_GENERATE_TOOL_WRAPPER([javac], [$JAVAC])
-  OPENJ9_GENERATE_TOOL_WRAPPER([lib], [$AR])
+  OPENJ9_GENERATE_TOOL_WRAPPER([lib], [$LIB])
   OPENJ9_GENERATE_TOOL_WRAPPER([link], [$LD])
   OPENJ9_GENERATE_TOOL_WRAPPER([mc], [$MC])
   OPENJ9_GENERATE_TOOL_WRAPPER([ml], [$AS])

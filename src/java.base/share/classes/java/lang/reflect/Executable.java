@@ -23,6 +23,12 @@
  * questions.
  */
 
+ /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * ===========================================================================
+ */
+
 package java.lang.reflect;
 
 import java.lang.annotation.Annotation;
@@ -35,7 +41,6 @@ import java.util.stream.Collectors;
 
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.vm.annotation.Stable;
-import jdk.internal.value.PrimitiveClass;
 import sun.reflect.annotation.AnnotationParser;
 import sun.reflect.annotation.AnnotationSupport;
 import sun.reflect.annotation.TypeAnnotationParser;
@@ -85,8 +90,7 @@ public abstract sealed class Executable extends AccessibleObject
     Annotation[][] parseParameterAnnotations(byte[] parameterAnnotations) {
         return AnnotationParser.parseParameterAnnotations(
                parameterAnnotations,
-               SharedSecrets.getJavaLangAccess().
-               getConstantPool(getDeclaringClass()),
+               com.ibm.oti.vm.VM.getConstantPoolFromAnnotationBytes(getDeclaringClass(), parameterAnnotations),
                getDeclaringClass());
     }
 
@@ -639,8 +643,7 @@ public abstract sealed class Executable extends AccessibleObject
                     } else {
                         declAnnos = AnnotationParser.parseAnnotations(
                                 getAnnotationBytes(),
-                                SharedSecrets.getJavaLangAccess().
-                                        getConstantPool(getDeclaringClass()),
+                                com.ibm.oti.vm.VM.getConstantPoolFromAnnotationBytes(getDeclaringClass(), getAnnotationBytes()),
                                 getDeclaringClass()
                         );
                     }
@@ -792,13 +795,5 @@ public abstract sealed class Executable extends AccessibleObject
                 getDeclaringClass(),
                 getGenericExceptionTypes(),
                 TypeAnnotation.TypeAnnotationTarget.THROWS);
-    }
-
-    String getDeclaringClassTypeName() {
-        Class<?> c = getDeclaringClass();
-        if (PrimitiveClass.isPrimitiveClass(c)) {
-            c = PrimitiveClass.asValueType(c);
-        }
-        return c.getTypeName();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,6 @@ public class Names {
 
     // keywords
     public final Name _class;
-    public final Name _default;
     public final Name _super;
     public final Name _this;
     public final Name var;
@@ -93,7 +92,6 @@ public class Names {
     public final Name getClass;
     public final Name hasNext;
     public final Name hashCode;
-    public final Name vnew;
     public final Name init;
     public final Name invoke;
     public final Name iterator;
@@ -105,8 +103,6 @@ public class Names {
     public final Name serialVersionUID;
     public final Name toString;
     public final Name value;
-    public final Name primitive;
-    public final Name identity;
     public final Name valueOf;
     public final Name values;
     public final Name readResolve;
@@ -214,8 +210,6 @@ public class Names {
 
     // values
     public final Name dollarValue;
-    public final Name ref;
-    public final Name val;
 
 
     // record related
@@ -240,14 +234,6 @@ public class Names {
     public final Name enumSwitch;
     public final Name enumConstant;
 
-    // templated string
-    public final Name process;
-    public final Name STR;
-    public final Name RAW;
-    public final Name newStringTemplate;
-    public final Name newLargeStringTemplate;
-    public final Name processStringTemplate;
-
     public final Name.Table table;
 
     @SuppressWarnings("this-escape")
@@ -265,7 +251,6 @@ public class Names {
 
         // keywords
         _class = fromString("class");
-        _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
         var = fromString("var");
@@ -301,7 +286,6 @@ public class Names {
         getClass = fromString("getClass");
         hasNext = fromString("hasNext");
         hashCode = fromString("hashCode");
-        vnew = fromString("<vnew>");
         init = fromString("<init>");
         invoke = fromString("invoke");
         iterator = fromString("iterator");
@@ -313,8 +297,6 @@ public class Names {
         serialVersionUID = fromString("serialVersionUID");
         toString = fromString("toString");
         value = fromString("value");
-        primitive = fromString("primitive");
-        identity = fromString("identity");
         valueOf = fromString("valueOf");
         values = fromString("values");
         readResolve = fromString("readResolve");
@@ -420,10 +402,7 @@ public class Names {
         makeConcat = fromString("makeConcat");
         makeConcatWithConstants = fromString("makeConcatWithConstants");
 
-        // primitive classes
         dollarValue = fromString("$value");
-        ref = fromString("ref");
-        val = fromString("val");
 
         bootstrap = fromString("bootstrap");
         record = fromString("record");
@@ -438,13 +417,6 @@ public class Names {
         permits = fromString("permits");
         sealed = fromString("sealed");
 
-        // templated string
-        process = fromString("process");
-        STR = fromString("STR");
-        RAW = fromString("RAW");
-        newStringTemplate = fromString("newStringTemplate");
-        newLargeStringTemplate = fromString("newLargeStringTemplate");
-        processStringTemplate = fromString("processStringTemplate");
 
         // pattern switches
         typeSwitch = fromString("typeSwitch");
@@ -475,8 +447,8 @@ public class Names {
         return UnsharedNameTable.create(this);
     }
 
-    public boolean isInitOrVNew(Name name) {
-        return name == init || name == vnew;
+    public boolean isInit(Name name) {
+        return name == init;
     }
 
     public void dispose() {
