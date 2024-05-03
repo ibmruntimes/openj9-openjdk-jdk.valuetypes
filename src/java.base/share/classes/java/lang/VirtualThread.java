@@ -466,6 +466,11 @@ final class VirtualThread extends BaseVirtualThread {
     private void afterYield() {
         assert carrierThread == null;
 
+        // re-adjust parallelism if the virtual thread yielded when compensating
+        if (currentThread() instanceof CarrierThread ct) {
+            ct.endBlocking();
+        }
+
         int s = state();
 
         // LockSupport.park/parkNanos
@@ -1185,9 +1190,6 @@ final class VirtualThread extends BaseVirtualThread {
 
     @IntrinsicCandidate
     private static native void notifyJvmtiDisableSuspend(boolean enter);
-
-    @IntrinsicCandidate
-    private native void notifyJvmtiDisableSuspend(boolean enter);
 
     private static native void registerNatives();
     static {
