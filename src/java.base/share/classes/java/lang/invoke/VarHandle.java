@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2024, 2024 All Rights Reserved
+ * ===========================================================================
+ */
+
 package java.lang.invoke;
 
 import java.lang.constant.ClassDesc;
@@ -35,7 +41,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import jdk.internal.value.PrimitiveClass;
+import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.DontInline;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
@@ -1694,12 +1700,6 @@ public abstract sealed class VarHandle implements Constable
                                   Class<?>... intermediate) {
             Class<?>[] ps;
             int i;
-            // the field type (value) is mapped to the return type of MethodType
-            // the receiver type is mapped to a parameter type of MethodType
-            // So use the value type if it's a primitive class
-            if (receiver != null && PrimitiveClass.isPrimitiveClass(receiver)) {
-                receiver = PrimitiveClass.asValueType(receiver);
-            }
             switch (this) {
                 case GET:
                     ps = allocateParameters(0, receiver, intermediate);
@@ -2208,15 +2208,32 @@ public abstract sealed class VarHandle implements Constable
     @Stable
     MethodHandle[] methodHandleTable;
 
+    private static final long METHOD_HANDLE_TABLE_OFFSET;
+
+    static {
+        METHOD_HANDLE_TABLE_OFFSET = UNSAFE.objectFieldOffset(VarHandle.class, "methodHandleTable");
+    }
+
     @ForceInline
     final MethodHandle getMethodHandle(int mode) {
         MethodHandle[] mhTable = methodHandleTable;
         if (mhTable == null) {
-            mhTable = methodHandleTable = new MethodHandle[AccessMode.COUNT];
+            mhTable = new MethodHandle[AccessMode.COUNT];
+            Object other = UNSAFE.compareAndExchangeReference(this, METHOD_HANDLE_TABLE_OFFSET, null, mhTable);
+            if (other != null) {
+                // We lost the race. Use the winning table instead.
+                mhTable = (MethodHandle[])other;
+            }
         }
         MethodHandle mh = mhTable[mode];
         if (mh == null) {
-            mh = mhTable[mode] = getMethodHandleUncached(mode);
+            mh = getMethodHandleUncached(mode);
+            long offset = Unsafe.ARRAY_OBJECT_BASE_OFFSET + (Unsafe.ARRAY_OBJECT_INDEX_SCALE * mode);
+            Object other = UNSAFE.compareAndExchangeReference(mhTable, offset, null, mh);
+            if (other != null) {
+                // We lost the race. Use the winning handle instead.
+                mh = (MethodHandle)other;
+            }
         }
         return mh;
     }

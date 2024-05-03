@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2024, 2024 All Rights Reserved
+ * ===========================================================================
+ */
+
 package java.lang.invoke;
 
 import jdk.internal.misc.VM;
@@ -111,15 +117,16 @@ class MethodHandleNatives {
 
         static final int
             MN_IS_METHOD             = 0x00010000, // method (not object constructor)
-            MN_IS_OBJECT_CONSTRUCTOR = 0x00020000, // object constructor
+            MN_IS_CONSTRUCTOR        = 0x00020000, // object constructor
             MN_IS_FIELD              = 0x00040000, // field
             MN_IS_TYPE               = 0x00080000, // nested type
             MN_CALLER_SENSITIVE      = 0x00100000, // @CallerSensitive annotation detected
             MN_TRUSTED_FINAL         = 0x00200000, // trusted final field
             MN_HIDDEN_MEMBER         = 0x00400000, // members defined in a hidden class or with @Hidden
-            MN_FLATTENED             = 0x00800000, // flattened field
-            MN_REFERENCE_KIND_SHIFT  = 24, // refKind
-            MN_REFERENCE_KIND_MASK   = 0x0F000000 >> MN_REFERENCE_KIND_SHIFT;
+            MN_FLAT_FIELD            = 0x00800000, // flat field
+            MN_NULL_RESTRICTED       = 0x01000000, // null-restricted field
+            MN_REFERENCE_KIND_SHIFT  = 26, // refKind
+            MN_REFERENCE_KIND_MASK   = 0x3C000000 >> MN_REFERENCE_KIND_SHIFT;
 
         /**
          * Constant pool reference-kind codes, as used by CONSTANT_MethodHandle CP entries.
@@ -173,7 +180,7 @@ class MethodHandleNatives {
     static boolean refKindIsMethod(byte refKind) {
         return !refKindIsField(refKind) && (refKind != REF_newInvokeSpecial);
     }
-    static boolean refKindIsObjectConstructor(byte refKind) {
+    static boolean refKindIsConstructor(byte refKind) {
         return (refKind == REF_newInvokeSpecial);
     }
     static boolean refKindHasReceiver(byte refKind) {
@@ -601,12 +608,12 @@ class MethodHandleNatives {
         sb.append(prefix);
         for (int i = 1; i < guardType.parameterCount() - 1; i++) {
             Class<?> pt = guardType.parameterType(i);
-            sb.append(getCharErasedType(pt));
+            sb.append(getCharType(pt));
         }
-        sb.append('_').append(getCharErasedType(guardType.returnType()));
+        sb.append('_').append(getCharType(guardType.returnType()));
         return sb.toString();
     }
-    static char getCharErasedType(Class<?> pt) {
+    static char getCharType(Class<?> pt) {
         return Wrapper.forBasicType(pt).basicTypeChar();
     }
     static NoSuchMethodError newNoSuchMethodErrorOnVarHandle(String name, MethodType mtype) {
@@ -691,4 +698,9 @@ class MethodHandleNatives {
         return (definingClass.isAssignableFrom(symbolicRefClass) ||  // Msym overrides Mdef
                 symbolicRefClass.isInterface());                     // Mdef implements Msym
     }
+
+    /**
+     * Inform the VM that a MemberName belonging to class c has been collected.
+     */
+    static native void markClassForMemberNamePruning(Class<?> c);
 }

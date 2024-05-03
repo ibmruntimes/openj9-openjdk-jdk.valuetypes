@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2023, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2024, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -50,10 +50,10 @@ TOOLCHAIN_DESCRIPTION_microsoft="Microsoft Visual Studio"
 TOOLCHAIN_DESCRIPTION_xlc="IBM XL C/C++"
 
 # Minimum supported versions, empty means unspecified
-TOOLCHAIN_MINIMUM_VERSION_clang="3.5"
-TOOLCHAIN_MINIMUM_VERSION_gcc="6.0"
+TOOLCHAIN_MINIMUM_VERSION_clang="13.0"
+TOOLCHAIN_MINIMUM_VERSION_gcc="10.0"
 TOOLCHAIN_MINIMUM_VERSION_microsoft="19.28.0.0" # VS2019 16.8, aka MSVC 14.28
-TOOLCHAIN_MINIMUM_VERSION_xlc="16.1.0.0011"
+TOOLCHAIN_MINIMUM_VERSION_xlc="17.1.1.4"
 
 # Minimum supported linker versions, empty means unspecified
 TOOLCHAIN_MINIMUM_LD_VERSION_gcc="2.18"
@@ -176,30 +176,24 @@ AC_DEFUN([TOOLCHAIN_SETUP_FILENAME_PATTERNS],
     LIBRARY_PREFIX=
     SHARED_LIBRARY_SUFFIX='.dll'
     STATIC_LIBRARY_SUFFIX='.lib'
-    SHARED_LIBRARY='[$]1.dll'
-    STATIC_LIBRARY='[$]1.lib'
     OBJ_SUFFIX='.obj'
     EXECUTABLE_SUFFIX='.exe'
   else
     LIBRARY_PREFIX=lib
     SHARED_LIBRARY_SUFFIX='.so'
     STATIC_LIBRARY_SUFFIX='.a'
-    SHARED_LIBRARY='lib[$]1.so'
-    STATIC_LIBRARY='lib[$]1.a'
     OBJ_SUFFIX='.o'
     EXECUTABLE_SUFFIX=''
     if test "x$OPENJDK_TARGET_OS" = xmacosx; then
-      # For full static builds, we're overloading the SHARED_LIBRARY
-      # variables in order to limit the amount of changes required.
+      # For full static builds, we're overloading the shared library suffix
+      # in order to limit the amount of changes required.
       # It would be better to remove SHARED and just use LIBRARY and
       # LIBRARY_SUFFIX for libraries that can be built either
       # shared or static and use STATIC_* for libraries that are
       # always built statically.
       if test "x$STATIC_BUILD" = xtrue; then
-        SHARED_LIBRARY='lib[$]1.a'
         SHARED_LIBRARY_SUFFIX='.a'
       else
-        SHARED_LIBRARY='lib[$]1.dylib'
         SHARED_LIBRARY_SUFFIX='.dylib'
       fi
     fi
@@ -208,8 +202,6 @@ AC_DEFUN([TOOLCHAIN_SETUP_FILENAME_PATTERNS],
   AC_SUBST(LIBRARY_PREFIX)
   AC_SUBST(SHARED_LIBRARY_SUFFIX)
   AC_SUBST(STATIC_LIBRARY_SUFFIX)
-  AC_SUBST(SHARED_LIBRARY)
-  AC_SUBST(STATIC_LIBRARY)
   AC_SUBST(OBJ_SUFFIX)
   AC_SUBST(EXECUTABLE_SUFFIX)
 ])
@@ -389,6 +381,10 @@ AC_DEFUN_ONCE([TOOLCHAIN_POST_DETECTION],
   # This is necessary since AC_PROG_CC defaults CFLAGS to "-g -O2"
   CFLAGS="$ORG_CFLAGS"
   CXXFLAGS="$ORG_CXXFLAGS"
+
+  # filter out some unwanted additions autoconf may add to CXX; we saw this on macOS with autoconf 2.72
+  UTIL_GET_NON_MATCHING_VALUES(cxx_filtered, $CXX, -std=c++11 -std=gnu++11)
+  CXX="$cxx_filtered"
 ])
 
 # Check if a compiler is of the toolchain type we expect, and save the version
@@ -728,11 +724,10 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_CORE],
   AC_SUBST(AS)
 
   #
-  # Setup the archiver (AR)
+  # Setup tools for creating static libraries (AR/LIB)
   #
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    # The corresponding ar tool is lib.exe (used to create static libraries)
-    UTIL_LOOKUP_TOOLCHAIN_PROGS(AR, lib)
+    UTIL_LOOKUP_TOOLCHAIN_PROGS(LIB, lib)
   elif test "x$TOOLCHAIN_TYPE" = xgcc; then
     UTIL_LOOKUP_TOOLCHAIN_PROGS(AR, ar gcc-ar)
   else
@@ -1007,11 +1002,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_MISC_CHECKS],
   # Setup hotspot lecagy names for toolchains
   HOTSPOT_TOOLCHAIN_TYPE=$TOOLCHAIN_TYPE
   if test "x$TOOLCHAIN_TYPE" = xclang; then
-    if test "x$OPENJDK_TARGET_OS" = xaix; then
-      HOTSPOT_TOOLCHAIN_TYPE=xlc
-    else
-      HOTSPOT_TOOLCHAIN_TYPE=gcc
-    fi
+    HOTSPOT_TOOLCHAIN_TYPE=gcc
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     HOTSPOT_TOOLCHAIN_TYPE=visCPP
   fi

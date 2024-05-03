@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,16 +23,24 @@
 
 package runtime.valhalla.inlinetypes;
 
+
+
 /*
  * @test UnsafeTest
  * @summary unsafe get/put/with inline type
  * @modules java.base/jdk.internal.misc
  * @library /test/lib
- * @compile -XDenablePrimitiveClasses Point.java UnsafeTest.java
- * @run main/othervm -XX:+EnableValhalla -XX:+EnablePrimitiveClasses -XX:FlatArrayElementMaxSize=-1 -XX:InlineFieldMaxFlatSize=-1 runtime.valhalla.inlinetypes.UnsafeTest
+ * @modules java.base/jdk.internal.vm.annotation
+ * @enablePreview
+ * @compile Point.java UnsafeTest.java
+ * @run main/othervm -XX:FlatArrayElementMaxSize=-1 -XX:InlineFieldMaxFlatSize=-1 runtime.valhalla.inlinetypes.UnsafeTest
  */
 
 import jdk.internal.misc.Unsafe;
+import jdk.internal.misc.VM;
+import jdk.internal.vm.annotation.ImplicitlyConstructible;
+import jdk.internal.vm.annotation.LooselyConsistentValue;
+import jdk.internal.vm.annotation.NullRestricted;
 
 import java.lang.reflect.*;
 import java.util.List;
@@ -41,7 +49,10 @@ import static jdk.test.lib.Asserts.*;
 public class UnsafeTest {
     static final Unsafe U = Unsafe.getUnsafe();
 
-    static primitive class Value1 {
+    @ImplicitlyConstructible
+    @LooselyConsistentValue
+    static value class Value1 {
+        @NullRestricted
         Point point;
         Point[] array;
         Value1(Point p, Point... points) {
@@ -50,8 +61,11 @@ public class UnsafeTest {
         }
     }
 
-    static primitive class Value2 {
+    @ImplicitlyConstructible
+    @LooselyConsistentValue
+    static value class Value2 {
         int i;
+        @NullRestricted
         Value1 v;
 
         Value2(Value1 v, int i) {
@@ -60,8 +74,11 @@ public class UnsafeTest {
         }
     }
 
-    static primitive class Value3 {
+    @ImplicitlyConstructible
+    @LooselyConsistentValue
+    static value class Value3 {
         Object o;
+        @NullRestricted
         Value2 v;
 
         Value3(Value2 v, Object ref) {
@@ -139,9 +156,9 @@ public class UnsafeTest {
         System.out.format("%s%s header size %d%n", indent, vc, U.valueHeaderSize(vc));
         for (Field f : vc.getDeclaredFields()) {
             System.out.format("%s%s: %s%s offset %d%n", indent, f.getName(),
-                              U.isFlattened(f) ? "flattened " : "", f.getType(),
+                              U.isFlatField(f) ? "flattened " : "", f.getType(),
                               U.objectFieldOffset(vc, f.getName()));
-            if (U.isFlattened(f)) {
+            if (U.isFlatField(f)) {
                 printValueClass(f.getType(), level+1);
             }
         }

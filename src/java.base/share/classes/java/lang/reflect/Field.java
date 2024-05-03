@@ -23,10 +23,15 @@
  * questions.
  */
 
+ /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * ===========================================================================
+ */
+
 package java.lang.reflect;
 
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.value.PrimitiveClass;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.FieldAccessor;
 import jdk.internal.reflect.Reflection;
@@ -74,7 +79,7 @@ class Field extends AccessibleObject implements Member {
     private final String              name;
     private final Class<?>            type;
     private final int                 modifiers;
-    private final boolean             trustedFinal;
+    private final int                 flags;
     // Generics and annotations support
     private final transient String    signature;
     // generic info repository; lazily initialized
@@ -127,17 +132,16 @@ class Field extends AccessibleObject implements Member {
           String name,
           Class<?> type,
           int modifiers,
-          boolean trustedFinal,
+          int flags,
           int slot,
           String signature,
           byte[] annotations)
     {
-        assert PrimitiveClass.isPrimaryType(declaringClass);
         this.clazz = declaringClass;
         this.name = name;
         this.type = type;
         this.modifiers = modifiers;
-        this.trustedFinal = trustedFinal;
+        this.flags = flags;
         this.slot = slot;
         this.signature = signature;
         this.annotations = annotations;
@@ -159,7 +163,7 @@ class Field extends AccessibleObject implements Member {
         if (this.root != null)
             throw new IllegalArgumentException("Can not copy a non-root Field");
 
-        Field res = new Field(clazz, name, type, modifiers, trustedFinal, slot, signature, annotations);
+        Field res = new Field(clazz, name, type, modifiers, flags, slot, signature, annotations);
         res.root = this;
         // Might as well eagerly propagate this if already present
         res.fieldAccessor = fieldAccessor;
@@ -228,9 +232,7 @@ class Field extends AccessibleObject implements Member {
     public Set<AccessFlag> accessFlags() {
         int major = SharedSecrets.getJavaLangAccess().classFileFormatVersion(getDeclaringClass()) & 0xffff;
         var cffv = ClassFileFormatVersion.fromMajor(major);
-        return AccessFlag.maskToAccessFlags(getModifiers(),
-                AccessFlag.Location.FIELD,
-                cffv);
+        return AccessFlag.maskToAccessFlags(getModifiers(), AccessFlag.Location.FIELD, cffv);
     }
 
     /**
@@ -354,21 +356,13 @@ class Field extends AccessibleObject implements Member {
         int mod = getModifiers();
         return (((mod == 0) ? "" : (Modifier.toString(mod) + " "))
             + getType().getTypeName() + " "
-            + getDeclaringClassTypeName() + "."
+            + getDeclaringClass().getTypeName() + "."
             + getName());
     }
 
     @Override
     String toShortString() {
-        return "field " + getDeclaringClassTypeName() + "." + getName();
-    }
-
-    String getDeclaringClassTypeName() {
-        Class<?> c = getDeclaringClass();
-        if (PrimitiveClass.isPrimitiveClass(c)) {
-            c = PrimitiveClass.asValueType(c);
-        }
-        return c.getTypeName();
+        return "field " + getDeclaringClass().getTypeName() + "." + getName();
     }
 
     /**
@@ -396,7 +390,7 @@ class Field extends AccessibleObject implements Member {
         Type fieldType = getGenericType();
         return (((mod == 0) ? "" : (Modifier.toString(mod) + " "))
             + fieldType.getTypeName() + " "
-            + getDeclaringClassTypeName() + "."
+            + getDeclaringClass().getTypeName() + "."
             + getName());
     }
 
@@ -1248,8 +1242,15 @@ class Field extends AccessibleObject implements Member {
         return root;
     }
 
+    private static final int TRUST_FINAL     = 0x0010;
+    private static final int NULL_RESTRICTED = 0x0020;
+
     /* package-private */ boolean isTrustedFinal() {
-        return trustedFinal;
+        return (flags & TRUST_FINAL) == TRUST_FINAL;
+    }
+
+    /* package-private */ boolean isNullRestricted() {
+        return (flags & NULL_RESTRICTED) == NULL_RESTRICTED;
     }
 
     /**
@@ -1298,8 +1299,7 @@ class Field extends AccessibleObject implements Member {
                     } else {
                         declAnnos = AnnotationParser.parseAnnotations(
                                 annotations,
-                                SharedSecrets.getJavaLangAccess()
-                                        .getConstantPool(getDeclaringClass()),
+                                com.ibm.oti.vm.VM.getConstantPoolFromAnnotationBytes(getDeclaringClass(), annotations),
                                 getDeclaringClass());
                     }
                     declaredAnnotations = declAnnos;

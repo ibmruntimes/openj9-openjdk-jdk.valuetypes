@@ -26,7 +26,6 @@
 package com.sun.source.util;
 
 import com.sun.source.tree.*;
-import jdk.internal.javac.PreviewFeature;
 
 /**
  * A TreeVisitor that visits all the child tree nodes.
@@ -305,22 +304,6 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @implSpec This implementation scans the children in left to right order.
-     *
-     * @param node  {@inheritDoc}
-     * @param p  {@inheritDoc}
-     * @return the result of scanning
-     */
-    @Override
-    public R visitWithField(WithFieldTree node, P p) {
-        R r = scan(node.getField(), p);
-        r = scanAndReduce(node.getValue(), p, r);
-        return r;
-    }
-
-    /**
      * {@inheritDoc} This implementation scans the children in left to right order.
      *
      * @param node  {@inheritDoc}
@@ -423,18 +406,6 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
      * {@inheritDoc}
      *
      * @implSpec This implementation scans the children in left to right order.
-     *
-     * @param node  {@inheritDoc}
-     * @param p  {@inheritDoc}
-     * @return the result of scanning
-     */
-    @Override
-    public R visitDefaultValue(DefaultValueTree node, P p) {
-        return scan(node.getType(), p);
-    }
-
-    /**
-     * {@inheritDoc} This implementation scans the children in left to right order.
      *
      * @param node  {@inheritDoc}
      * @param p  {@inheritDoc}
@@ -799,23 +770,6 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     @Override
     public R visitAnyPattern(AnyPatternTree node, P p) {
         return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @implSpec This implementation scans the children in left to right order.
-     *
-     * @param node  {@inheritDoc}
-     * @param p  {@inheritDoc}
-     * @return the result of scanning
-     */
-    @Override
-    @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES, reflective=true)
-    public R visitStringTemplate(StringTemplateTree node, P p) {
-        R r = scan(node.getProcessor(), p);
-        r = scanAndReduce(node.getExpressions(), p, r);
-        return r;
     }
 
     /**

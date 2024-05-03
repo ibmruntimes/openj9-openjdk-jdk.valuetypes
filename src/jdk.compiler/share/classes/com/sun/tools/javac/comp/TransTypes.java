@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -322,7 +322,7 @@ public class TransTypes extends TreeTranslator {
                            ClassSymbol origin,
                            ListBuffer<JCTree> bridges) {
         if (sym.kind == MTH &&
-                !names.isInitOrVNew(sym.name) &&
+                sym.name != names.init &&
                 (sym.flags() & (PRIVATE | STATIC)) == 0 &&
                 (sym.flags() & SYNTHETIC) != SYNTHETIC &&
                 sym.isMemberOf(origin, types)) {
@@ -502,13 +502,6 @@ public class TransTypes extends TreeTranslator {
         result = tree;
     }
 
-    public void visitWithField(JCWithField tree) {
-        tree.field = translate(tree.field, null);
-        tree.value = translate(tree.value, erasure(tree.field.type));
-        tree.type = erasure(tree.type);
-        result = retype(tree, tree.type, pt);
-    }
-
     public void visitForLoop(JCForLoop tree) {
         tree.init = translate(tree.init, null);
         if (tree.cond != null)
@@ -677,7 +670,6 @@ public class TransTypes extends TreeTranslator {
         List<Type> argtypes = useInstantiatedPtArgs ?
                 tree.meth.type.getParameterTypes() :
                 mt.getParameterTypes();
-        // TODO - is enum so <init>
         if (meth.name == names.init && meth.owner == syms.enumSym)
             argtypes = argtypes.tail.tail;
         if (tree.varargsElement != null)
@@ -845,14 +837,6 @@ public class TransTypes extends TreeTranslator {
         }
     }
 
-    public void visitStringTemplate(JCStringTemplate tree) {
-        tree.processor = translate(tree.processor, erasure(tree.processor.type));
-        tree.expressions = tree.expressions.stream()
-                .map(e -> translate(e, erasure(e.type))).collect(List.collector());
-        tree.type = erasure(tree.type);
-        result = tree;
-    }
-
     public void visitSelect(JCFieldAccess tree) {
         Type t = types.skipTypeVars(tree.selected.type, false);
         if (t.isCompound()) {
@@ -913,7 +897,7 @@ public class TransTypes extends TreeTranslator {
         result = tree;
     }
 
-/**************************************************************************
+/* ************************************************************************
  * utility methods
  *************************************************************************/
 
@@ -921,7 +905,7 @@ public class TransTypes extends TreeTranslator {
         return types.erasure(t);
     }
 
-/**************************************************************************
+/* ************************************************************************
  * main method
  *************************************************************************/
 

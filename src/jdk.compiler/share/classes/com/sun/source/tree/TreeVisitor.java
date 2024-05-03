@@ -25,8 +25,6 @@
 
 package com.sun.source.tree;
 
-import jdk.internal.javac.PreviewFeature;
-
 /**
  * A visitor of trees, in the style of the visitor design pattern.
  * Classes implementing this interface are used to operate
@@ -172,14 +170,6 @@ public interface TreeVisitor<R,P> {
     R visitContinue(ContinueTree node, P p);
 
     /**
-     * Visits a {@code DefaultValue} node.
-     * @param node the node being visited
-     * @param p a parameter value
-     * @return a result value
-     */
-    R visitDefaultValue(DefaultValueTree node, P p);
-
-    /**
      * Visits a {@code DoWhileTree} node.
      * @param node the node being visited
      * @param p a parameter value
@@ -266,15 +256,6 @@ public interface TreeVisitor<R,P> {
      * @return a result value
      */
     R visitLiteral(LiteralTree node, P p);
-
-    /**
-     * Visits a StringTemplateTree node.
-     * @param node the node being visited
-     * @param p a parameter value
-     * @return a result value
-     */
-    @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES, reflective=true)
-    R visitStringTemplate(StringTemplateTree node, P p);
 
     /**
      * Visits a {@code AnyPatternTree} node.
@@ -557,15 +538,6 @@ public interface TreeVisitor<R,P> {
     R visitWhileLoop(WhileLoopTree node, P p);
 
     /**
-     * Visits a {@code WithFieldTree} node.
-     * @param node the node being visited
-     * @param p a parameter value
-     * @return a result value
-     */
-    R visitWithField(WithFieldTree node, P p);
-
-    /**
-     * Visits a WildcardTypeTree node.
      * Visits a {@code WildcardTypeTree} node.
      * @param node the node being visited
      * @param p a parameter value

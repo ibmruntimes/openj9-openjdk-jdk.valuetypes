@@ -1,5 +1,9 @@
 /*
+<<<<<<<< HEAD:test/langtools/tools/javac/valhalla/value-objects/separate_compilation/AbstractValueSuper.java
  * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+========
+ * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
+>>>>>>>> 876f1301930288df5dde8cccff4ecf9f36804b16:src/java.base/windows/native/libjava/jni_util_md.h
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,4 +27,12 @@
  * questions.
  */
 
+<<<<<<<< HEAD:test/langtools/tools/javac/valhalla/value-objects/separate_compilation/AbstractValueSuper.java
 public abstract value class AbstractValueSuper {}
+========
+#ifndef JNI_UTIL_MD_H
+#define JNI_UTIL_MD_H
+
+#endif /* JNI_UTIL_MD_H */
+
+>>>>>>>> 876f1301930288df5dde8cccff4ecf9f36804b16:src/java.base/windows/native/libjava/jni_util_md.h

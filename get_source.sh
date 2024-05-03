@@ -22,6 +22,9 @@
 # exit immediately if any unexpected error occurs
 set -e
 
+openssloptions=""
+DOWNLOAD_OPENSSL=false
+
 # These maps are keyed by the prefix of option names (e.g. openj9, omr).
 declare -A source_branch    # branch or tag
 declare -A source_folder    # local working directory
@@ -137,10 +140,35 @@ process_options() {
 	local version=""
 
 	for arg in "$@" ; do
+		# temporarily handle openssl options that don't follow the general pattern
+		case "$arg" in
+			--openssl-repo=*)
+				# remove leading '-'
+				arg="${arg/--/-}"
+				;;
+			--openssl-version=*)
+				# map to -openssl-branch
+				version="${arg#*=}"
+				case "$version" in
+					1.0.2* | 1.1.*)
+						version="OpenSSL_${version//./_}"
+						;;
+					3.*)
+						version="openssl-$version"
+						;;
+					*)
+						;;
+				esac
+				arg=-openssl-branch=$version
+				;;
+			*)
+				;;
+		esac
+
 		if [[ "$arg" =~ -([A-Za-z0-9]+)-(branch|reference|repo|sha)=.* ]] ; then
 			local key="${BASH_REMATCH[1]}"
 			if [ -z "${source_folder[${key}]}" ] ; then
-				fail "Unknown option: '$arg'"
+				fail "Unknown option: $arg"
 			fi
 
 			local value="${arg#*=}"
@@ -169,7 +197,7 @@ process_options() {
 					break
 					;;
 				*)
-					fail "Unknown option: '$arg'"
+					# bad option
 					usage
 					;;
 			esac
@@ -206,7 +234,7 @@ clone_or_update_repos() {
 				cd - > /dev/null
 			else
 				echo
-				echo "Cloning $folder version $branch from $url"
+				echo "Clone repository: $folder"
 				echo
 
 				git clone \

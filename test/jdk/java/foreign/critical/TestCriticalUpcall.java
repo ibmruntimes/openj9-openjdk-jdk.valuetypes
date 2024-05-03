@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,12 @@
  */
 
 /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * ===========================================================================
+ */
+
+/*
  * @test
  * @library ../ /test/lib
  * @requires jdk.foreign.linker != "FALLBACK"
@@ -35,6 +41,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
+import java.util.List;
 
 import static org.testng.Assert.fail;
 
@@ -43,7 +50,9 @@ public class TestCriticalUpcall extends UpcallTestHelper {
     @Test
     public void testUpcallFailure() throws IOException, InterruptedException {
         // test to see if we catch a trivial downcall doing an upcall
-        runInNewProcess(Runner.class, true).assertStdOutContains("wrong thread state for upcall");
+        runInNewProcess(Runner.class, true, List.of("-XX:-CreateCoredumpOnCrash"), List.of())
+            .shouldNotHaveExitValue(0)
+            .stderrShouldContain("wrong thread state for upcall");
     }
 
     public static class Runner extends NativeTestHelper {
