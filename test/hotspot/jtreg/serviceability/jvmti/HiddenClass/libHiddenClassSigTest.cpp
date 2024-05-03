@@ -201,9 +201,16 @@ check_hidden_class_impl_interf(jvmtiEnv* jvmti, JNIEnv* jni, jclass klass) {
     failed = true;
     return;
   }
-  // get interface signature
-  err = jvmti->GetClassSignature(interfaces[0], &sig, nullptr);
-  CHECK_JVMTI_ERROR(jni, err, "check_hidden_class_impl_interf: Error in JVMTI GetClassSignature for implemented interface");
+  bool found = false;
+  for (int i = 0; i < count; i++) {
+    // get interface signature
+    err = jvmti->GetClassSignature(interfaces[i], &sig, nullptr);
+    CHECK_JVMTI_ERROR(jni, err, "check_hidden_class_impl_interf: Error in JVMTI GetClassSignature for implemented interface");
+    // check the interface signature is matching the expected
+    if (strcmp(sig, EXP_INTERF_SIG) == 0) {
+      found = true;
+    }
+  }
 
   if (!found) {
     LOG2("check_hidden_class_impl_interf: FAIL: implemented interface signature: %s, expected to be: %s\n",
