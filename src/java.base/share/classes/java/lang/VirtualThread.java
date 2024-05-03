@@ -1186,6 +1186,9 @@ final class VirtualThread extends BaseVirtualThread {
     @IntrinsicCandidate
     private static native void notifyJvmtiDisableSuspend(boolean enter);
 
+    @IntrinsicCandidate
+    private native void notifyJvmtiDisableSuspend(boolean enter);
+
     private static native void registerNatives();
     static {
         registerNatives();

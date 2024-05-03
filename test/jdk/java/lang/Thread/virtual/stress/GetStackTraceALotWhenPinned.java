@@ -43,7 +43,6 @@ import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import jdk.test.lib.thread.VThreadRunner;
-import jdk.test.lib.thread.VThreadPinner;
 
 public class GetStackTraceALotWhenPinned {
 
