@@ -1166,9 +1166,6 @@ JVM_VirtualThreadHideFrames(JNIEnv* env, jclass clazz, jboolean hide);
 JNIEXPORT void JNICALL
 JVM_VirtualThreadDisableSuspend(JNIEnv* env, jclass clazz, jboolean enter);
 
-JNIEXPORT void JNICALL
-JVM_VirtualThreadDisableSuspend(JNIEnv* env, jobject vthread, jboolean enter);
-
 /*
  * Core reflection support.
  */
