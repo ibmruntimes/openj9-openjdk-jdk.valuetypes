@@ -22,9 +22,6 @@
 # exit immediately if any unexpected error occurs
 set -e
 
-openssloptions=""
-DOWNLOAD_OPENSSL=false
-
 # These maps are keyed by the prefix of option names (e.g. openj9, omr).
 declare -A source_branch    # branch or tag
 declare -A source_folder    # local working directory
@@ -168,7 +165,7 @@ process_options() {
 		if [[ "$arg" =~ -([A-Za-z0-9]+)-(branch|reference|repo|sha)=.* ]] ; then
 			local key="${BASH_REMATCH[1]}"
 			if [ -z "${source_folder[${key}]}" ] ; then
-				fail "Unknown option: $arg"
+				fail "Unknown option: '$arg'"
 			fi
 
 			local value="${arg#*=}"
@@ -197,7 +194,7 @@ process_options() {
 					break
 					;;
 				*)
-					# bad option
+					fail "Unknown option: '$arg'"
 					usage
 					;;
 			esac
@@ -234,7 +231,7 @@ clone_or_update_repos() {
 				cd - > /dev/null
 			else
 				echo
-				echo "Clone repository: $folder"
+				echo "Cloning $folder version $branch from $url"
 				echo
 
 				git clone \

@@ -41,7 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -522,6 +521,12 @@ final class ProxyGenerator {
     /**
      * Generate a class file for the proxy class.  This method drives the
      * class file generation process.
+     *
+     * If a proxy interface references any value classes, the value classes
+     * are listed in the preload attribute of the interface class.  The
+     * classes that are referenced by the proxy interface have already
+     * been loaded before the proxy class.  Hence the proxy class is
+     * generated with no preload attributes as it essentially has no effect.
      */
     private byte[] generateClassFile() {
         /*
@@ -549,15 +554,9 @@ final class ProxyGenerator {
         /*
          * For each set of proxy methods with the same signature,
          * verify that the methods' return types are compatible.
-         *
-         * Determine if any value classes to be preloaded.
          */
-        Set<Class<?>> preloadClasses = new HashSet<>();
         for (List<ProxyMethod> sigmethods : proxyMethods.values()) {
             checkReturnTypes(sigmethods);
-            for (ProxyMethod pm : sigmethods) {
-                preloadClasses.addAll(pm.preloadClasses());
-            }
         }
 
         return classfileContext.build(classEntry, cp, clb -> {
@@ -697,7 +696,7 @@ final class ProxyGenerator {
                             .block(blockBuilder -> blockBuilder
                                     .aload(cob.parameterSlot(0))
                                     .invokevirtual(CD_MethodHandles_Lookup, "lookupClass", MTD_Class)
-                                    .constantInstruction(Opcode.LDC, CD_Proxy)
+                                    .ldc(CD_Proxy)
                                     .if_acmpne(blockBuilder.breakLabel())
                                     .aload(cob.parameterSlot(0))
                                     .invokevirtual(CD_MethodHandles_Lookup, "hasFullPrivilegeAccess", MTD_boolean)
@@ -771,11 +770,11 @@ final class ProxyGenerator {
 
                         if (parameterTypes.length > 0) {
                             // Create an array and fill with the parameters converting primitives to wrappers
-                            cob.constantInstruction(parameterTypes.length)
+                            cob.loadConstant(parameterTypes.length)
                                .anewarray(CE_Object);
                             for (int i = 0; i < parameterTypes.length; i++) {
                                 cob.dup()
-                                   .constantInstruction(i);
+                                   .loadConstant(i);
                                 codeWrapArgument(cob, parameterTypes[i], cob.parameterSlot(i));
                                 cob.aastore();
                             }
@@ -811,27 +810,6 @@ final class ProxyGenerator {
                     }));
         }
 
-        Set<Class<?>> preloadClasses() {
-            Set<Class<?>> preloadClasses = new HashSet<>();
-            for (Class<?> type : parameterTypes) {
-                if (requiresPreload(type)) {
-                    preloadClasses.add(type);
-                }
-            }
-            if (requiresPreload(returnType)) {
-                preloadClasses.add(returnType);
-            }
-            return preloadClasses;
-        }
-
-        boolean requiresPreload(Class<?> cls) {
-            Class<?> c = cls;
-            while (c.isArray()) {
-                c = c.getComponentType();
-            }
-            return c.isValue();
-        }
-
         /**
          * Generate code for wrapping an argument of the given type
          * whose value can be found at the specified local variable
@@ -840,7 +818,7 @@ final class ProxyGenerator {
          */
         private void codeWrapArgument(CodeBuilder cob, Class<?> type, int slot) {
             if (type.isPrimitive()) {
-                cob.loadInstruction(TypeKind.from(type).asLoadable(), slot);
+                cob.loadLocal(TypeKind.from(type).asLoadable(), slot);
                 PrimitiveTypeInfo prim = PrimitiveTypeInfo.get(type);
                 cob.invokestatic(prim.wrapperMethodRef);
             } else {
@@ -859,7 +837,7 @@ final class ProxyGenerator {
 
                 cob.checkcast(prim.wrapperClass)
                    .invokevirtual(prim.unwrapMethodRef)
-                   .returnInstruction(TypeKind.from(type).asLoadable());
+                   .return_(TypeKind.from(type).asLoadable());
             } else {
                 cob.checkcast(toClassDesc(type))
                    .areturn();
@@ -876,13 +854,13 @@ final class ProxyGenerator {
             codeClassForName(cob, fromClass);
 
             cob.ldc(method.getName())
-               .constantInstruction(parameterTypes.length)
+               .loadConstant(parameterTypes.length)
                .anewarray(CE_Class);
 
             // Construct an array with the parameter types mapping primitives to Wrapper types
             for (int i = 0; i < parameterTypes.length; i++) {
                 cob.dup()
-                   .constantInstruction(i);
+                   .loadConstant(i);
                 if (parameterTypes[i].isPrimitive()) {
                     PrimitiveTypeInfo prim = PrimitiveTypeInfo.get(parameterTypes[i]);
                     cob.getstatic(prim.typeFieldRef);
@@ -902,12 +880,10 @@ final class ProxyGenerator {
 
         /**
          * Generate code to invoke the Class.forName with the name of the given
-         * class to get its Class object at runtime.  And also generate code
-         * to invoke Class::asValueType if the class is a primitive value type.
-         *
-         * The code is written to the supplied stream.  Note that the code generated
-         * by this method may caused the checked ClassNotFoundException to be thrown.
-         * A class loader is anticipated at local variable index 0.
+         * class to get its Class object at runtime.  The code is written to
+         * the supplied stream.  Note that the code generated by this method
+         * may cause the checked ClassNotFoundException to be thrown. A class
+         * loader is anticipated at local variable index 0.
          */
         private void codeClassForName(CodeBuilder cob, Class<?> cl) {
             cob.ldc(cl.getName())
