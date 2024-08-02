@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef NSK_JVMTI_AGENT_COMMON_DEFINED
-#define NSK_JVMTI_AGENT_COMMON_DEFINED
+
+#ifndef _NSK_SHARE_JVMTI_JVMTITOOLS_HPP_
+#define _NSK_SHARE_JVMTI_JVMTITOOLS_HPP_
 
 #include "jvmti.h"
-#include "../jvmti_tools.h"
 
-extern "C" {
+#include "jvmti_common.hpp"
 
-JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved);
-
-JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM *jvm, char *options, void *reserved);
-
-jint Agent_Initialize(JavaVM *vm, char *options, void *reserved);
-
-}
-
-#endif
+#endif /* _NSK_SHARE_JVMTI_JVMTITOOLS_HPP_ */
