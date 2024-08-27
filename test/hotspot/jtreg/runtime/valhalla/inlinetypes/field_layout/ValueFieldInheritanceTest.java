@@ -23,7 +23,7 @@
 
   /*
  * @test id=32bits
- * @requires vm.bits == 32
+ * @requires vm.bits == 32 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -33,7 +33,7 @@
 
 /*
  * @test id=64bitsCompressedOops
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -43,7 +43,7 @@
 
 /*
  * @test id=64bitsNoCompressedOops
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -53,7 +53,7 @@
 
 /*
  * @test id=64bitsNoCompressedOopsNoCompressKlassPointers
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -176,6 +176,7 @@ public class ValueFieldInheritanceTest {
     Collections.addAll(argsList, "--enable-preview");
     Collections.addAll(argsList, "-XX:+UnlockDiagnosticVMOptions");
     Collections.addAll(argsList, "-XX:+PrintFieldLayout");
+    Collections.addAll(argsList, "-Xshare:off");
     if (compressedOopsArg != null) {
       Collections.addAll(argsList, compressedOopsArg);
     }
