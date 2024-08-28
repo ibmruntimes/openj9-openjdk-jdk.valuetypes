@@ -209,6 +209,7 @@ public class Preview {
         return switch (feature) {
             case IMPLICIT_CLASSES -> true;
             case SUPER_INIT -> true;
+            case PRIMITIVE_PATTERNS -> true;
             case VALUE_CLASSES -> true;
             case PRIMITIVE_PATTERNS -> true;
             //Note: this is a backdoor which allows to optionally treat all features as 'preview' (for testing).

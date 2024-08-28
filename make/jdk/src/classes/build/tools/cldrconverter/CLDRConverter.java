@@ -1334,7 +1334,7 @@ public class CLDRConverter {
      */
     private static void generateTZDBShortNamesMap() throws IOException {
         Files.walk(Path.of(tzDataDir), 1, FileVisitOption.FOLLOW_LINKS)
-            .filter(p -> p.toFile().isFile() && !p.endsWith("jdk11_backward"))
+            .filter(p -> p.toFile().isFile())
             .forEach(p -> {
                 try {
                     String zone = null;

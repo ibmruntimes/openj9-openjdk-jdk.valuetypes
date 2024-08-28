@@ -82,6 +82,8 @@ public class SwitchBootstraps {
     private static final MethodTypeDesc TYPES_SWITCH_DESCRIPTOR =
             MethodTypeDesc.ofDescriptor("(Ljava/lang/Object;ILjava/util/function/BiPredicate;Ljava/util/List;)I");
 
+    private static final Map<TypePairs, String> typePairToName;
+
     static {
         try {
             NULL_CHECK = LOOKUP.findStatic(Objects.class, "isNull",
@@ -97,6 +99,7 @@ public class SwitchBootstraps {
         catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
+        typePairToName = TypePairs.initialize();
     }
 
     /**

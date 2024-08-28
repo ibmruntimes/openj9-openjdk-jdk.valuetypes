@@ -54,13 +54,13 @@ extern "C" {
         test_class_B = (jclass)env->NewGlobalRef(arg1);
         if (test_class_B == nullptr)  return JNI_FALSE;
 
-        test_staticM_id = env->GetStaticMethodID(test_class_A, "staticM", "(Ljava/lang/Runnable;)V");
+        test_staticM_id = env->GetStaticMethodID(test_class_A, "staticM", "(Ljava/lang/Runnable;LClassInitBarrier$MyValue;)V");
         if (test_staticM_id == nullptr)  return JNI_FALSE;
 
-        test_staticS_id = env->GetStaticMethodID(test_class_A, "staticS", "(Ljava/lang/Runnable;)V");
+        test_staticS_id = env->GetStaticMethodID(test_class_A, "staticS", "(Ljava/lang/Runnable;LClassInitBarrier$MyValue;)V");
         if (test_staticS_id == nullptr)  return JNI_FALSE;
 
-        test_staticN_id = env->GetStaticMethodID(test_class_A, "staticN", "(Ljava/lang/Runnable;)V");
+        test_staticN_id = env->GetStaticMethodID(test_class_A, "staticN", "(Ljava/lang/Runnable;LClassInitBarrier$MyValue;)V");
         if (test_staticN_id == nullptr)  return JNI_FALSE;
 
         test_A_m_id = env->GetMethodID(test_class_A, "m", "()V");

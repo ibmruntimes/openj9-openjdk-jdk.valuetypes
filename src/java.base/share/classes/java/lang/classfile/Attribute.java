@@ -35,6 +35,7 @@ import java.lang.classfile.attribute.EnclosingMethodAttribute;
 import java.lang.classfile.attribute.ExceptionsAttribute;
 import java.lang.classfile.attribute.InnerClassesAttribute;
 import java.lang.classfile.attribute.LineNumberTableAttribute;
+import java.lang.classfile.attribute.LoadableDescriptorsAttribute;
 import java.lang.classfile.attribute.LocalVariableTableAttribute;
 import java.lang.classfile.attribute.LocalVariableTypeTableAttribute;
 import java.lang.classfile.attribute.MethodParametersAttribute;
@@ -85,7 +86,7 @@ public sealed interface Attribute<A extends Attribute<A>>
                 CharacterRangeTableAttribute, CodeAttribute, CompilationIDAttribute,
                 ConstantValueAttribute, DeprecatedAttribute, EnclosingMethodAttribute,
                 ExceptionsAttribute, InnerClassesAttribute, LineNumberTableAttribute,
-                LocalVariableTableAttribute, LocalVariableTypeTableAttribute,
+                LoadableDescriptorsAttribute, LocalVariableTableAttribute, LocalVariableTypeTableAttribute,
                 MethodParametersAttribute, ModuleAttribute, ModuleHashesAttribute,
                 ModuleMainClassAttribute, ModulePackagesAttribute, ModuleResolutionAttribute,
                 ModuleTargetAttribute, NestHostAttribute, NestMembersAttribute,

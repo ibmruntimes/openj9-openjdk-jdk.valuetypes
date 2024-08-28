@@ -56,7 +56,8 @@ public class TestLookForUntestedEvents {
         Arrays.asList(
             "DataLoss", "IntFlag", "ReservedStackActivation", "NativeLibraryUnload",
             "DoubleFlag", "UnsignedLongFlagChanged", "IntFlagChanged",
-            "UnsignedIntFlag", "UnsignedIntFlagChanged", "DoubleFlagChanged")
+            "UnsignedIntFlag", "UnsignedIntFlagChanged", "DoubleFlagChanged",
+            "SafepointCleanupTask")
     );
 
     // GC uses specific framework to test the events, instead of using event names literally.

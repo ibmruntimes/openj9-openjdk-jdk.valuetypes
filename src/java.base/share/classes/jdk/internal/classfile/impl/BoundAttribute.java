@@ -935,6 +935,23 @@ public abstract sealed class BoundAttribute<T extends Attribute<T>>
         }
     }
 
+    public static final class BoundLoadableDescriptorsAttribute extends BoundAttribute<LoadableDescriptorsAttribute>
+            implements LoadableDescriptorsAttribute {
+        private List<Utf8Entry> loadableDescriptors = null;
+
+        public BoundLoadableDescriptorsAttribute(ClassReader cf, AttributeMapper<LoadableDescriptorsAttribute> mapper, int pos) {
+            super(cf, mapper, pos);
+        }
+
+        @Override
+        public List<Utf8Entry> loadableDescriptors() {
+            if (loadableDescriptors == null) {
+                loadableDescriptors = readEntryList(payloadStart);
+            }
+            return loadableDescriptors;
+        }
+    }
+
     public abstract static sealed class BoundCodeAttribute
             extends BoundAttribute<CodeAttribute>
             implements CodeAttribute

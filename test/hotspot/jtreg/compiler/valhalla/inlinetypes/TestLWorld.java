@@ -1371,8 +1371,6 @@ public class TestLWorld {
     }
 
     // Test for bug in Escape Analysis
-    // TODO 8325106 Re-enable
-    /*
     @DontInline
     public void test41_dontinline(Object o) {
         Asserts.assertEQ(o, rI);
@@ -1391,7 +1389,6 @@ public class TestLWorld {
     public void test41_verifier() {
         test41();
     }
-    */
 
     // Test for bug in Escape Analysis
     private static final MyValue1 test42VT1 = MyValue1.createWithFieldsInline(rI, rL);
@@ -1737,7 +1734,7 @@ public class TestLWorld {
         try {
             test56(testValue1);
             throw new RuntimeException("test56 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -1760,7 +1757,7 @@ public class TestLWorld {
         try {
             test57(testValue1);
             throw new RuntimeException("test57 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -1784,7 +1781,7 @@ public class TestLWorld {
         try {
             test58();
             throw new RuntimeException("test58 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -1806,7 +1803,7 @@ public class TestLWorld {
         try {
             test59(new Object(), true);
             throw new RuntimeException("test59 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -1825,18 +1822,18 @@ public class TestLWorld {
         try {
             test60(false);
             throw new RuntimeException("test60 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
         try {
             test60(true);
             throw new RuntimeException("test60 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
 
-    // Test catching the IllegalMonitorStateException in compiled code
+    // Test catching the IdentityException in compiled code
     @Test
     public void test61(Object vt) {
         boolean thrown = false;
@@ -1844,7 +1841,7 @@ public class TestLWorld {
             synchronized (vt) {
                 throw new RuntimeException("test61 failed: no exception thrown");
             }
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             thrown = true;
         }
         if (!thrown) {
@@ -1861,7 +1858,7 @@ public class TestLWorld {
     public void test62(Object o) {
         try {
             synchronized (o) { }
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
             return;
         }
@@ -1883,7 +1880,7 @@ public class TestLWorld {
     public void test63_verifier() {
         try {
             test63(testValue1);
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
             return;
         }
@@ -3756,14 +3753,11 @@ public class TestLWorld {
     }
 
     @Test
-    // TODO 8325106
-    /*
     @IR(failOn = {LOAD},
         // LockNode keeps MyValue1 allocation alive up until macro expansion which in turn keeps MyValue2
         // alloc alive. Although the MyValue1 allocation is removed (unused), MyValue2 is expanded first
         // and therefore stays.
         counts = {ALLOC, "<= 1", STORE, "<= 1"})
-    */
     public void test130() {
         Object obj = test130_inlinee();
         synchronized (obj) {
@@ -3776,7 +3770,7 @@ public class TestLWorld {
         try {
             test130();
             throw new RuntimeException("test130 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -3801,7 +3795,7 @@ public class TestLWorld {
         try {
             test131();
             throw new RuntimeException("test131 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -3829,7 +3823,7 @@ public class TestLWorld {
         try {
             test132();
             throw new RuntimeException("test132 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -3851,7 +3845,7 @@ public class TestLWorld {
         try {
             test133(false);
             throw new RuntimeException("test133 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -3874,7 +3868,7 @@ public class TestLWorld {
         try {
             test134(true);
             throw new RuntimeException("test134 failed: no exception thrown");
-        } catch (IllegalMonitorStateException ex) {
+        } catch (IdentityException ex) {
             // Expected
         }
     }
@@ -4045,9 +4039,7 @@ public class TestLWorld {
 
     // Test merging of buffered default and non-default inline types
     @Test
-    // TODO 8325106 With incremental inlining, we already buffer the larval which can't use the default oop because it might be overridden.
-    @IR(applyIf = {"AlwaysIncrementalInline", "false"},
-        failOn = {ALLOC_G})
+    @IR(failOn = {ALLOC_G})
     public Object test144(int i) {
         if (i == 0) {
             return MyValue1.createDefaultInline();
@@ -4128,11 +4120,8 @@ public class TestLWorld {
 
     // Test post-parse call devirtualization with inline type receiver
     @Test
-    // TODO 8325106
-    /*
     @IR(applyIf = {"InlineTypePassFieldsAsArgs", "true"},
         failOn = {ALLOC})
-    */
     @IR(failOn = {compiler.lib.ir_framework.IRNode.DYNAMIC_CALL_OF_METHOD, "MyValue2::hash"},
         counts = {compiler.lib.ir_framework.IRNode.STATIC_CALL_OF_METHOD, "MyValue2::hash", "= 1"})
     public long test150() {
@@ -4154,7 +4143,7 @@ public class TestLWorld {
         Asserts.assertEquals(test150(), testValue2.hash());
     }
 
-// TODO 8325106 This triggers #  assert(false) failed: Should have been buffered
+// TODO 8336003 This triggers #  assert(false) failed: Should have been buffered
 /*
     // Same as test150 but with val not being allocated in the scope of the method
     @Test
@@ -4184,6 +4173,7 @@ public class TestLWorld {
         public int val();
     }
 
+    @ImplicitlyConstructible
     static abstract value class MyAbstract2 implements MyInterface2 {
 
     }
@@ -4371,5 +4361,138 @@ public class TestLWorld {
             // Expected
         }
         test160(null);
+    }
+
+    abstract value static class AbstractValueClassSingleSubclass {
+    }
+
+    value static class UniqueValueSubClass extends AbstractValueClassSingleSubclass {
+        int x = 34;
+    }
+
+    static AbstractValueClassSingleSubclass abstractValueClassSingleSubclass = new UniqueValueSubClass();
+
+    @Test
+    public void testUniqueConcreteValueSubKlass(boolean flag) {
+        // C2 should recognize that even though we do not know the exact layout of the underlying inline type of the
+        // abstract field abstractValueClassSingleSubclass (i.e. cannot scalarize), we only have a unique concrete sub
+        // class from which we know at compile time whether it can be scalarized or not. This unique sub class
+        // optimization was missing, resulting in a missing InlineTypeNode assertion failure.
+        doNothing(abstractValueClassSingleSubclass, flag ? 23 : 34);
+    }
+
+    void doNothing(Object a, int i) {}
+
+    @Run(test = "testUniqueConcreteValueSubKlass")
+    public void testUniqueConcreteValueSubKlass_verifier() {
+        testUniqueConcreteValueSubKlass(true);
+    }
+
+    static value class MyValueContainer {
+        private final Object value;
+
+        private MyValueContainer(Object value) {
+            this.value = value;
+        }
+    }
+
+    static value class MyValue161 {
+        int x = 0;
+    }
+
+    // Test merging value classes with Object fields
+    @Test
+    public MyValueContainer test161(boolean b) {
+        MyValueContainer res = b ? new MyValueContainer(new MyValue161()) : null;
+        // Cast to verify that merged values are of correct type
+        Object obj = b ? (MyValue161)res.value : null;
+        return res;
+    }
+
+    @Run(test = "test161")
+    public void test161_verifier() {
+        Asserts.assertEquals(test161(true), new MyValueContainer(new MyValue161()));
+        Asserts.assertEquals(test161(false), null);
+    }
+
+    @Test
+    public MyValueContainer test162(boolean b) {
+        MyValueContainer res = b ? null : new MyValueContainer(new MyValue161());
+        // Cast to verify that merged values are of correct type
+        Object obj = b ? null : (MyValue161)res.value;
+        return res;
+    }
+
+    @Run(test = "test162")
+    public void test162_verifier() {
+        Asserts.assertEquals(test162(true), null);
+        Asserts.assertEquals(test162(false), new MyValueContainer(new MyValue161()));
+    }
+
+    @Test
+    public MyValueContainer test163(boolean b) {
+        MyValueContainer res = b ? new MyValueContainer(new MyValue161()) : new MyValueContainer(null);
+        // Cast to verify that merged values are of correct type
+        Object obj = b ? (MyValue161)res.value : (MyValue161)res.value;
+        return res;
+    }
+
+    @Run(test = "test163")
+    public void test163_verifier() {
+        Asserts.assertEquals(test163(true), new MyValueContainer(new MyValue161()));
+        Asserts.assertEquals(test163(false), new MyValueContainer(null));
+    }
+
+    @Test
+    public MyValueContainer test164(boolean b) {
+        MyValueContainer res = b ? new MyValueContainer(null) : new MyValueContainer(new MyValue161());
+        // Cast to verify that merged values are of correct type
+        Object obj = b ? (MyValue161)res.value : (MyValue161)res.value;
+        return res;
+    }
+
+    @Run(test = "test164")
+    public void test164_verifier() {
+        Asserts.assertEquals(test164(true), new MyValueContainer(null));
+        Asserts.assertEquals(test164(false), new MyValueContainer(new MyValue161()));
+    }
+
+    @Test
+    public MyValueContainer test165(boolean b) {
+        MyValueContainer res = b ? new MyValueContainer(new MyValue161()) : new MyValueContainer(42);
+        // Cast to verify that merged values are of correct type
+        Object obj = b ? (MyValue161)res.value : (Integer)res.value;
+        return res;
+    }
+
+    @Run(test = "test165")
+    public void test165_verifier() {
+        Asserts.assertEquals(test165(true), new MyValueContainer(new MyValue161()));
+        Asserts.assertEquals(test165(false), new MyValueContainer(42));
+    }
+
+    @Test
+    public MyValueContainer test166(boolean b) {
+        MyValueContainer res = b ? new MyValueContainer(42) : new MyValueContainer(new MyValue161());
+        // Cast to verify that merged values are of correct type
+        Object obj = b ? (Integer)res.value : (MyValue161)res.value;
+        return res;
+    }
+
+    @Run(test = "test166")
+    public void test166_verifier() {
+        Asserts.assertEquals(test166(true), new MyValueContainer(42));
+        Asserts.assertEquals(test166(false), new MyValueContainer(new MyValue161()));
+    }
+
+    // Verify that monitor information in JVMState is correct at method exit
+    @Test
+    public synchronized Object test167() {
+        return MyValue1.createWithFieldsInline(rI, rL); // Might trigger buffering which requires JVMState
+    }
+
+    @Run(test = "test167")
+    public void test167_verifier() {
+        Asserts.assertEquals(((MyValue1)test167()).hash(), hash());
     }
 }

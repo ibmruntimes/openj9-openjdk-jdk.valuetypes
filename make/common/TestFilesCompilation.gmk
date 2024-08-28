@@ -56,6 +56,9 @@ define SetupTestFilesCompilationBody
     $$(error There are duplicate test file names for $1: $$($1_DUPLICATED_NAMES))
   endif
 
+  # Always include common test functionality
+  TEST_CFLAGS := -I$(TOPDIR)/test/lib/native
+
   # The list to depend on starts out empty
   $1 :=
   ifeq ($$($1_TYPE), LIBRARY)

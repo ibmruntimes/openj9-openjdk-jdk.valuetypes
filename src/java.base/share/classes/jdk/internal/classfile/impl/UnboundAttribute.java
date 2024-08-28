@@ -52,6 +52,7 @@ import java.lang.classfile.attribute.InnerClassInfo;
 import java.lang.classfile.attribute.InnerClassesAttribute;
 import java.lang.classfile.attribute.LineNumberInfo;
 import java.lang.classfile.attribute.LineNumberTableAttribute;
+import java.lang.classfile.attribute.LoadableDescriptorsAttribute;
 import java.lang.classfile.attribute.LocalVariableInfo;
 import java.lang.classfile.attribute.LocalVariableTableAttribute;
 import java.lang.classfile.attribute.LocalVariableTypeInfo;
@@ -426,6 +427,22 @@ public abstract sealed class UnboundAttribute<T extends Attribute<T>>
         @Override
         public List<ClassEntry> permittedSubclasses() {
             return permittedSubclasses;
+        }
+    }
+
+    public static final class UnboundLoadableDescriptorsAttribute
+            extends UnboundAttribute<LoadableDescriptorsAttribute>
+            implements LoadableDescriptorsAttribute {
+        private final List<Utf8Entry> loadableDescriptors;
+
+        public UnboundLoadableDescriptorsAttribute(List<Utf8Entry> loadableDescriptors) {
+            super(Attributes.LOADABLE_DESCRIPTORS);
+            this.loadableDescriptors = List.copyOf(loadableDescriptors);
+        }
+
+        @Override
+        public List<Utf8Entry> loadableDescriptors() {
+            return loadableDescriptors;
         }
     }
 
