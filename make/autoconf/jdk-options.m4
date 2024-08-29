@@ -24,7 +24,7 @@
 #
 
 # ===========================================================================
-# (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
+# (c) Copyright IBM Corp. 2022, 2024 All Rights Reserved
 # ===========================================================================
 
 ###############################################################################
@@ -194,6 +194,9 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_OPTIONS],
   fi
   AC_SUBST(INCLUDE_SA)
 
+  # Setup default CDS alignment. For OpenJ9 it needs to be false.
+  COMPATIBLE_CDS_ALIGNMENT_DEFAULT=false
+
   # Compress jars
   COMPRESS_JARS=false
 
@@ -256,11 +259,7 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
         fi
       ],
       [
-        if test "x$STATIC_BUILD" = xtrue; then
-          with_native_debug_symbols="none"
-        else
-          with_native_debug_symbols="external"
-        fi
+        with_native_debug_symbols="external"
       ])
   AC_MSG_RESULT([$with_native_debug_symbols])
 
@@ -431,12 +430,23 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_ADDRESS_SANITIZER],
           # It's harmless to be suppressed in clang as well.
           ASAN_CFLAGS="-fsanitize=address -Wno-stringop-truncation -fno-omit-frame-pointer -fno-common -DADDRESS_SANITIZER"
           ASAN_LDFLAGS="-fsanitize=address"
+          # detect_stack_use_after_return causes ASAN to offload stack-local
+          # variables to c-heap and therefore breaks assumptions in hotspot
+          # that rely on data (e.g. Marks) living in thread stacks.
+          if test "x$TOOLCHAIN_TYPE" = "xgcc"; then
+            ASAN_CFLAGS="$ASAN_CFLAGS --param asan-use-after-return=0"
+          fi
+          if test "x$TOOLCHAIN_TYPE" = "xclang"; then
+            ASAN_CFLAGS="$ASAN_CFLAGS -fsanitize-address-use-after-return=never"
+          fi
         elif test "x$TOOLCHAIN_TYPE" = "xmicrosoft"; then
           # -Oy- is equivalent to -fno-omit-frame-pointer in GCC/Clang.
           ASAN_CFLAGS="-fsanitize=address -Oy- -DADDRESS_SANITIZER"
           # MSVC produces a warning if you pass -fsanitize=address to the linker. It also complains
           $ if -DEBUG is not passed to the linker when building with ASan.
           ASAN_LDFLAGS="-debug"
+          # -fsanitize-address-use-after-return is off by default in MS Visual Studio 22 (19.37.32824).
+          # cl : Command line warning D9002 : ignoring unknown option '-fno-sanitize-address-use-after-return'
         fi
         JVM_CFLAGS="$JVM_CFLAGS $ASAN_CFLAGS"
         JVM_LDFLAGS="$JVM_LDFLAGS $ASAN_LDFLAGS"
@@ -489,9 +499,15 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_LEAK_SANITIZER],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_UNDEFINED_BEHAVIOR_SANITIZER],
 [
+  UTIL_ARG_WITH(NAME: additional-ubsan-checks, TYPE: string,
+      DEFAULT: [],
+      DESC: [Customizes the ubsan checks],
+      OPTIONAL: true)
+
   # GCC reports lots of likely false positives for stringop-truncation and format-overflow.
   # Silence them for now.
-  UBSAN_CHECKS="-fsanitize=undefined -fsanitize=float-divide-by-zero -fno-sanitize=shift-base -fno-sanitize=alignment"
+  UBSAN_CHECKS="-fsanitize=undefined -fsanitize=float-divide-by-zero -fno-sanitize=shift-base -fno-sanitize=alignment \
+      $ADDITIONAL_UBSAN_CHECKS"
   UBSAN_CFLAGS="$UBSAN_CHECKS -Wno-stringop-truncation -Wno-format-overflow -fno-omit-frame-pointer -DUNDEFINED_BEHAVIOR_SANITIZER"
   UBSAN_LDFLAGS="$UBSAN_CHECKS"
   UTIL_ARG_ENABLE(NAME: ubsan, DEFAULT: false, RESULT: UBSAN_ENABLED,
@@ -532,24 +548,7 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_UNDEFINED_BEHAVIOR_SANITIZER],
 #
 AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
 [
-  UTIL_ARG_ENABLE(NAME: static-build, DEFAULT: false, RESULT: STATIC_BUILD,
-      DESC: [enable static library build],
-      CHECKING_MSG: [if static build is enabled],
-      CHECK_AVAILABLE: [
-        AC_MSG_CHECKING([if static build is available])
-        if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
-          AC_MSG_RESULT([yes])
-        else
-          AC_MSG_RESULT([no])
-          AVAILABLE=false
-        fi
-      ],
-      IF_ENABLED: [
-        STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
-        CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
-        CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
-      ])
-  AC_SUBST(STATIC_BUILD)
+  UTIL_DEPRECATED_ARG_ENABLE(static-build)
 ])
 
 ################################################################################
@@ -673,7 +672,7 @@ AC_DEFUN([JDKOPT_ENABLE_DISABLE_CDS_ARCHIVE],
 #
 AC_DEFUN([JDKOPT_ENABLE_DISABLE_COMPATIBLE_CDS_ALIGNMENT],
 [
-  UTIL_ARG_ENABLE(NAME: compatible-cds-alignment, DEFAULT: false,
+  UTIL_ARG_ENABLE(NAME: compatible-cds-alignment, DEFAULT: $COMPATIBLE_CDS_ALIGNMENT_DEFAULT,
       RESULT: ENABLE_COMPATIBLE_CDS_ALIGNMENT,
       DESC: [enable use alternative compatible cds core region alignment],
       DEFAULT_DESC: [disabled],

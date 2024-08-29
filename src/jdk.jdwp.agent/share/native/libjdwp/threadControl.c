@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2024 All Rights Reserved
+ * ===========================================================================
+ */
+
 #include "util.h"
 #include "eventHandler.h"
 #include "threadControl.h"
@@ -31,6 +37,10 @@
 #include "stepControl.h"
 #include "invoker.h"
 #include "bag.h"
+#include "j9cfg.h"
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "ibmjvmti.h"
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #define HANDLING_EVENT(node) ((node)->current_ei != 0)
 
@@ -136,11 +146,6 @@ typedef struct {
 } DeferredEventModeList;
 
 static DeferredEventModeList deferredEventModes;
-
-#ifdef DEBUG
-static void dumpThreadList(ThreadList *list);
-static void dumpThread(ThreadNode *node);
-#endif
 
 /* Get the state of the thread direct from JVMTI */
 static jvmtiError
@@ -642,26 +647,31 @@ getLocks(void)
      * thread) needs to be grabbed here. This allows thread control
      * code to safely suspend and resume the application threads
      * while ensuring they don't hold a critical lock.
+     *
+     * stepControl_beginStep() grabs the eventHandler lock and stepControl lock
+     * before eventually ending up here, so we need to maintain that order here.
+     * Similarly, invoker_completeInvokeRequest() grabs the eventHandler lock
+     * and invoker lock.
      */
-
+    callback_lock();
     eventHandler_lock();
+    stepControl_lock();
     invoker_lock();
     eventHelper_lock();
-    stepControl_lock();
-    commonRef_lock();
     debugMonitorEnter(threadLock);
-
+    commonRef_lock();
 }
 
 static void
 releaseLocks(void)
 {
-    debugMonitorExit(threadLock);
     commonRef_unlock();
-    stepControl_unlock();
+    debugMonitorExit(threadLock);
     eventHelper_unlock();
     invoker_unlock();
+    stepControl_unlock();
     eventHandler_unlock();
+    callback_unlock();
 }
 
 void
@@ -1646,6 +1656,34 @@ threadControl_getInvokeRequest(jthread thread)
     return request;
 }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static jvmtiExtensionFunction
+find_ext_function(jvmtiEnv *jvmti, const char *funcName)
+{
+    jint extCount = 0;
+    jvmtiExtensionFunctionInfo *extList = NULL;
+    jvmtiExtensionFunction retFunc = NULL;
+
+    jvmtiError err = JVMTI_FUNC_PTR(jvmti, GetExtensionFunctions)
+                            (jvmti, &extCount, &extList);
+    if (JVMTI_ERROR_NONE == err) {
+        jint i = 0;
+        for (i = 0; i < extCount; i++) {
+            if (0 == strcmp(extList[i].id, funcName)) {
+                retFunc = extList[i].func;
+                break;
+            }
+        }
+    } else {
+        ERROR_MESSAGE(("Error in JVMTI GetExtensionFunctions: %s(%d)\n", jvmtiErrorText(err), err));
+    }
+    return retFunc;
+}
+
+static jvmtiExtensionFunction addDebugThreadToCheckpointState_func = NULL;
+static jvmtiExtensionFunction removeDebugThreadFromCheckpointState_func = NULL;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 jvmtiError
 threadControl_addDebugThread(jthread thread)
 {
@@ -1665,6 +1703,12 @@ threadControl_addDebugThread(jthread thread)
         } else {
             debugThreadCount++;
             error = JVMTI_ERROR_NONE;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (NULL == addDebugThreadToCheckpointState_func) {
+                addDebugThreadToCheckpointState_func = find_ext_function(gdata->jvmti, OPENJ9_FUNCTION_ADD_DEBUG_THREAD);
+            }
+            error = (*addDebugThreadToCheckpointState_func)(gdata->jvmti, thread);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
         }
     }
     debugMonitorExit(threadLock);
@@ -1692,6 +1736,12 @@ threadControl_removeDebugThread(jthread thread)
             }
             debugThreadCount--;
             error = JVMTI_ERROR_NONE;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (NULL == removeDebugThreadFromCheckpointState_func) {
+                removeDebugThreadFromCheckpointState_func = find_ext_function(gdata->jvmti, OPENJ9_FUNCTION_REMOVE_DEBUG_THREAD);
+            }
+            error = (*removeDebugThreadFromCheckpointState_func)(gdata->jvmti, thread);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
             break;
         }
     }
@@ -2556,13 +2606,15 @@ threadControl_allVThreads(jint *numVThreads)
     return vthreads;
 }
 
-/***** debugging *****/
+/***** APIs for debugging the debug agent *****/
 
-#ifdef DEBUG
+static void dumpThreadList(ThreadList *list);
+static void dumpThread(ThreadNode *node);
 
 void
 threadControl_dumpAllThreads()
 {
+    tty_message("suspendAllCount: %d", suspendAllCount);
     tty_message("Dumping runningThreads:");
     dumpThreadList(&runningThreads);
     tty_message("\nDumping runningVThreads:");
@@ -2647,5 +2699,3 @@ dumpThread(ThreadNode *node) {
     tty_message("\tobjID: %d", commonRef_refToID(getEnv(), node->thread));
 #endif
 }
-
-#endif /* DEBUG */

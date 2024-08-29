@@ -4161,7 +4161,7 @@ public class Check {
 
                 // If super()/this() isn't first, require flexible constructors feature
                 if (!firstStatement)
-                    preview.checkSourceLevel(apply.pos(), Feature.SUPER_INIT);
+                    preview.checkSourceLevel(apply.pos(), Feature.FLEXIBLE_CONSTRUCTORS);
 
                 // We found a legitimate super()/this() call; remember it
                 initCall = methodName;
@@ -4527,7 +4527,7 @@ public class Check {
                 TypeSymbol tsym = imp.qualid.selected.type.tsym;
                 if (tsym.kind == PCK && tsym.members().isEmpty() &&
                     !(Feature.IMPORT_ON_DEMAND_OBSERVABLE_PACKAGES.allowedInSource(source) && tsym.exists())) {
-                    log.error(DiagnosticFlag.RESOLVE_ERROR, imp.pos, Errors.DoesntExist(tsym));
+                    log.error(DiagnosticFlag.RESOLVE_ERROR, imp.qualid.selected.pos(), Errors.DoesntExist(tsym));
                 }
             }
         }
@@ -4917,7 +4917,6 @@ public class Check {
                     JCCaseLabel testCaseLabel = caseAndLabel.snd;
                     Type testType = labelType(testCaseLabel);
                     boolean dominated = false;
-                    if (unconditionalCaseLabel == testCaseLabel) unconditionalFound = true;
                     if (types.isUnconditionallyExact(currentType, testType) &&
                         !currentType.hasTag(ERROR) && !testType.hasTag(ERROR)) {
                         //the current label is potentially dominated by the existing (test) label, check:
@@ -4930,11 +4929,6 @@ public class Check {
                             dominated = patternDominated(testPatternCaseLabel.pat,
                                                          patternCL.pat);
                         }
-                    }
-
-                    // Domination can occur even when we have not an unconditional pair between case labels.
-                    if (unconditionalFound && unconditionalCaseLabel != label) {
-                        dominated = true;
                     }
 
                     if (dominated) {

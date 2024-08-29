@@ -340,6 +340,10 @@ public class CreateSymbols {
             "Ljdk/internal/javac/PreviewFeature;";
     private static final String PREVIEW_FEATURE_ANNOTATION_INTERNAL =
             "Ljdk/internal/PreviewFeature+Annotation;";
+    private static final String RESTRICTED_ANNOTATION =
+            "Ljdk/internal/javac/Restricted;";
+    private static final String RESTRICTED_ANNOTATION_INTERNAL =
+            "Ljdk/internal/javac/Restricted+Annotation;";
     private static final String VALUE_BASED_ANNOTATION =
             "Ljdk/internal/ValueBased;";
     private static final String VALUE_BASED_ANNOTATION_INTERNAL =
@@ -354,6 +358,7 @@ public class CreateSymbols {
                     PREVIEW_FEATURE_ANNOTATION_OLD,
                     PREVIEW_FEATURE_ANNOTATION_NEW,
                     VALUE_BASED_ANNOTATION,
+                    RESTRICTED_ANNOTATION,
                     MIGRATED_VALUE_CLASS_ANNOTATION));
 
     private void stripNonExistentAnnotations(LoadDescriptions data) {
@@ -1250,6 +1255,12 @@ public class CreateSymbols {
             //the non-public ValueBased annotation will not be available in ct.sym,
             //replace with purely synthetic javac-internal annotation:
             annotationType = VALUE_BASED_ANNOTATION_INTERNAL;
+        }
+
+        if (RESTRICTED_ANNOTATION.equals(annotationType)) {
+            //the non-public Restricted annotation will not be available in ct.sym,
+            //replace with purely synthetic javac-internal annotation:
+            annotationType = RESTRICTED_ANNOTATION_INTERNAL;
         }
 
         if (MIGRATED_VALUE_CLASS_ANNOTATION.equals(annotationType)) {

@@ -29,10 +29,6 @@ include LauncherCommon.gmk
 ## Build javap
 ################################################################################
 
-################################################################################
-## Build javap
-################################################################################
-
 $(eval $(call SetupBuildLauncher, javap, \
     MAIN_CLASS := com.sun.tools.javap.Main, \
     CFLAGS := -DEXPAND_CLASSPATH_WILDCARDS, \
@@ -53,5 +49,14 @@ $(eval $(call SetupBuildLauncher, jdeps, \
 
 $(eval $(call SetupBuildLauncher, jdeprscan, \
     MAIN_CLASS := com.sun.tools.jdeprscan.Main, \
+    CFLAGS := -DEXPAND_CLASSPATH_WILDCARDS, \
+))
+
+################################################################################
+## Build jnativescan
+################################################################################
+
+$(eval $(call SetupBuildLauncher, jnativescan, \
+    MAIN_CLASS := com.sun.tools.jnativescan.Main, \
     CFLAGS := -DEXPAND_CLASSPATH_WILDCARDS, \
 ))

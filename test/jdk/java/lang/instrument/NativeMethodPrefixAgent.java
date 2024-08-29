@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,6 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6263319
- * @requires ((vm.opt.StartFlightRecording == null) | (vm.opt.StartFlightRecording == false)) & ((vm.opt.FlightRecorder == null) | (vm.opt.FlightRecorder == false))
- * @summary test setNativeMethodPrefix
- * @author Robert Field, Sun Microsystems
- *
- * @enablePreview
- * @modules java.management
- *          java.instrument
- * @run shell/timeout=240 MakeJAR2.sh NativeMethodPrefixAgent NativeMethodPrefixApp 'Can-Retransform-Classes: true' 'Can-Set-Native-Method-Prefix: true'
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-CheckIntrinsics -javaagent:NativeMethodPrefixAgent.jar NativeMethodPrefixApp
- */
-
 import asmlib.Instrumentor;
 
 import java.lang.constant.ClassDesc;
@@ -49,11 +35,23 @@ class NativeMethodPrefixAgent {
 
     static ClassFileTransformer t0, t1, t2;
     static Instrumentation inst;
-    private static Throwable agentError;
+    private static Throwable agentError; // to be accessed/updated in a synchronized block
 
-    public static void checkErrors() {
+    private static final String CLASS_TO_TRANSFORM = "NativeMethodPrefixApp$Dummy";
+
+    public static synchronized void checkErrors() {
         if (agentError != null) {
             throw new RuntimeException("Agent error", agentError);
+        }
+    }
+
+    private static synchronized void trackError(final Throwable t) {
+        if (agentError == null) {
+            agentError = t;
+            return;
+        }
+        if (agentError != t) {
+            agentError.addSuppressed(t);
         }
     }
 
@@ -62,12 +60,15 @@ class NativeMethodPrefixAgent {
         private static final MethodTypeDesc MTD_void_String_int = MethodTypeDesc.of(CD_void, CD_String, CD_int);
         final String trname;
         final int transformId;
+        private final String nativeMethodPrefix;
 
         Tr(int transformId) {
             this.trname = "tr" + transformId;
             this.transformId = transformId;
+            this.nativeMethodPrefix = "wrapped_" + trname + "_";
         }
 
+<<<<<<< HEAD
         public byte[]
         transform(
             ClassLoader loader,
@@ -99,20 +100,38 @@ class NativeMethodPrefixAgent {
                         write_buffer(fname + "_instr.class", newcf);
                     }
                     ***/
+=======
+        @Override
+        public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+                                ProtectionDomain protectionDomain, byte[] classfileBuffer) {
+>>>>>>> d032521c17215a93395974cf933ceea0982be2a9
 
-                    return redef? null : newcf;
-                } catch (Throwable ex) {
-                    if (agentError == null) {
-                        agentError = ex;
-                    }
-                    System.err.println("ERROR: Injection failure: " + ex);
-                    ex.printStackTrace();
+            try {
+                // we only transform a specific application class
+                if (!className.equals(CLASS_TO_TRANSFORM)) {
                     return null;
                 }
+                if (classBeingRedefined != null) {
+                    return null;
+                }
+                // use a byte code generator which creates wrapper methods,
+                // with a configured native method prefix, for each native method on the
+                // class being transformed
+                final Instrumentor byteCodeGenerator = Instrumentor.instrFor(classfileBuffer)
+                        .addNativeMethodTrackingInjection(nativeMethodPrefix,
+                                (name, cb) -> {
+                                    cb.loadConstant(name);
+                                    cb.loadConstant(transformId);
+                                    cb.invokestatic(CD_StringIdCallbackReporter,
+                                            "tracker", MTD_void_String_int);
+                                });
+                // generate the bytecode
+                return byteCodeGenerator.apply();
+            } catch (Throwable t) {
+                trackError(t);
+                return null;
             }
-            return null;
         }
-
     }
 
     // for debugging

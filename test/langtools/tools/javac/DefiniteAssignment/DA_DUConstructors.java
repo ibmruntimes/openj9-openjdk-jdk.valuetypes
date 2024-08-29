@@ -1,9 +1,16 @@
 /*
  * @test /nodynamiccopyright/
+<<<<<<< HEAD
  * @bug 8324873
  * @summary [lworld] implementation of value classes construction
  * @enablePreview
  * @compile/fail/ref=DA_DUConstructors.out -XDrawDiagnostics DA_DUConstructors.java
+=======
+ * @bug 8325805
+ * @summary Permit non-superclass instance field assignments before this/super in constructors
+ * @compile/fail/ref=DA_DUConstructors.out -XDrawDiagnostics DA_DUConstructors.java
+ * @enablePreview
+>>>>>>> d032521c17215a93395974cf933ceea0982be2a9
  */
 
 public class DA_DUConstructors {
@@ -48,6 +55,7 @@ public class DA_DUConstructors {
             x = i;
         }
     }
+<<<<<<< HEAD
 
     // value classes
     value class V1 {
@@ -88,4 +96,6 @@ public class DA_DUConstructors {
             x = i;
         }
     }
+=======
+>>>>>>> d032521c17215a93395974cf933ceea0982be2a9
 }

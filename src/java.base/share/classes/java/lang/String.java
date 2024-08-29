@@ -1058,7 +1058,11 @@ public final class String
     private static int scale(int len, float expansionFactor) {
         // We need to perform double, not float, arithmetic; otherwise
         // we lose low order bits when len is larger than 2**24.
-        return (int)(len * (double)expansionFactor);
+        double result = len * (double)expansionFactor;
+        if (result > (double)Integer.MAX_VALUE) {
+            throw new OutOfMemoryError("Requested array size exceeds limit");
+        }
+        return (int)result;
     }
 
     private static Charset lookupCharset(String csn) throws UnsupportedEncodingException {
@@ -1264,7 +1268,7 @@ public final class String
         return Arrays.copyOf(dst, dp);
     }
 
-    //////////////////////////////// utf8 ////////////////////////////////////
+    //------------------------------ utf8 ------------------------------------
 
     /**
      * Decodes ASCII from the source byte array into the destination
@@ -3765,7 +3769,7 @@ public final class String
         if (str.isEmpty()) {
             return this;
         }
-        return StringConcatHelper.simpleConcat(this, str);
+        return StringConcatHelper.doConcat(this, str);
     }
 
     /**
@@ -5584,7 +5588,7 @@ public final class String
         System.arraycopy(buffer, offset, buffer, offset + copied, limit - copied);
     }
 
-    ////////////////////////////////////////////////////////////////
+    //--------------------------------------------------------------
 
     /**
      * Copy character bytes from this string into dst starting at dstBegin.

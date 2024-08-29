@@ -541,12 +541,12 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
     ALWAYS_DEFINES_JVM="-D_REENTRANT"
     ALWAYS_DEFINES_JDK="-D_GNU_SOURCE -D_REENTRANT -DSTDC"
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    # Access APIs for Windows 8 and above
-    # see https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
-    ALWAYS_DEFINES_JDK="-DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0602 \
-        -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -DWIN32 -DIAL"
-    ALWAYS_DEFINES_JVM="-DNOMINMAX -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0602 \
-        -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE"
+    # _WIN32_WINNT=0x0602 means access APIs for Windows 8 and above. See
+    # https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
+    ALWAYS_DEFINES="-DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0602 \
+        -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS"
+    ALWAYS_DEFINES_JDK="$ALWAYS_DEFINES -DWIN32 -DIAL"
+    ALWAYS_DEFINES_JVM="$ALWAYS_DEFINES -DNOMINMAX"
   fi
 
   ###############################################################################
@@ -631,7 +631,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     LANGSTD_CXXFLAGS="-std:c++14"
   else
-    AC_MSG_ERROR([Cannot enable C++14 for this toolchain])
+    AC_MSG_ERROR([Don't know how to enable C++14 for this toolchain])
   fi
   TOOLCHAIN_CFLAGS_JDK_CXXONLY="$TOOLCHAIN_CFLAGS_JDK_CXXONLY $LANGSTD_CXXFLAGS"
   TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM $LANGSTD_CXXFLAGS"
@@ -703,11 +703,8 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xmacosx; then
-    # Linking is different on MacOSX
-    JDK_PICFLAG=''
-    if test "x$STATIC_BUILD" = xtrue; then
-      JVM_PICFLAG=""
-    fi
+    # Linking is different on macOS
+    JVM_PICFLAG=""
   fi
 
   # Extra flags needed when building optional static versions of certain

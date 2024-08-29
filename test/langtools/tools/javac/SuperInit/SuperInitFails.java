@@ -91,7 +91,11 @@ public class SuperInitFails extends AtomicReference<Object> implements Iterable<
     }
 
     public SuperInitFails(short[] x) {
+<<<<<<< HEAD
         this.x = x.length;              // this should work
+=======
+        this.x++;                       // this should FAIL
+>>>>>>> d032521c17215a93395974cf933ceea0982be2a9
         super();
     }
 
@@ -145,16 +149,6 @@ public class SuperInitFails extends AtomicReference<Object> implements Iterable<
         return null;
     }
 
-    public SuperInitFails(short[][] x) {
-        class Foo {
-            Foo() {
-                SuperInitFails.this.hashCode();
-            }
-        };
-        new Foo();                      // this should FAIL
-        super();
-    }
-
     public SuperInitFails(float[][] x) {
         Runnable r = () -> {
             super();                    // this should FAIL
@@ -167,5 +161,33 @@ public class SuperInitFails extends AtomicReference<Object> implements Iterable<
 
     public SuperInitFails(long[][] z) {
         super(new Inner1());            // this should FAIL
+    }
+
+    public static class Inner2 {
+        int x;
+    }
+    public static class Inner3 extends Inner2 {
+        int y;
+        Inner3(byte z) {
+            x = z;                      // this should FAIL
+            super();
+        }
+        Inner3(short z) {
+            this.x = z;                 // this should FAIL
+            super();
+        }
+        Inner3(char z) {
+            Inner3.this.x = z;          // this should FAIL
+            super();
+        }
+        Inner3(int z) {
+            super.x = z;                // this should FAIL
+            super();
+        }
+    }
+
+    public SuperInitFails(double[][] x) {
+        Runnable r = () -> this.x = 7;  // this should FAIL
+        super();
     }
 }
