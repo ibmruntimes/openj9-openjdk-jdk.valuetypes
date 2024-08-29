@@ -47,6 +47,7 @@ public final class StackCounter {
     static StackCounter of(DirectCodeBuilder dcb, BufWriterImpl buf) {
         return new StackCounter(
                 dcb,
+                buf.thisClass().asSymbol(),
                 dcb.methodInfo.methodName().stringValue(),
                 dcb.methodInfo.methodTypeSymbol(),
                 (dcb.methodInfo.methodFlags() & ACC_STATIC) != 0,
@@ -96,6 +97,7 @@ public final class StackCounter {
     }
 
     public StackCounter(LabelContext labelContext,
+                     ClassDesc thisClass,
                      String methodName,
                      MethodTypeDesc methodDesc,
                      boolean isStatic,
