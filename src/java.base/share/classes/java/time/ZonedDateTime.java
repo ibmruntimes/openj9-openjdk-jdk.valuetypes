@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -162,6 +162,7 @@ import java.util.Objects;
  * @since 1.8
  */
 @jdk.internal.ValueBased
+@jdk.internal.MigratedValueClass
 public final class ZonedDateTime
         implements Temporal, ChronoZonedDateTime<LocalDate>, Serializable {
 
@@ -2214,11 +2215,20 @@ public final class ZonedDateTime
      */
     @Override  // override for Javadoc
     public String toString() {
-        String str = dateTime.toString() + offset.toString();
+        var offsetStr = offset.toString();
+        var zoneStr = (String) null;
+        int length = 29 + offsetStr.length();
         if (offset != zone) {
-            str += '[' + zone.toString() + ']';
+            zoneStr = zone.toString();
+            length += zoneStr.length() + 2;
         }
-        return str;
+        var buf = new StringBuilder(length);
+        dateTime.formatTo(buf);
+        buf.append(offsetStr);
+        if (zoneStr != null) {
+            buf.append('[').append(zoneStr).append(']');
+        }
+        return buf.toString();
     }
 
     //-----------------------------------------------------------------------

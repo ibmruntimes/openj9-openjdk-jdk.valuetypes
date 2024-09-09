@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2024, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * (c) Copyright IBM Corp. 2023, 2024 All Rights Reserved
  * ===========================================================================
  */
 
@@ -36,6 +36,7 @@ import jdk.internal.foreign.Utils;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
+import jdk.internal.util.OperatingSystem;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 
@@ -45,8 +46,10 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A value layout. A value layout is used to model the memory layout associated with values of basic data types, such as <em>integral</em> types
@@ -164,9 +167,12 @@ public final class ValueLayouts {
 
         @ForceInline
         public final VarHandle varHandle() {
+            final class VarHandleCache {
+                private static final Map<ValueLayout, VarHandle> HANDLE_MAP = new ConcurrentHashMap<>();
+            }
             if (handle == null) {
                 // this store to stable field is safe, because return value of 'makeMemoryAccessVarHandle' has stable identity
-                handle = Utils.makeSegmentViewVarHandle(self());
+                handle = VarHandleCache.HANDLE_MAP.computeIfAbsent(self().withoutName(), _ -> varHandleInternal());
             }
             return handle;
         }
@@ -301,12 +307,12 @@ public final class ValueLayouts {
         }
 
         public static OfDouble of(ByteOrder order) {
-            return new OfDoubleImpl(order, Utils.IS_AIX ? 4 : Double.BYTES, Optional.empty());
+            return new OfDoubleImpl(order, OperatingSystem.isAix() ? 4 : Double.BYTES, Optional.empty());
         }
 
         @Override
         public boolean hasNaturalAlignment() {
-            return Utils.IS_AIX ? (byteAlignment() == 4) : super.hasNaturalAlignment();
+            return OperatingSystem.isAix() ? (byteAlignment() == 4) : super.hasNaturalAlignment();
         }
     }
 
@@ -338,7 +344,7 @@ public final class ValueLayouts {
         @Override
         @CallerSensitive
         public AddressLayout withTargetLayout(MemoryLayout layout) {
-            Reflection.ensureNativeAccess(Reflection.getCallerClass(), AddressLayout.class, "withTargetLayout");
+            Reflection.ensureNativeAccess(Reflection.getCallerClass(), AddressLayout.class, "withTargetLayout", false);
             Objects.requireNonNull(layout);
             return new OfAddressImpl(order(), byteSize(), byteAlignment(), layout, name());
         }

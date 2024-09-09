@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2022, 2023 All Rights Reserved
+ * (c) Copyright IBM Corp. 2022, 2024 All Rights Reserved
  * ===========================================================================
  */
 
@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.math.BigInteger;
 import java.security.ProviderException;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.ECPoint;
@@ -45,6 +47,7 @@ import java.security.spec.ECFieldF2m;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.AlgorithmParameters;
+import sun.security.util.CurveDB;
 import sun.security.util.NamedCurve;
 
 import jdk.crypto.jniprovider.NativeCrypto;
@@ -157,5 +160,75 @@ public final class NativeECUtil {
                                        gy, gy.length,
                                        n, n.length,
                                        h, h.length);
+    }
+
+    /**
+     * Returns the native pointer for the provided EC public key.
+     *
+     * @param key   the EC public key
+     * @return      the native EC public key context pointer or -1 on error
+     */
+    static long getPublicKeyNativePtr(ECPublicKey key) {
+        synchronized (key) {
+            long nativePointer = encodeGroup(key.getParams());
+            if (nativePointer != -1) {
+                try {
+                    byte[] x = key.getW().getAffineX().toByteArray();
+                    byte[] y = key.getW().getAffineY().toByteArray();
+                    int fieldType = NativeCrypto.ECField_Fp;
+                    if (key.getParams().getCurve().getField() instanceof ECFieldF2m) {
+                        fieldType = NativeCrypto.ECField_F2m;
+                    }
+                    if (nativeCrypto.ECCreatePublicKey(nativePointer, x, x.length, y, y.length, fieldType) == -1) {
+                        nativeCrypto.ECDestroyKey(nativePointer);
+                        nativePointer = -1;
+                    }
+                } finally {
+                    if (nativePointer != -1) {
+                        nativeCrypto.createECKeyCleaner(key, nativePointer);
+                    }
+                }
+            }
+            return nativePointer;
+        }
+    }
+
+    /**
+     * Returns the native pointer for the provided EC private key.
+     *
+     * @param key   the EC private key
+     * @return      the native EC private key context pointer or -1 on error
+     */
+    static long getPrivateKeyNativePtr(ECPrivateKey key) {
+        synchronized (key) {
+            long nativePointer = encodeGroup(key.getParams());
+            if (nativePointer != -1) {
+                try {
+                    byte[] value = key.getS().toByteArray();
+                    if (nativeCrypto.ECCreatePrivateKey(nativePointer, value, value.length) == -1) {
+                        nativeCrypto.ECDestroyKey(nativePointer);
+                        nativePointer = -1;
+                    }
+                } finally {
+                    if (nativePointer != -1) {
+                        nativeCrypto.createECKeyCleaner(key, nativePointer);
+                    }
+                }
+            }
+            return nativePointer;
+        }
+    }
+
+    static boolean isBrainpoolP512r1(ECParameterSpec name) {
+        NamedCurve curve = CurveDB.lookup(name);
+        if (curve != null) {
+            String[] nameAndAliases = curve.getNameAndAliases();
+            for (String nameOrAlias : nameAndAliases) {
+                if ("brainpoolP512r1".equalsIgnoreCase(nameOrAlias)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

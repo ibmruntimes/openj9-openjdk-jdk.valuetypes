@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2024 All Rights Reserved
+ * ===========================================================================
+ */
+
 #ifndef JDWP_UTIL_H
 #define JDWP_UTIL_H
 
@@ -58,6 +64,7 @@
 #include "util_md.h"
 #include "error_messages.h"
 #include "debugInit.h"
+#include "j9cfg.h"
 
 /* Definition of a CommonRef tracked by the backend for the frontend */
 typedef struct RefNode {
@@ -90,6 +97,7 @@ typedef struct {
     jboolean doerrorexit;
     jboolean modifiedUtf8;
     jboolean quiet;
+    jboolean jvmti_data_dump; /* If true, then support JVMTI DATA_DUMP_REQUEST events. */
 
     /* Debug flags (bit mask) */
     int      debugflags;
@@ -175,8 +183,13 @@ typedef enum {
         EI_VM_DEATH             = 20,
         EI_VIRTUAL_THREAD_START = 21,
         EI_VIRTUAL_THREAD_END   = 22,
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+        EI_VM_RESTORE           = 23,
 
+        EI_max                  = 23
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
         EI_max                  = 22
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } EventIndex;
 
 /* Agent errors that might be in a jvmtiError for JDWP or internal.
@@ -389,9 +402,7 @@ void *jvmtiAllocate(jint numBytes);
 void jvmtiDeallocate(void *buffer);
 
 void             eventIndexInit(void);
-#ifdef DEBUG
 char*            eventIndex2EventName(EventIndex ei);
-#endif
 jdwpEvent        eventIndex2jdwp(EventIndex i);
 jvmtiEvent       eventIndex2jvmti(EventIndex i);
 EventIndex       jdwp2EventIndex(jdwpEvent eventType);

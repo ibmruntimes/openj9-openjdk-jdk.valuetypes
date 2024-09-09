@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,7 @@ import java.lang.classfile.attribute.EnclosingMethodAttribute;
 import java.lang.classfile.attribute.ExceptionsAttribute;
 import java.lang.classfile.attribute.InnerClassInfo;
 import java.lang.classfile.attribute.InnerClassesAttribute;
+import java.lang.classfile.attribute.LoadableDescriptorsAttribute;
 import java.lang.classfile.attribute.ModuleAttribute;
 import java.lang.classfile.attribute.ModuleProvideInfo;
 import java.lang.classfile.attribute.NestHostAttribute;
@@ -97,12 +98,10 @@ public record ClassRemapperImpl(Function<ClassDesc, ClassDesc> mapFunction) impl
         switch (cle) {
             case FieldModel fm ->
                 clb.withField(fm.fieldName().stringValue(), map(
-                        fm.fieldTypeSymbol()), fb ->
-                                fm.forEachElement(asFieldTransform().resolve(fb).consumer()));
+                        fm.fieldTypeSymbol()), fb -> fb.transform(fm, asFieldTransform()));
             case MethodModel mm ->
                 clb.withMethod(mm.methodName().stringValue(), mapMethodDesc(
-                        mm.methodTypeSymbol()), mm.flags().flagsMask(), mb ->
-                                mm.forEachElement(asMethodTransform().resolve(mb).consumer()));
+                        mm.methodTypeSymbol()), mm.flags().flagsMask(), mb -> mb.transform(mm, asMethodTransform()));
             case Superclass sc ->
                 clb.withSuperclass(map(sc.superclassEntry().asSymbol()));
             case Interfaces ins ->
@@ -142,6 +141,8 @@ public record ClassRemapperImpl(Function<ClassDesc, ClassDesc> mapFunction) impl
                 clb.with(PermittedSubclassesAttribute.ofSymbols(
                         psa.permittedSubclasses().stream().map(ps ->
                                 map(ps.asSymbol())).toList()));
+            case LoadableDescriptorsAttribute pa ->
+                clb.with(LoadableDescriptorsAttribute.of(pa.loadableDescriptors()));
             case RuntimeVisibleAnnotationsAttribute aa ->
                 clb.with(RuntimeVisibleAnnotationsAttribute.of(
                         mapAnnotations(aa.annotations())));
@@ -239,7 +240,7 @@ public record ClassRemapperImpl(Function<ClassDesc, ClassDesc> mapFunction) impl
                             ii.isInterface());
                 case InvokeDynamicInstruction idi ->
                     cob.invokedynamic(DynamicCallSiteDesc.of(
-                            idi.bootstrapMethod(), idi.name().stringValue(),
+                            mapDirectMethodHandle(idi.bootstrapMethod()), idi.name().stringValue(),
                             mapMethodDesc(idi.typeSymbol()),
                             idi.bootstrapArgs().stream().map(this::mapConstantValue).toArray(ConstantDesc[]::new)));
                 case NewObjectInstruction c ->
@@ -403,9 +404,7 @@ public record ClassRemapperImpl(Function<ClassDesc, ClassDesc> mapFunction) impl
 
     List<TypeAnnotation> mapTypeAnnotations(List<TypeAnnotation> typeAnnotations) {
         return typeAnnotations.stream().map(a -> TypeAnnotation.of(a.targetInfo(),
-                a.targetPath(), map(a.classSymbol()),
-                a.elements().stream().map(el -> AnnotationElement.of(el.name(),
-                        mapAnnotationValue(el.value()))).toList())).toList();
+                a.targetPath(), mapAnnotation(a.annotation()))).toList();
     }
 
     List<Signature.TypeParam> mapTypeParams(List<Signature.TypeParam> typeParams) {

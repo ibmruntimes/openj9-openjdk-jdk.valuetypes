@@ -41,6 +41,7 @@ compiler.err.signature.doesnt.match.intf                # UNUSED
 compiler.err.signature.doesnt.match.supertype           # UNUSED
 compiler.err.source.cant.overwrite.input.file
 compiler.err.stack.sim.error
+compiler.err.cant.attach.type.annotations               # bad class file
 compiler.err.type.var.more.than.once                    # UNUSED
 compiler.err.type.var.more.than.once.in.result          # UNUSED
 compiler.err.unexpected.type
@@ -119,7 +120,6 @@ compiler.warn.illegal.char.for.encoding
 compiler.warn.incubating.modules                        # requires adjusted classfile
 compiler.warn.invalid.archive.file
 compiler.warn.invalid.utf8.in.classfile                 # bad class file
-compiler.warn.is.preview                                # difficult to produce reliably despite future changes to java.base
 compiler.warn.is.preview.reflective                     # difficult to produce reliably despite future changes to java.base
 compiler.warn.output.file.clash                         # this warning is not generated on Linux
 compiler.warn.override.bridge
@@ -219,7 +219,12 @@ compiler.err.annotation.unrecognized.attribute.name
 
 # this one is transitional (waiting for FFM API to exit preview)
 compiler.warn.restricted.method
+<<<<<<< HEAD
 # Value Objects
 compiler.misc.feature.value.classes
-compiler.misc.feature.super.init                            # temporary as we are using statements before super in value classes
-compiler.warn.preview.feature.use                           # temporary as we are using statements before super in value classes
+=======
+
+# Pending removal
+compiler.note.implicit.annotation.processing
+compiler.warn.proc.use.proc.or.implicit
+>>>>>>> d032521c17215a93395974cf933ceea0982be2a9

@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2023, 2024 All Rights Reserved
+ * ===========================================================================
+ */
+
 JDWP "Java(tm) Debug Wire Protocol"
 (CommandSet VirtualMachine=1
     (Command Version=1
@@ -1617,11 +1623,14 @@ JDWP "Java(tm) Debug Wire Protocol"
             (object object "The object ID")
         )
         (Reply
-            (threadObject owner "The monitor owner, or null if it is not currently owned.")
-            (int entryCount "The number of times the monitor has been entered.")
-            (Repeat waiters "The total number of threads that are waiting to enter or re-enter "
-                            "the monitor, or waiting to be notified by the monitor."
-                (threadObject thread "A thread waiting for this monitor.")
+            (threadObject owner "The platform thread owning this monitor, or null "
+                                "if owned by a virtual thread or not owned.")
+            (int entryCount "The number of times the owning platform thread has entered the monitor, "
+                            "or 0 if owned by a virtual thread or not owned.")
+            (Repeat waiters "The total number of platform threads that are waiting to enter or re-enter "
+                            "the monitor, or waiting to be notified by the monitor, or 0 if "
+                            "only virtual threads are waiting or no threads are waiting."
+                (threadObject thread "A platform thread waiting for this monitor.")
             )
         )
         (ErrorSet
@@ -2871,7 +2880,7 @@ JDWP "Java(tm) Debug Wire Protocol"
                         "if not explicitly requested."
 
                      (int requestID
-                             "Request that generated event (or 0 if this "
+                             "Request that generated event, or 0 if this "
                              "event is automatically generated.")
                         (threadObject thread "Initial thread")
                     )
@@ -3142,6 +3151,17 @@ JDWP "Java(tm) Debug Wire Protocol"
                         (int requestID
                                 "Request that generated event")
                     )
+/*[IF CRIU_SUPPORT]*/
+                    (Alt VMRestore=JDWP.EventKind.VM_RESTORE
+                        "Notification of when the VM is restored from a checkpoint. Similar to"
+                        "VMStartEvent this occurs before application code has run, including any"
+                        "application hooks for the restore event."
+                        "The event is generated even if not explicitly requested."
+
+                        (int requestID "Request that generated event")
+                        (threadObject thread "The thread restoring the VM from a checkpoint.")
+                    )
+/*[ENDIF] CRIU_SUPPORT */
                 )
             )
         )
@@ -3272,6 +3292,9 @@ JDWP "Java(tm) Debug Wire Protocol"
     (Constant VM_INIT                =90  "obsolete - was used in jvmdi")
     (Constant VM_DEATH               =99  )
     (Constant VM_DISCONNECTED        =100 "Never sent across JDWP")
+/*[IF CRIU_SUPPORT]*/
+    (Constant VM_RESTORE             =101 "OpenJ9 VM Restored")
+/*[ENDIF] CRIU_SUPPORT */
 )
 
 (ConstantSet ThreadStatus

@@ -2401,15 +2401,18 @@ public class ObjectInputStream
                 handles.setObject(passHandle, obj);
         } else if (desc.isExternalizable()) {
             if (desc.isValue()) {
-                throw new NotSerializableException("Externalizable not valid for value class "
+                throw new InvalidClassException("Externalizable not valid for value class "
                         + cl.getName());
             }
             if (!unshared)
                 handles.setObject(passHandle, obj);
             readExternalData((Externalizable) obj, desc);
         } else if (desc.isValue()) {
+            if (obj == null) {
+                throw new InvalidClassException("Serializable not valid for value class "
+                        + cl.getName());
+            }
             // For value objects, read the fields and finish the buffer before publishing the ref
-            assert obj != null : "obj == null: " + desc;
             readSerialData(obj, desc);
             obj = desc.finishValue(obj);
             if (!unshared)
@@ -2503,7 +2506,13 @@ public class ObjectInputStream
          */
     }
 
-    /** Reads a record. */
+    /**
+     * Reads and returns a record.
+     * If an exception is marked for any of the fields, the dependency
+     * mechanism marks the record as having an exception.
+     * Null is returned from readRecord and later the exception is thrown at
+     * the exit of {@link #readObject(Class)}.
+     **/
     private Object readRecord(ObjectStreamClass desc) throws IOException {
         ObjectStreamClass.ClassDataSlot[] slots = desc.getClassDataLayout();
         if (slots.length != 1) {
@@ -2516,6 +2525,9 @@ public class ObjectInputStream
         }
 
         FieldValues fieldValues = new FieldValues(desc, true);
+        if (handles.lookupException(passHandle) != null) {
+            return null;     // slot marked with exception, don't create record
+        }
 
         // get canonical record constructor adapted to take two arguments:
         // - byte[] primValues
@@ -2612,8 +2624,11 @@ public class ObjectInputStream
                     if (slotValues != null) {
                         slotValues[i] = values;
                     } else if (obj != null) {
-                        values.defaultCheckFieldValues(obj);
-                        values.defaultSetFieldValues(obj);
+                        if (handles.lookupException(passHandle) == null) {
+                            // passHandle NOT marked with an exception; set field values
+                            values.defaultCheckFieldValues(obj);
+                            values.defaultSetFieldValues(obj);
+                        }
                     }
                 }
 
@@ -2634,7 +2649,8 @@ public class ObjectInputStream
             }
         }
 
-        if (obj != null && slotValues != null) {
+        if (obj != null && slotValues != null && handles.lookupException(passHandle) == null) {
+            // passHandle NOT marked with an exception
             // Check that the non-primitive types are assignable for all slots
             // before assigning.
             for (int i = 0; i < slots.length; i++) {

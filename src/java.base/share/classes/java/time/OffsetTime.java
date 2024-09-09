@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,6 +116,7 @@ import java.util.Objects;
  * @since 1.8
  */
 @jdk.internal.ValueBased
+@jdk.internal.MigratedValueClass
 public final class OffsetTime
         implements Temporal, TemporalAdjuster, Comparable<OffsetTime>, Serializable {
 
@@ -1398,7 +1399,10 @@ public final class OffsetTime
      */
     @Override
     public String toString() {
-        return time.toString() + offset.toString();
+        var offsetStr = offset.toString();
+        var buf = new StringBuilder(18 + offsetStr.length());
+        time.formatTo(buf);
+        return buf.append(offsetStr).toString();
     }
 
     //-----------------------------------------------------------------------

@@ -28,7 +28,7 @@
  * @requires vm.debug != true
  * @modules java.base/java.lang:+open
  * @library /test/lib
- * @run main/othervm GetStackTraceALotWhenPinned 500000
+ * @run main/othervm --enable-native-access=ALL-UNNAMED GetStackTraceALotWhenPinned 500000
  */
 
 /*
@@ -36,13 +36,14 @@
  * @requires vm.debug == true
  * @modules java.base/java.lang:+open
  * @library /test/lib
- * @run main/othervm/timeout=300 GetStackTraceALotWhenPinned 200000
+ * @run main/othervm/timeout=300 --enable-native-access=ALL-UNNAMED GetStackTraceALotWhenPinned 200000
  */
 
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import jdk.test.lib.thread.VThreadRunner;
+import jdk.test.lib.thread.VThreadPinner;
 
 public class GetStackTraceALotWhenPinned {
 
@@ -78,7 +79,7 @@ public class GetStackTraceALotWhenPinned {
         });
 
         long lastTimestamp = System.currentTimeMillis();
-        for (int i = 0; i < iterations; i++) {
+        for (int i = 1; i <= iterations; i++) {
             // wait for virtual thread to arrive
             barrier.await();
 
@@ -86,8 +87,8 @@ public class GetStackTraceALotWhenPinned {
             LockSupport.unpark(thread);
 
             long currentTime = System.currentTimeMillis();
-            if ((currentTime - lastTimestamp) > 500) {
-                System.out.format("%s %d remaining ...%n", Instant.now(), (iterations - i));
+            if (i == iterations || ((currentTime - lastTimestamp) > 500)) {
+                System.out.format("%s => %d of %d%n", Instant.now(), i, iterations);
                 lastTimestamp = currentTime;
             }
         }

@@ -122,6 +122,10 @@ public class CodeAttributeTools {
     public void benchmarkStackCounter(Blackhole bh) {
         for (var d : data) bh.consume(new StackCounter(
                 d.labelContext(),
+<<<<<<< HEAD
+=======
+                null,
+>>>>>>> d032521c17215a93395974cf933ceea0982be2a9
                 d.thisClass(),
                 d.methodName(),
                 d.methodDesc(),
