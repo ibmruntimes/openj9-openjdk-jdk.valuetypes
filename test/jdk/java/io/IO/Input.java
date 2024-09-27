@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,13 +21,16 @@
  * questions.
  */
 
- // key: compiler.misc.feature.super.init
- // key: compiler.warn.preview.feature.use
- // options: --enable-preview -source ${jdk.version} -Xlint:preview
+import java.io.IOException;
 
-class FeatureStatementsBeforeSuper {
-    FeatureStatementsBeforeSuper() {
-        System.out.println();
-        super();
+import static java.io.IO.readln;
+
+public class Input {
+
+    public static void main(String[] args) throws IOException {
+        if (args[0].equals("0"))
+            System.out.print(readln(null));
+        else
+            System.out.print(readln(args[1]));
     }
 }
