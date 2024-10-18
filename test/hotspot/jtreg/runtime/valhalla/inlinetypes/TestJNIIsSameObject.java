@@ -34,7 +34,7 @@ import jdk.test.lib.Asserts;
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
  * @compile TestJNIIsSameObject.java
- * @run main/othervm/native TestJNIIsSameObject
+ * @run main/othervm/native -XX:ValueTypeFlatteningThreshold=99999 TestJNIIsSameObject
  */
 
 public class TestJNIIsSameObject {

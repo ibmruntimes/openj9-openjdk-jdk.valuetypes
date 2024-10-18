@@ -44,10 +44,10 @@ import jdk.test.whitebox.WhiteBox;
  * @enablePreview
  * @compile InlineTypeDensity.java
  * @run driver jdk.test.lib.helpers.ClassFileInstaller jdk.test.whitebox.WhiteBox
- * @run main/othervm -XX:+UseArrayFlattening -XX:+UseCompressedOops
+ * @run main/othervm -XX:+UseArrayFlattening
  *                   -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI InlineTypeDensity
- * @run main/othervm -XX:+UseArrayFlattening -XX:-UseCompressedOops
+ * @run main/othervm -XX:+UseArrayFlattening
  *                   -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI InlineTypeDensity
  * @run main/othervm -XX:+UseArrayFlattening

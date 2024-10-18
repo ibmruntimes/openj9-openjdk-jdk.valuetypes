@@ -41,7 +41,6 @@ groups=TEST.groups TEST.quick-groups
 # Source files for classes that will be used at the beginning of each test suite run,
 # to determine additional characteristics of the system for use with the @requires tag.
 # Note: compiled bootlibs classes will be added to BCP.
-requires.extraPropDefns = ../../jtreg-ext/requires/VMProps.java
 requires.extraPropDefns.bootlibs = ../../lib/jdk/test/whitebox
 requires.extraPropDefns.libs = \
     ../../lib/jdk/test/lib/Platform.java \
