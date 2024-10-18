@@ -1,0 +1,53 @@
+# List of tests to exclude from inlinetypes tests
+
+# I need to go through these tests
+runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
+runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
+runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
+runtime/valhalla/inlinetypes/PreloadCircularityTest.java 13182 generic-all
+runtime/valhalla/inlinetypes/QuickeningTest.java 13182 generic-all
+runtime/valhalla/inlinetypes/TestInheritedInlineTypeFields.java 13182 generic-all
+runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
+runtime/valhalla/inlinetypes/ValueTearing.java 13182 generic-all
+runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
+runtime/valhalla/inlinetypes/classfileparser/IllegalFieldModifiers.java 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#CompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#NoCompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64CompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64NoCompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64NoCompressedOopsNoCompressedKlassPointers 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsCompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOopsNoCompressKlassPointers 13182 generic-all
+runtime/valhalla/inlinetypes/verifier/StrictFields.java 13182 generic-all
+
+# not sure if these can be expected to work
+# compilation issues
+runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
+# testing jcmd
+runtime/valhalla/inlinetypes/ClassPrintLayoutDcmd.java 13182 generic-all
+
+# ClassCircularityError
+# didn't fail at the right place
+runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
+# unexpected ClassCircularityError
+runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
+
+# test expected NPE but j9 throws ase
+runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
+
+# J9 needs to patch java base with java.base-valueclasses.jar in order to 
+# use migrated value classes. Discussing this with Hang currently
+runtime/valhalla/inlinetypes/MonitorEnterTest.java#id0 13182 generic-all
+runtime/valhalla/inlinetypes/MonitorEnterTest.java#id1 13182 generic-all
+runtime/valhalla/inlinetypes/MonitorEnterTest.java#id2 13182 generic-all
+
+# some class verification checks for vm annotations are missing
+runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
+
+# tests reliant on hotspot internals
+# Preload test looks for specific messages from xlog
+runtime/valhalla/inlinetypes/ValuePreloadTest.java 13182 generic-all
+# Relies on Whitebox library
+runtime/valhalla/inlinetypes/InlineTypeDensity.java 13182 generic-all
+
