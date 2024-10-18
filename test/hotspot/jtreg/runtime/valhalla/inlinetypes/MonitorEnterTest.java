@@ -26,7 +26,7 @@
 * @library /test/lib
 * @enablePreview
 * @compile MonitorEnterTest.java
-* @run main/othervm -XX:LockingMode=0 runtime.valhalla.inlinetypes.MonitorEnterTest
+* @run main/othervm --patch-module java.base=/Users/theresamammarella/openj9builds/openj9-openjdk-jdk.valuetypes/build/macosx-aarch64-server-release/jdk/lib/valueclasses/java.base-valueclasses.jar -XX:LockingMode=0 runtime.valhalla.inlinetypes.MonitorEnterTest
 */
 
 /**
@@ -34,7 +34,7 @@
 * @library /test/lib
 * @enablePreview
 * @compile MonitorEnterTest.java
-* @run main/othervm -XX:LockingMode=1 runtime.valhalla.inlinetypes.MonitorEnterTest
+* @run main/othervm --patch-module java.base=/Users/theresamammarella/openj9builds/openj9-openjdk-jdk.valuetypes/build/macosx-aarch64-server-release/jdk/lib/valueclasses/java.base-valueclasses.jar -XX:LockingMode=1 runtime.valhalla.inlinetypes.MonitorEnterTest
 */
 
 /**
@@ -42,7 +42,7 @@
 * @library /test/lib
 * @enablePreview
 * @compile MonitorEnterTest.java
-* @run main/othervm -XX:LockingMode=2 runtime.valhalla.inlinetypes.MonitorEnterTest
+* @run main/othervm --patch-module java.base=/Users/theresamammarella/openj9builds/openj9-openjdk-jdk.valuetypes/build/macosx-aarch64-server-release/jdk/lib/valueclasses/java.base-valueclasses.jar -XX:LockingMode=2 runtime.valhalla.inlinetypes.MonitorEnterTest
 */
 
 package runtime.valhalla.inlinetypes;

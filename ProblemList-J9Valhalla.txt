@@ -36,12 +36,6 @@ runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
 # test expected NPE but j9 throws ase
 runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
 
-# J9 needs to patch java base with java.base-valueclasses.jar in order to 
-# use migrated value classes. Discussing this with Hang currently
-runtime/valhalla/inlinetypes/MonitorEnterTest.java#id0 13182 generic-all
-runtime/valhalla/inlinetypes/MonitorEnterTest.java#id1 13182 generic-all
-runtime/valhalla/inlinetypes/MonitorEnterTest.java#id2 13182 generic-all
-
 # some class verification checks for vm annotations are missing
 runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
 
