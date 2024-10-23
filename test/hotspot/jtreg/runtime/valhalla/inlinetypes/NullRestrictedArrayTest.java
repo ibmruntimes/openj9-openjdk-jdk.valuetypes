@@ -39,7 +39,7 @@ import jdk.internal.vm.annotation.LooselyConsistentValue;
  *          java.base/jdk.internal.misc
  *          java.base/jdk.internal.value
  * @enablePreview
- * @run main/othervm -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening NullRestrictedArrayTest
+ * @run main/othervm NullRestrictedArrayTest
  */
 
 
