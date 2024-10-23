@@ -2,27 +2,33 @@
 
 # https://github.com/eclipse-openj9/openj9/issues/13794
 runtime/valhalla/inlinetypes/TestInheritedInlineTypeFields.java 13182 generic-all
+runtime/valhalla/inlinetypes/QuickeningTest.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/13797 - unexpected ClassCircularityError
 runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/13789 - CodeBuilder not recognized, compiler issue may be fixed with extensions updates
 runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
+
+# TODO make issues for these
+# segfault - need to investigate
+runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
+# some class verification checks for vm annotations are missing
+runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
+# update JNI IsSameObject for value types
+runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
+# code builder compiler error
+runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
+# ClassCircularityError - didn't fail at the right place
+runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
 
 # Expected NPE but J9 throws ASE 
 runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
 # other issues to investigate as well
 runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
 
+# testing jcmd - should this work with j9?
+runtime/valhalla/inlinetypes/ClassPrintLayoutDcmd.java 13182 generic-all
 
-
-
-
-# I need to go through these
-runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
-runtime/valhalla/inlinetypes/PreloadCircularityTest.java 13182 generic-all
-runtime/valhalla/inlinetypes/QuickeningTest.java 13182 generic-all
-runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
-runtime/valhalla/inlinetypes/ValueTearing.java 13182 generic-all
-runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
+#relys on outputanalyzer - this should work with j9
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#CompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#NoCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64CompressedOops 13182 generic-all
@@ -31,17 +37,11 @@ runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64NoCom
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOopsNoCompressKlassPointers 13182 generic-all
-# not sure if these can be expected to work
-# compilation issues
-runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
-# testing jcmd
-runtime/valhalla/inlinetypes/ClassPrintLayoutDcmd.java 13182 generic-all
-# ClassCircularityError
-# didn't fail at the right place
-runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
-# some class verification checks for vm annotations are missing
-runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
+runtime/valhalla/inlinetypes/PreloadCircularityTest.java 13182 generic-all
 
 # tests reliant on hotspot internals
 runtime/valhalla/inlinetypes/ValuePreloadTest.java 13182 generic-all
 runtime/valhalla/inlinetypes/InlineTypeDensity.java 13182 generic-all
+runtime/valhalla/inlinetypes/ValueTearing.java 13182 generic-all
+# expects volatile fields to not be flattened
+runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
