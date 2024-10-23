@@ -7,16 +7,22 @@ runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/13789 - CodeBuilder not recognized, compiler issue may be fixed with extensions updates
 runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
 
-# I need to go through these tests
-#existing issue
-runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
+# Expected NPE but J9 throws ASE 
 runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
+# other issues to investigate as well
+runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
+
+
+
+
+
+# I need to go through these
+runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
 runtime/valhalla/inlinetypes/PreloadCircularityTest.java 13182 generic-all
 runtime/valhalla/inlinetypes/QuickeningTest.java 13182 generic-all
 runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
 runtime/valhalla/inlinetypes/ValueTearing.java 13182 generic-all
 runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
-runtime/valhalla/inlinetypes/classfileparser/IllegalFieldModifiers.java 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#CompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#NoCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64CompressedOops 13182 generic-all
@@ -33,12 +39,9 @@ runtime/valhalla/inlinetypes/ClassPrintLayoutDcmd.java 13182 generic-all
 # ClassCircularityError
 # didn't fail at the right place
 runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
-# test expected NPE but j9 throws ase
-runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
 # some class verification checks for vm annotations are missing
 runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
 
 # tests reliant on hotspot internals
 runtime/valhalla/inlinetypes/ValuePreloadTest.java 13182 generic-all
 runtime/valhalla/inlinetypes/InlineTypeDensity.java 13182 generic-all
-
