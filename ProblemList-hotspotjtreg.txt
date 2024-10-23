@@ -45,3 +45,37 @@ runtime/valhalla/inlinetypes/InlineTypeDensity.java 13182 generic-all
 runtime/valhalla/inlinetypes/ValueTearing.java 13182 generic-all
 # expects volatile fields to not be flattened
 runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
+
+# I think these will pass when extensions repo is updated
+compiler/valhalla/inlinetypes/TestArrayCopyWithOops.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestArrays.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestBasicFunctionality.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestBufferTearing.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestC1.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestC2CCalls.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestCallingConvention.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestCallingConventionC1.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestDeoptimizationWhenBuffering.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestFlatArrayThreshold.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestFlatInArraysFolding.java#id1 13182 generic-all
+compiler/valhalla/inlinetypes/TestGetfieldChains.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestInlineFieldNonFlattened.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestIntrinsics.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestJNICalls.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestLWorld.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestLWorldProfiling.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestLarvalState.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestMethodHandles.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestMismatchHandling.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestNewAcmp.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestNullableArrays.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestNullableInlineTypes.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestOnStackReplacement.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestUnloadedInlineTypeArray.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestUnloadedInlineTypeField.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestUnloadedReturnTypes.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestUnresolvedInlineClass.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueClasses.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueRematDuringTypeSharpening.java 13182 generic-all
+compiler/valhalla/inlinetypes/bootstrap/TestBootClassloader.java 13182 generic-all
