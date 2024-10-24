@@ -7,9 +7,9 @@ runtime/valhalla/inlinetypes/QuickeningTest.java 13182 generic-all
 runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/13789 - CodeBuilder not recognized, compiler issue may be fixed with extensions updates
 runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
-
-# TODO make issues for these
-# segfault - need to investigate
+# this test hangs occasionally 
+runtime/valhalla/inlinetypes/VarArgsArray.java
+# segfault
 runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
 # some class verification checks for vm annotations are missing
 runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
@@ -19,16 +19,13 @@ runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
 runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
 # ClassCircularityError - didn't fail at the right place
 runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
-
 # Expected NPE but J9 throws ASE 
 runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
 # other issues to investigate as well
 runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
-
-# testing jcmd - should this work with j9?
+# testing jcmd - I'm not sure if this should work with j9
 runtime/valhalla/inlinetypes/ClassPrintLayoutDcmd.java 13182 generic-all
-
-#relys on outputanalyzer - this should work with j9
+#relys on outputanalyzer - not sure if this works with j9
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#CompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#NoCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64CompressedOops 13182 generic-all
