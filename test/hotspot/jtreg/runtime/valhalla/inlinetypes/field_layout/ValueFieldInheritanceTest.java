@@ -23,42 +23,42 @@
 
   /*
  * @test id=32bits
- * @requires vm.bits == 32
+ * @requires vm.bits == 32 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
  * @compile FieldLayoutAnalyzer.java ValueFieldInheritanceTest.java
- * @run main/othervm -Xint ValueFieldInheritanceTest 0
+ * @run main/othervm ValueFieldInheritanceTest 0
  */
 
 /*
  * @test id=64bitsCompressedOops
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
  * @compile FieldLayoutAnalyzer.java ValueFieldInheritanceTest.java
- * @run main/othervm -Xint ValueFieldInheritanceTest 1
+ * @run main/othervm ValueFieldInheritanceTest 1
  */
 
 /*
  * @test id=64bitsNoCompressedOops
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
  * @compile FieldLayoutAnalyzer.java ValueFieldInheritanceTest.java
- * @run main/othervm -Xint ValueFieldInheritanceTest 2
+ * @run main/othervm ValueFieldInheritanceTest 2
  */
 
 /*
  * @test id=64bitsNoCompressedOopsNoCompressKlassPointers
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
  * @compile FieldLayoutAnalyzer.java ValueFieldInheritanceTest.java
- * @run main/othervm -Xint ValueFieldInheritanceTest 3
+ * @run main/othervm ValueFieldInheritanceTest 3
  */
 
 import java.util.ArrayList;
@@ -176,6 +176,7 @@ public class ValueFieldInheritanceTest {
     Collections.addAll(argsList, "--enable-preview");
     Collections.addAll(argsList, "-XX:+UnlockDiagnosticVMOptions");
     Collections.addAll(argsList, "-XX:+PrintFieldLayout");
+    Collections.addAll(argsList, "-Xshare:off");
     if (compressedOopsArg != null) {
       Collections.addAll(argsList, compressedOopsArg);
     }

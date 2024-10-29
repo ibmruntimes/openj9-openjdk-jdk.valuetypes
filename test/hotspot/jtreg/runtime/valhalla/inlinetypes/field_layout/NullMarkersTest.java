@@ -23,7 +23,7 @@
 
  /*
  * @test id=NullMarker32
- * @requires vm.bits == 32
+ * @requires vm.bits == 32 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -33,7 +33,7 @@
 
 /*
  * @test id=NullMarker64CompressedOops
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -43,7 +43,7 @@
 
 /*
  * @test id=NullMarker64NoCompressedOops
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -53,7 +53,7 @@
 
 /*
  * @test id=NullMarker64NoCompressedOopsNoCompressedKlassPointers
- * @requires vm.bits == 64
+ * @requires vm.bits == 64 & vm.flagless
  * @library /test/lib
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
@@ -291,6 +291,7 @@ public class NullMarkersTest {
     Collections.addAll(argsList, "-Xint");
     Collections.addAll(argsList, "-XX:+UnlockDiagnosticVMOptions");
     Collections.addAll(argsList, "-XX:+PrintFieldLayout");
+    Collections.addAll(argsList, "-Xshare:off");
     if (compressedOopsArg != null) {
       Collections.addAll(argsList, compressedOopsArg);
     }
