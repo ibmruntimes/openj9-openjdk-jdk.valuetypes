@@ -26,6 +26,7 @@
 package java.lang;
 
 import jdk.internal.misc.CDS;
+import jdk.internal.value.DeserializeConstructor;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
 import jdk.internal.vm.annotation.Stable;
 
@@ -179,6 +180,7 @@ import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
  * @author  Ulf Zibis
  * @since   1.0
  */
+@jdk.internal.MigratedValueClass
 @jdk.internal.ValueBased
 public final class Character implements java.io.Serializable, Comparable<Character>, Constable {
     /**
@@ -9013,6 +9015,7 @@ public final class Character implements java.io.Serializable, Comparable<Charact
      * @since  1.5
      */
     @IntrinsicCandidate
+    @DeserializeConstructor
     public static Character valueOf(char c) {
         if (c <= 127) { // must cache
             return CharacterCache.cache[(int)c];

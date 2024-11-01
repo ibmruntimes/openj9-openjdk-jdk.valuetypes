@@ -173,7 +173,7 @@ public class IsRecordTest {
                 access = access | ACC_FINAL;
             if (isAbstract)
                 access = access | ACC_ABSTRACT;
-            clb.withFlags(access | Opcodes.ACC_IDENTITY);
+            clb.withFlags(access);
             clb.withSuperclass(ClassDesc.ofInternalName(superName));
             if (components != null)
                 clb.accept(RecordAttribute.of(components));

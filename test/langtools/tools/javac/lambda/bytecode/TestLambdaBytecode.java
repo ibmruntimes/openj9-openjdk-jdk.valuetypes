@@ -26,8 +26,8 @@
  * @bug 8009649 8129962 8238358
  * @summary Lambda back-end should generate invokevirtual for method handles referring to
  *          private instance methods as lambda proxy is a nestmate of the target clsas
- * @library /tools/javac/lib
  * @enablePreview
+ * @library /tools/javac/lib
  * @modules java.base/jdk.internal.classfile.impl
  *          jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.file
@@ -218,7 +218,7 @@ public class TestLambdaBytecode extends ComboInstance<TestLambdaBytecode> {
                 fail("Test method not found");
                 return;
             }
-            CodeAttribute ea = testMethod.findAttribute(Attributes.CODE).orElse(null);
+            CodeAttribute ea = testMethod.findAttribute(Attributes.code()).orElse(null);
             if (ea == null) {
                 fail("Code attribute for test() method not found");
                 return;
@@ -243,7 +243,7 @@ public class TestLambdaBytecode extends ComboInstance<TestLambdaBytecode> {
                 return;
             }
 
-            BootstrapMethodsAttribute bsm_attr = cf.findAttribute(Attributes.BOOTSTRAP_METHODS).orElseThrow();
+            BootstrapMethodsAttribute bsm_attr = cf.findAttribute(Attributes.bootstrapMethods()).orElseThrow();
             if (bsm_attr.bootstrapMethodsSize() != 1) {
                 fail("Bad number of method specifiers " +
                         "in BootstrapMethods attribute");

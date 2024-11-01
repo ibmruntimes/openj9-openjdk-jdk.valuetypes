@@ -362,7 +362,7 @@ public class ClassDataTest {
             this.classname = ClassDesc.ofInternalName(classname);
             this.cw = clb -> {
                 clb.withSuperclass(CD_Object);
-                clb.withFlags(AccessFlag.FINAL | ACC_IDENTITY);
+                clb.withFlags(AccessFlag.FINAL);
                 clb.withMethodBody(INIT_NAME, MTD_void, ACC_PUBLIC, cob -> {
                     cob.aload(0);
                     cob.invokespecial(CD_Object, INIT_NAME, MTD_void);

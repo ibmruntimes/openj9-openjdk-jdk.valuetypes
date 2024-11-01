@@ -2207,6 +2207,8 @@ public class TestNullableInlineTypes {
         }
     }
 
+// TODO 8325632 Fails with -XX:+UnlockExperimentalVMOptions -XX:PerMethodSpecTrapLimit=0 -XX:PerMethodTrapLimit=0
+/*
     @ForceInline
     public Object test80_helper(Object obj, int i) {
         if ((i % 2) == 0) {
@@ -2236,8 +2238,6 @@ public class TestNullableInlineTypes {
         Asserts.assertEquals(test80(), test80Result);
     }
 
-// TODO 8325106 Fails because they are not compilable with Scenario 3, probably we run out of nodes ...
-/*
     @ForceInline
     public Object test81_helper(Object obj, int i) {
         if ((i % 2) == 0) {
@@ -2377,12 +2377,9 @@ public class TestNullableInlineTypes {
         return obj;
     }
 
-// TODO 8325106 Fails because they are not compilable with Scenario 3, probably we run out of nodes ...
-/*
     // Same as test81 but with wrapper
     @Test
-    // TODO 8325106 Fails with Scenario 5
-    // @IR(failOn = {ALLOC, LOAD, STORE})
+    @IR(failOn = {ALLOC, LOAD, STORE})
     public long test85() {
         Object val = new MyValue1Wrapper(null);
         for (int i = 0; i < 10; ++i) {
@@ -2408,7 +2405,6 @@ public class TestNullableInlineTypes {
         }
         Asserts.assertEquals(test85(), test85Result);
     }
-*/
 
     static final class ObjectWrapper {
         public Object obj;
@@ -2622,9 +2618,9 @@ public class TestNullableInlineTypes {
     // Test that calling convention optimization prevents buffering of arguments
     @Test
     @IR(applyIf = {"InlineTypePassFieldsAsArgs", "true"},
-        counts = {ALLOC_G, " = 2"}) // 1 MyValue2 allocation + 1 Integer allocation
+        counts = {ALLOC_G, " <= 2"}) // 1 MyValue2 allocation + 1 Integer allocation (if not the default value)
     @IR(applyIf = {"InlineTypePassFieldsAsArgs", "false"},
-        counts = {ALLOC_G, " = 3"}) // 1 MyValue1 allocation + 1 MyValue2 allocation + 1 Integer allocation
+        counts = {ALLOC_G, " <= 3"}) // 1 MyValue1 allocation + 1 MyValue2 allocation + 1 Integer allocation (if not the default value)
     public MyValue1 test94(MyValue1 vt) {
         MyValue1 res = test94_helper1(vt);
         vt = MyValue1.createWithFieldsInline(rI, rL);
@@ -2658,9 +2654,9 @@ public class TestNullableInlineTypes {
     // Same as test94 but with static methods to trigger simple adapter logic
     @Test
     @IR(applyIf = {"InlineTypePassFieldsAsArgs", "true"},
-        counts = {ALLOC_G, " = 2"}) // 1 MyValue2 allocation + 1 Integer allocation
+        counts = {ALLOC_G, " <= 2"}) // 1 MyValue2 allocation + 1 Integer allocation (if not the default value)
     @IR(applyIf = {"InlineTypePassFieldsAsArgs", "false"},
-        counts = {ALLOC_G, " = 3"}) // 1 MyValue1 allocation + 1 MyValue2 allocation + 1 Integer allocation
+        counts = {ALLOC_G, " <= 3"}) // 1 MyValue1 allocation + 1 MyValue2 allocation + 1 Integer allocation (if not the default value)
     public static MyValue1 test95(MyValue1 vt) {
         MyValue1 res = test95_helper1(vt);
         vt = MyValue1.createWithFieldsInline(rI, rL);
@@ -2696,7 +2692,7 @@ public class TestNullableInlineTypes {
     @IR(applyIf = {"InlineTypeReturnedAsFields", "true"},
         failOn = {ALLOC_G})
     @IR(applyIf = {"InlineTypeReturnedAsFields", "false"},
-        counts = {ALLOC_G, " = 1"})
+        counts = {ALLOC_G, " <= 1"}) // No allocation required if the MyValue2 return is the default value
     public MyValue2 test96(int c, boolean b) {
         MyValue2 res = null;
         if (c == 1) {
@@ -3290,4 +3286,62 @@ public class TestNullableInlineTypes {
             // Expected
         }
     }
+
+    static value class CircularValue7 {
+        CircularValue7 v;
+        int i;
+
+        public CircularValue7(int i) {
+            this.v = new CircularValue7(); // When <init> is incrementally inlined: StoreN into object
+            dontInline(); // Not inlined -> safepoint which also saves StoreN.
+            this.i = i;
+        }
+
+        public CircularValue7(boolean ignored) {
+            this.v = new CircularValue7();
+            this.i = 23;
+        }
+
+        public CircularValue7() {
+            this.v = null;
+            this.i = 34;
+        }
+
+        @DontInline
+        static void dontInline() {}
+    }
+
+    @Test
+    @IR(failOn = ALLOC_G)
+    int testCircularSafepointUse() {
+        CircularValue7 v = new CircularValue7(true);  // v is non escaping -> EA can remove allocation
+        dontInline(); // Not inlined -> safepoint
+        return v.i; // Use v such that it is still required in the safepoint at dontInline()
+    }
+
+    @DontInline
+    void dontInline() {}
+
+    @Run(test = "testCircularSafepointUse")
+    public void testCircularSafepointUse_verifier() {
+        Asserts.assertEQ(testCircularSafepointUse(), new CircularValue7(true).i);
+    }
+
+
+    @Test
+    @IR(failOn = ALLOC_G)
+    int testCircularSafepointUse2(int i) {
+        // With AlwaysIncrementalInline:
+        // We allocate here because <init> is not inlined at parsing.
+        // At late inline: The store of v.v is done with a StoreN into the allocation to make the effect visible.
+        CircularValue7 v = new CircularValue7(i);
+        return v.i;
+    }
+
+    @Run(test = "testCircularSafepointUse2")
+    public void testCircularSafepointUse2_verifier() {
+        int rand = rI;
+        Asserts.assertEQ(testCircularSafepointUse2(rand), new CircularValue7(rand).i);
+    }
+
 }

@@ -26,8 +26,8 @@
  * @bug 8238358
  * @summary Lambda back-end should generate invokespecial for method handles referring to
  *          private instance methods when compiling with --release 14
- * @library /tools/javac/lib
  * @enablePreview
+ * @library /tools/javac/lib
  * @modules java.base/jdk.internal.classfile.impl
  *          jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.file
@@ -220,7 +220,7 @@ public class TestLambdaBytecodeTargetRelease14 extends ComboInstance<TestLambdaB
                 fail("Test method not found");
                 return;
             }
-            CodeAttribute ea = testMethod.findAttribute(Attributes.CODE).orElse(null);
+            CodeAttribute ea = testMethod.findAttribute(Attributes.code()).orElse(null);
             if (ea == null) {
                 fail("Code attribute for test() method not found");
                 return;
@@ -245,7 +245,7 @@ public class TestLambdaBytecodeTargetRelease14 extends ComboInstance<TestLambdaB
                 return;
             }
 
-            BootstrapMethodsAttribute bsm_attr = cm.findAttribute(Attributes.BOOTSTRAP_METHODS).orElseThrow();
+            BootstrapMethodsAttribute bsm_attr = cm.findAttribute(Attributes.bootstrapMethods()).orElseThrow();
             if (bsm_attr.bootstrapMethodsSize() != 1) {
                 fail("Bad number of method specifiers " +
                         "in BootstrapMethods attribute");

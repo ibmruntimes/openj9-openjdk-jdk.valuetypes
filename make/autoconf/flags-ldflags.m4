@@ -75,7 +75,9 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_HELPER],
     LDFLAGS_CXX_PARTIAL_LINKING="$MACHINE_FLAG -r"
 
     if test "x$OPENJDK_TARGET_OS" = xlinux; then
-      BASIC_LDFLAGS="-Wl,--exclude-libs,ALL"
+      # Clang needs the lld linker to work correctly
+      BASIC_LDFLAGS="-fuse-ld=lld -Wl,--exclude-libs,ALL"
+      UTIL_REQUIRE_PROGS(LLD, lld)
     fi
     if test "x$OPENJDK_TARGET_OS" = xaix; then
       BASIC_LDFLAGS="-Wl,-b64 -Wl,-brtl -Wl,-bnolibpath -Wl,-bnoexpall \
@@ -116,14 +118,6 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_HELPER],
       fi
     fi
 
-  elif test "x$TOOLCHAIN_TYPE" = xxlc; then
-    # We need '-qminimaltoc' or '-qpic=large -bbigtoc' if the TOC overflows.
-    # Hotspot now overflows its 64K TOC (currently only for debug),
-    # so we build with '-qpic=large -bbigtoc'.
-    if test "x$DEBUG_LEVEL" != xrelease; then
-      DEBUGLEVEL_LDFLAGS_JVM_ONLY="$DEBUGLEVEL_LDFLAGS_JVM_ONLY -bbigtoc"
-    fi
-
   elif test "x$TOOLCHAIN_TYPE" = xclang && test "x$OPENJDK_TARGET_OS" = xaix; then
     # We need '-fpic' or '-fpic -mcmodel=large -Wl,-bbigtoc' if the TOC overflows.
     # Hotspot now overflows its 64K TOC (currently only for debug),
@@ -135,7 +129,6 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_HELPER],
 
   # Setup LDFLAGS for linking executables
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
-    EXECUTABLE_LDFLAGS="$EXECUTABLE_LDFLAGS -Wl,--allow-shlib-undefined"
     # Enabling pie on 32 bit builds prevents the JVM from allocating a continuous
     # java heap.
     if test "x$OPENJDK_TARGET_CPU_BITS" != "x32"; then
@@ -184,9 +177,9 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_CPU_DEP],
 
     # MIPS ABI does not support GNU hash style
     if test "x${OPENJDK_$1_CPU}" = xmips ||
-       test "x${OPENJDK_$1_CPU}" = xmipsel ||
-       test "x${OPENJDK_$1_CPU}" = xmips64 ||
-       test "x${OPENJDK_$1_CPU}" = xmips64el; then
+        test "x${OPENJDK_$1_CPU}" = xmipsel ||
+        test "x${OPENJDK_$1_CPU}" = xmips64 ||
+        test "x${OPENJDK_$1_CPU}" = xmips64el; then
       $1_CPU_LDFLAGS="${$1_CPU_LDFLAGS} -Wl,--hash-style=sysv"
     else
       $1_CPU_LDFLAGS="${$1_CPU_LDFLAGS} -Wl,--hash-style=gnu"

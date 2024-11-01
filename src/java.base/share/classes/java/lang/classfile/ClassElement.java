@@ -28,6 +28,7 @@ import java.lang.classfile.attribute.CompilationIDAttribute;
 import java.lang.classfile.attribute.DeprecatedAttribute;
 import java.lang.classfile.attribute.EnclosingMethodAttribute;
 import java.lang.classfile.attribute.InnerClassesAttribute;
+import java.lang.classfile.attribute.LoadableDescriptorsAttribute;
 import java.lang.classfile.attribute.ModuleAttribute;
 import java.lang.classfile.attribute.ModuleHashesAttribute;
 import java.lang.classfile.attribute.ModuleMainClassAttribute;
@@ -63,6 +64,7 @@ public sealed interface ClassElement extends ClassFileElement
                 FieldModel, MethodModel,
                 CustomAttribute, CompilationIDAttribute, DeprecatedAttribute,
                 EnclosingMethodAttribute, InnerClassesAttribute,
+                LoadableDescriptorsAttribute,
                 ModuleAttribute, ModuleHashesAttribute, ModuleMainClassAttribute,
                 ModulePackagesAttribute, ModuleResolutionAttribute, ModuleTargetAttribute,
                 NestHostAttribute, NestMembersAttribute, PermittedSubclassesAttribute,
