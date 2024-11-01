@@ -21,25 +21,19 @@ java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessValue.java 20404 gene
 java/lang/invoke/condy/CondyInterfaceWithOverpassMethods.java 20404 generic-all
 java/lang/invoke/condy/CondyWrongType.java 20404 generic-all
 java/lang/invoke/unreflect/UnreflectTest.java 20404 generic-all
-valhalla/valuetypes/ArrayElementVarHandleTest.java 20404 generic-all
-valhalla/valuetypes/LambdaMetaFactory/LambdaConversion.java 20404 generic-all
-valhalla/valuetypes/LambdaMetaFactory/LambdaTest.java 20404 generic-all
-valhalla/valuetypes/MHZeroValue.java 20404 generic-all
-valhalla/valuetypes/MethodHandleTest.java 20404 generic-all
-valhalla/valuetypes/Nest.java 20404 generic-all
-valhalla/valuetypes/NullRestrictedArraysTest.java 20404 generic-all
-valhalla/valuetypes/NullRestrictedTest.java 20404 generic-all
-valhalla/valuetypes/ObjectMethods.java 20404 generic-all
-valhalla/valuetypes/ObjectMethodsViaCondy.java 20404 generic-all
-valhalla/valuetypes/RecursiveValueClass.java 20404 generic-all
-valhalla/valuetypes/Reflection.java 20404 generic-all
-valhalla/valuetypes/StreamTest.java 20404 generic-all
-valhalla/valuetypes/SubstitutabilityTest.java 20404 generic-all
-valhalla/valuetypes/UseValueClassTest.java 20404 generic-all
-valhalla/valuetypes/ValueConstantDesc.java 20404 generic-all
+
+
+
 
 # real error
 valhalla/valuetypes/WeakReferenceTest.java 20404 generic-all
+# invalid superclass
+valhalla/valuetypes/ObjectMethods.java 20404 generic-all
+valhalla/valuetypes/ObjectMethodsViaCondy.java 20404 generic-all
+# class circularity error
+valhalla/valuetypes/RecursiveValueClass.java 20404 generic-all
+# command line option issue
+valhalla/valuetypes/UseValueClassTest.java 20404 generic-all
 
 # compile error can't find CodeBuilder class
 java/lang/invoke/condy/BootstrapMethodJumboArgsTest.java 20404 generic-all
@@ -55,6 +49,13 @@ java/lang/invoke/condy/ConstantBootstrapsTest.java 20404 generic-all
 # assertion failure
 java/lang/invoke/defineHiddenClass/BasicTest.java 20404 generic-all
 
+# version compilation issue?
+java/lang/invoke/MethodHandleProxies/WrapperHiddenClassTest.java 20404 generic-all
+
+# missing junit driver
+java/lang/invoke/VarHandles/IndirectVarHandleTest.java 20404 generic-all
+java/lang/invoke/VarHandles/LazyInitializingTest.java 20404 generic-all
+
 # https://github.com/eclipse-openj9/openj9/issues/20372 waiting on extensions update
 java/lang/invoke/findVirtual/FindVirtualArrayCloneTest.java 20404 generic-all
 java/lang/invoke/lambda/LambdaClassLoaderSerialization.java 20404 generic-all
@@ -64,10 +65,15 @@ java/lang/invoke/lambda/RepetitiveLambdaSerialization.java 20404 generic-all
 java/lang/invoke/MethodHandleProxies/BasicTest.java 20404 generic-all
 java/lang/invoke/MethodHandles/TestCatchException.java 20404 generic-all
 java/lang/invoke/VarHandles/describeConstable/DescribeConstableTest.java 20404 generic-all
-
-# version compilation issue?
-java/lang/invoke/MethodHandleProxies/WrapperHiddenClassTest.java 20404 generic-all
-
-# missing junit driver
-java/lang/invoke/VarHandles/IndirectVarHandleTest.java 20404 generic-all
-java/lang/invoke/VarHandles/LazyInitializingTest.java 20404 generic-all
+valhalla/valuetypes/LambdaMetaFactory/LambdaConversion.java 20404 generic-all
+valhalla/valuetypes/LambdaMetaFactory/LambdaTest.java 20404 generic-all
+valhalla/valuetypes/ArrayElementVarHandleTest.java 20404 generic-all
+valhalla/valuetypes/MethodHandleTest.java 20404 generic-all
+valhalla/valuetypes/MHZeroValue.java 20404 generic-all
+valhalla/valuetypes/Nest.java 20404 generic-all
+valhalla/valuetypes/NullRestrictedArraysTest.java 20404 generic-all
+valhalla/valuetypes/NullRestrictedTest.java 20404 generic-all
+valhalla/valuetypes/StreamTest.java 20404 generic-all
+valhalla/valuetypes/SubstitutabilityTest.java 20404 generic-all
+valhalla/valuetypes/Reflection.java 20404 generic-all
+valhalla/valuetypes/ValueConstantDesc.java 20404 generic-all
