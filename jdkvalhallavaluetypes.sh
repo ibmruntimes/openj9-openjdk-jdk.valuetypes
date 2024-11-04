@@ -8,11 +8,11 @@ TEST_IMAGE=$EXTENSIONSBASEDIR/build/macosx-aarch64-server-release/images/test
 # https://github.com/eclipse-openj9/openj9/issues/20386
 # Add --patch-module java.base=$EXTENSIONSBASEDIR/build/macosx-aarch64-server-release/jdk/lib/valueclasses/java.base-valueclasses.jar
 
-# jdk_valhalla runs both java/lang/invoke and valhalla tests
+# jdk_valhalla runs both "java/lang/invoke" and "valhalla" tests
 
 # run-test-prebuilt runs tests without recompiling the jdk
 make run-test-prebuilt \
-    TEST="valhalla" \
+    TEST="jdk_valhalla" \
     JTREG_EXTRA_PROBLEM_LISTS="$EXTENSIONSBASEDIR/ProblemList-jdkvalhallavaluetypes.txt" \
     JTREG_JAVA_OPTIONS="-XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening" \
     BOOT_JDK=$TEST_JDK_HOME \
