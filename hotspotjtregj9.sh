@@ -12,7 +12,7 @@ TEST_IMAGE=$EXTENSIONSBASEDIR/build/macosx-aarch64-server-release/images/test
 make run-test-prebuilt \
     TEST="hotspot_valhalla" \
     JTREG_EXTRA_PROBLEM_LISTS="$EXTENSIONSBASEDIR/ProblemList-hotspotjtreg.txt" \
-    JTREG_JAVA_OPTIONS="-XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening" \
+    JTREG_JAVA_OPTIONS="-XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening -Djdk.debug=release" \
     BOOT_JDK=$TEST_JDK_HOME \
     JT_HOME=$JTREGHOME \
     JDK_IMAGE_DIR=$TEST_JDK_HOME \
