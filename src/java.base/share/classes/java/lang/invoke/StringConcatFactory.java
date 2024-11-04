@@ -129,13 +129,6 @@ public final class StringConcatFactory {
         FORCE_INLINE_THRESHOLD = inlineThreshold != null ? Integer.parseInt(inlineThreshold) : 16;
     }
 
-    private static final int HIGH_ARITY_THRESHOLD;
-
-    static {
-        String highArity = VM.getSavedProperty("java.lang.invoke.StringConcat.highArityThreshold");
-        HIGH_ARITY_THRESHOLD = highArity != null ? Integer.parseInt(highArity) : 20;
-    }
-
     /**
      * Tag used to demarcate an ordinary argument.
      */

@@ -227,11 +227,6 @@ public class DocTreeMaker implements DocTreeFactory {
             }
 
             @Override
-            public JCDiagnostic.DiagnosticPosition getPos() {
-                return null;
-            }
-
-            @Override
             public int getSourcePos(int index) {
                 return Position.NOPOS;
             }

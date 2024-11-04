@@ -43,8 +43,6 @@ import openj9.internal.criu.CRIUSECProvider;
 import openj9.internal.criu.InternalCRIUSupport;
 /*[ENDIF] CRIU_SUPPORT */
 
-import sun.security.x509.AlgorithmId;
-
 /**
  * This class constitutes the core of HMAC-<MD> algorithms, where
  * <MD> is the digest algorithm used by HMAC as in RFC 2104

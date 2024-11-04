@@ -2623,10 +2623,6 @@ public final class System {
                 return StringConcatHelper.lookupStatic(name, methodType);
             }
 
-            public long stringConcatHelperPrepend(long indexCoder, byte[] buf, String value) {
-                return StringConcatHelper.prepend(indexCoder, buf, value);
-            }
-
             public long stringConcatInitialCoder() {
                 return StringConcatHelper.initialCoder();
             }

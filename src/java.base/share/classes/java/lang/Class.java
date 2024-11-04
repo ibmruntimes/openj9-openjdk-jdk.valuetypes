@@ -1561,7 +1561,6 @@ public final class Class<T> implements java.io.Serializable,
      *          a primitive type or void.
      * @since   1.1
      */
-
     public Object[] getSigners() {
         var signers = this.signers;
         return signers == null ? null : signers.clone();

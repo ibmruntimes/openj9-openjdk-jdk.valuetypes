@@ -41,18 +41,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.*;
 import java.nio.channels.FileChannel;
-<<<<<<< HEAD
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.filechooser.FileFilter;
-=======
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,7 +52,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
->>>>>>> master
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.ErrorManager;
@@ -93,21 +80,7 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
     public static final String PREFERRED_ID = "OutlineTopComponent";
     private static final GraphDocument document = new GraphDocument();
     private static final int WORK_UNITS = 10000;
-<<<<<<< HEAD
-    private static final FileFilter xmlFileFilter = new FileFilter() {
-        @Override
-        public boolean accept(File f) {
-            return f.getName().toLowerCase().endsWith(".xml") || f.isDirectory();
-        }
-
-        @Override
-        public String getDescription() {
-            return "Graph files (*.xml)";
-        }
-    };
-=======
     private static final FileFilter graphFileFilter = new FileNameExtensionFilter("Graph files (*.xml, *.igv)", "xml", "igv");
->>>>>>> master
     private static final Server server = new Server(document, OutlineTopComponent::loadContext);
     public static OutlineTopComponent instance;
     private final Set<FolderNode> selectedFolders = new HashSet<>();
@@ -182,10 +155,6 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
             }
         }
 
-<<<<<<< HEAD
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(path))) {
-            Printer.exportGraphDocument(writer, doc, saveContexts);
-=======
         if (path.endsWith(".igv")) {
             File zipFile = new File(path);
             String fileName = zipFile.getName();
@@ -206,7 +175,6 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
             try (Writer writer = new OutputStreamWriter(new FileOutputStream(path))) {
                 Printer.exportGraphDocument(writer, doc, saveContexts);
             }
->>>>>>> master
         }
     }
 
@@ -402,11 +370,7 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
      **/
     public void openFile() {
         JFileChooser fc = new JFileChooser(Settings.get().get(Settings.DIRECTORY, Settings.DIRECTORY_DEFAULT));
-<<<<<<< HEAD
-        fc.setFileFilter(xmlFileFilter);
-=======
         fc.setFileFilter(graphFileFilter);
->>>>>>> master
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             clearWorkspace();
             String path = fc.getSelectedFile().getAbsolutePath();
@@ -451,11 +415,6 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
     }
 
     public void saveAs() {
-<<<<<<< HEAD
-        JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Save As...");
-        fc.setFileFilter(xmlFileFilter);
-=======
         JFileChooser fc = new JFileChooser() {
             @Override
             public void approveSelection() {
@@ -472,7 +431,6 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
         };
         fc.setDialogTitle("Save As...");
         fc.setFileFilter(graphFileFilter);
->>>>>>> master
         fc.setCurrentDirectory(new File(Settings.get().get(Settings.DIRECTORY, Settings.DIRECTORY_DEFAULT)));
         if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             String path = fc.getSelectedFile().getAbsolutePath();
@@ -499,11 +457,7 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
      **/
     public void importFromXML() {
         JFileChooser fc = new JFileChooser();
-<<<<<<< HEAD
-        fc.setFileFilter(xmlFileFilter);
-=======
         fc.setFileFilter(graphFileFilter);
->>>>>>> master
         fc.setCurrentDirectory(new File(Settings.get().get(Settings.DIRECTORY, Settings.DIRECTORY_DEFAULT)));
         fc.setMultiSelectionEnabled(true);
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -553,67 +507,14 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
     }
 
     /**
-<<<<<<< HEAD
-     * Loads a graph document from the given file path, updating progress via a ProgressHandle.
-     * Parse the XML file, add the parsed document to the workspace, and load associated contexts if specified.
-=======
      * Loads a graph document from the specified path, either as an XML file or from a ZIP archive.
      * If loading the context is requested, it loads the context along with the document.
->>>>>>> master
      */
     private void loadGraphDocument(String path, boolean loadContext) throws IOException {
         if (Files.notExists(Path.of(path))) {
             return;
         }
         File file = new File(path);
-<<<<<<< HEAD
-        final FileChannel channel;
-        final long start;
-        try {
-            channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);
-            start = channel.size();
-        } catch (Exception ex) {
-            Exceptions.printStackTrace(ex);
-            return;
-        }
-
-        final ProgressHandle handle = ProgressHandleFactory.createHandle("Opening file " + file.getName());
-        handle.start(WORK_UNITS);
-
-        ParseMonitor monitor = new ParseMonitor() {
-            @Override
-            public void updateProgress() {
-                try {
-                    int prog = (int) (WORK_UNITS * (double) channel.position() / (double) start);
-                    handle.progress(prog);
-                } catch (IOException ignored) {
-                }
-            }
-
-            @Override
-            public void setState(String state) {
-                updateProgress();
-                handle.progress(state);
-            }
-        };
-        try {
-            if (file.getName().endsWith(".xml")) {
-                ArrayList<GraphContext> contexts = new ArrayList<>();
-                final Parser parser = new Parser(channel, monitor, document, loadContext ? contexts::add : null);
-                parser.parse();
-                SwingUtilities.invokeLater(() -> {
-                    for (Node child : manager.getRootContext().getChildren().getNodes(true)) {
-                        // Nodes are lazily created. By expanding and collapsing they are all initialized
-                        ((BeanTreeView) this.treeView).expandNode(child);
-                        ((BeanTreeView) this.treeView).collapseNode(child);
-                    }
-                    requestActive();
-                });
-                for (GraphContext ctx : contexts) {
-                    loadContext(ctx);
-                }
-            }
-=======
         if (file.getName().endsWith(".xml")) {
             try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
                 loadFile(channel, file, loadContext);
@@ -683,7 +584,6 @@ public final class OutlineTopComponent extends TopComponent implements ExplorerM
                     loadContext(ctx);
                 }
             });
->>>>>>> master
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

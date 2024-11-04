@@ -580,6 +580,7 @@ public sealed abstract class AbstractAttributeMapper<T extends Attribute<T>>
         }
     }
 
+    public static final String NAME_LOADABLE_DESCRIPTORS = "LoadableDescriptors";
     public static final class PermittedSubclassesMapper extends AbstractAttributeMapper<PermittedSubclassesAttribute> {
         public static final PermittedSubclassesMapper INSTANCE = new PermittedSubclassesMapper();
 
@@ -595,6 +596,24 @@ public sealed abstract class AbstractAttributeMapper<T extends Attribute<T>>
         @Override
         protected void writeBody(BufWriter buf, PermittedSubclassesAttribute attr) {
             Util.writeListIndices(buf, attr.permittedSubclasses());
+        }
+    }
+
+    public static final class LoadableDescriptorsMapper extends AbstractAttributeMapper<LoadableDescriptorsAttribute> {
+        public static final LoadableDescriptorsMapper INSTANCE = new LoadableDescriptorsMapper();
+
+        private LoadableDescriptorsMapper() {
+            super(NAME_LOADABLE_DESCRIPTORS, AttributeStability.CP_REFS);
+        }
+
+        @Override
+        public LoadableDescriptorsAttribute readAttribute(AttributedElement e, ClassReader cf, int p) {
+            return new BoundAttribute.BoundLoadableDescriptorsAttribute(cf, this, p);
+        }
+
+        @Override
+        protected void writeBody(BufWriter buf, LoadableDescriptorsAttribute attr) {
+            Util.writeListIndices(buf, attr.loadableDescriptors());
         }
     }
 

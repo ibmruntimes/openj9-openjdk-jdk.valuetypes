@@ -405,6 +405,11 @@ public final class Attributes {
         return PermittedSubclassesMapper.INSTANCE;
     }
 
+    /** Attribute mapper for the {@code LoadableDescriptors} attribute */
+    public static AttributeMapper<LoadableDescriptorsAttribute> loadableDescriptors() {
+        return LoadableDescriptorsMapper.INSTANCE;
+    }
+
     /**
      * {@return Attribute mapper for the {@code Record} attribute}
      * @since 23

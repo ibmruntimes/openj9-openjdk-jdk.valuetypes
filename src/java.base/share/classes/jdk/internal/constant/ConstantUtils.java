@@ -303,13 +303,6 @@ public final class ConstantUtils {
         return new IllegalArgumentException("Bad method descriptor: " + descriptor);
     }
 
-    private static ClassDesc resolveClassDesc(String descriptor, int start, int len) {
-        if (len == 1) {
-            return Wrapper.forPrimitiveType(descriptor.charAt(start)).classDescriptor();
-        }
-        return ClassDesc.ofDescriptor(descriptor.substring(start, start + len));
-    }
-
     private static final char JVM_SIGNATURE_ARRAY = '[';
     private static final char JVM_SIGNATURE_BYTE = 'B';
     private static final char JVM_SIGNATURE_CHAR = 'C';

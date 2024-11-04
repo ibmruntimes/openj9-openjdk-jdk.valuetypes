@@ -1229,8 +1229,6 @@ public class JavaTokenizer extends UnicodeReader {
 
         DiagnosticPosition pos;
 
-        DiagnosticPosition pos;
-
         /**
          * true if comment contains @deprecated at beginning of a line.
          */
