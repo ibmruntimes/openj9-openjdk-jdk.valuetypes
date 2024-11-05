@@ -373,62 +373,6 @@ public final class Security {
         }
     }
 
-    private static boolean loadProps(File masterFile, String extraPropFile, boolean overrideAll) {
-        InputStream is = null;
-        try {
-            if (masterFile != null && masterFile.exists()) {
-                is = new FileInputStream(masterFile);
-            } else if (extraPropFile != null) {
-                extraPropFile = PropertyExpander.expand(extraPropFile);
-                File propFile = new File(extraPropFile);
-                URL propURL;
-                if (propFile.exists()) {
-                    propURL = newURL
-                            ("file:" + propFile.getCanonicalPath());
-                } else {
-                    propURL = newURL(extraPropFile);
-                }
-
-                is = propURL.openStream();
-                if (overrideAll) {
-                    props = new Properties();
-                    if (sdebug != null) {
-                        sdebug.println
-                                ("overriding other security properties files!");
-                    }
-                }
-            } else {
-                // unexpected
-                return false;
-            }
-            props.load(is);
-            if (sdebug != null) {
-                // ExceptionInInitializerError if masterFile.getName() is
-                // called here (NPE!). Leave as is (and few lines down)
-                sdebug.println("reading security properties file: " +
-                        masterFile == null ? extraPropFile : "java.security");
-            }
-            return true;
-        } catch (IOException | PropertyExpander.ExpandException e) {
-            if (sdebug != null) {
-                sdebug.println("unable to load security properties from " +
-                        masterFile == null ? extraPropFile : "java.security");
-                e.printStackTrace();
-            }
-            return false;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException ioe) {
-                    if (sdebug != null) {
-                        sdebug.println("unable to close input stream");
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * Don't let anyone instantiate this.
      */

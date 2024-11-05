@@ -32,9 +32,8 @@
 package sun.security.pkcs11;
 
 import java.io.*;
-import java.util.*;
 import java.math.BigInteger;
-
+import java.util.*;
 import java.util.stream.Collectors;
 import java.security.*;
 import java.security.interfaces.*;
@@ -875,7 +874,7 @@ public final class SunPKCS11 extends AuthProvider {
         d(KPG, "DH",            P11KeyPairGenerator,
                 dhAlias,
                 m(CKM_DH_PKCS_KEY_PAIR_GEN));
-        d(KPG, "EC",            P11KeyPairGenerator,
+        dA(KPG, "EC",            P11KeyPairGenerator,
                 m(CKM_EC_KEY_PAIR_GEN));
 
         dA(KG,  "ARCFOUR",       P11KeyGenerator,
@@ -925,7 +924,7 @@ public final class SunPKCS11 extends AuthProvider {
         d(KF, "DH",             P11DHKeyFactory,
                 dhAlias,
                 m(CKM_DH_PKCS_KEY_PAIR_GEN, CKM_DH_PKCS_DERIVE));
-        d(KF, "EC",             P11ECKeyFactory,
+        dA(KF, "EC",             P11ECKeyFactory,
                 m(CKM_EC_KEY_PAIR_GEN, CKM_ECDH1_DERIVE,
                     CKM_ECDSA, CKM_ECDSA_SHA1));
 
@@ -2191,6 +2190,19 @@ public final class SunPKCS11 extends AuthProvider {
 
     private Object writeReplace() throws ObjectStreamException {
         return new SunPKCS11Rep(this);
+    }
+
+    /**
+     * Restores the state of this object from the stream.
+     *
+     * @param  stream the {@code ObjectInputStream} from which data is read
+     * @throws IOException if an I/O error occurs
+     * @throws ClassNotFoundException if a serialized class cannot be loaded
+     */
+    @java.io.Serial
+    private void readObject(ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        throw new InvalidObjectException("SunPKCS11 not directly deserializable");
     }
 
     /**

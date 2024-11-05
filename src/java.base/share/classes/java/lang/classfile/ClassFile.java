@@ -25,27 +25,28 @@
 package java.lang.classfile;
 
 import java.io.IOException;
-import java.lang.constant.ClassDesc;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
+import java.lang.classfile.attribute.CharacterRangeInfo;
+import java.lang.classfile.attribute.LocalVariableInfo;
+import java.lang.classfile.attribute.LocalVariableTypeInfo;
 import java.lang.classfile.attribute.ModuleAttribute;
 import java.lang.classfile.constantpool.ClassEntry;
 import java.lang.classfile.constantpool.ConstantPoolBuilder;
 import java.lang.classfile.constantpool.Utf8Entry;
+import java.lang.classfile.instruction.ExceptionCatch;
+import java.lang.constant.ClassDesc;
+import java.lang.reflect.AccessFlag;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import jdk.internal.classfile.impl.ClassFileImpl;
 import jdk.internal.classfile.impl.TemporaryConstantPool;
-import java.lang.reflect.AccessFlag;
-import java.lang.classfile.attribute.CharacterRangeInfo;
-import java.lang.classfile.attribute.LocalVariableInfo;
-import java.lang.classfile.attribute.LocalVariableTypeInfo;
-import java.lang.classfile.instruction.ExceptionCatch;
-import java.util.List;
+import jdk.internal.javac.PreviewFeature;
+
 import static java.util.Objects.requireNonNull;
 import static jdk.internal.constant.ConstantUtils.CD_module_info;
-import jdk.internal.javac.PreviewFeature;
 
 /**
  * Represents a context for parsing, transforming, and generating classfiles.
@@ -533,10 +534,10 @@ public sealed interface ClassFile
     /** The bit mask of SUPER access and property modifier. */
     int ACC_SUPER = 0x0020;
 
-    /** The bit mask of IDENTITY access and property modifier. */
+    /** The value of IDENTITY access and property modifier. */
     int ACC_IDENTITY = 0x0020;
 
-    /** The bit mask of ABSTRACT access and property modifier. */
+    /** The value of ABSTRACT access and property modifier. */
     int ACC_ABSTRACT = 0x0400;
 
     /** The bit mask of VOLATILE access and property modifier. */

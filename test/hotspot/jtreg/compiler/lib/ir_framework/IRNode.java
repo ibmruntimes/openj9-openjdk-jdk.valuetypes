@@ -119,13 +119,13 @@ public class IRNode {
     public static final String VECTOR_SIZE_32  = VECTOR_SIZE + "32";
     public static final String VECTOR_SIZE_64  = VECTOR_SIZE + "64";
 
-    private static final String TYPE_BYTE   = "byte";
-    private static final String TYPE_CHAR   = "char";
-    private static final String TYPE_SHORT  = "short";
-    private static final String TYPE_INT    = "int";
-    private static final String TYPE_LONG   = "long";
-    private static final String TYPE_FLOAT  = "float";
-    private static final String TYPE_DOUBLE = "double";
+    private static final String TYPE_BYTE   = "B";
+    private static final String TYPE_CHAR   = "C";
+    private static final String TYPE_SHORT  = "S";
+    private static final String TYPE_INT    = "I";
+    private static final String TYPE_LONG   = "J";
+    private static final String TYPE_FLOAT  = "F";
+    private static final String TYPE_DOUBLE = "D";
 
     /**
      * IR placeholder string to regex-for-compile-phase map.
@@ -288,7 +288,7 @@ public class IRNode {
 
     public static final String ALLOC_ARRAY = PREFIX + "ALLOC_ARRAY" + POSTFIX;
     static {
-        String optoRegex = "(.*precise \\[.*\\R((.*(?i:mov|mv|xor|nop|spill|pushq|popq).*|\\s*|.*(LGHI|LI).*)\\R)*.*(?i:call,static).*wrapper for: C2 Runtime new_array" + END;
+        String optoRegex = "(.*precise \\[.*\\R((.*(?i:mov|mv|xor|nop|spill).*|\\s*|.*(LGHI|LI).*)\\R)*.*(?i:call,static).*wrapper for: C2 Runtime new_array" + END;
         allocNodes(ALLOC_ARRAY, "AllocateArray", optoRegex);
     }
 
@@ -675,11 +675,6 @@ public class IRNode {
     public static final String IF = PREFIX + "IF" + POSTFIX;
     static {
         beforeMatchingNameRegex(IF, "If\\b");
-    }
-
-    public static final String INLINE_TYPE = PREFIX + "INLINE_TYPE" + POSTFIX;
-    static {
-        beforeMatchingNameRegex(INLINE_TYPE, "InlineType");
     }
 
     // Does not work for VM builds without JVMCI like x86_32 (a rule containing this regex will be skipped without having JVMCI built).
@@ -2388,7 +2383,7 @@ public class IRNode {
      * Apply {@code regex} on all machine independent ideal graph phases up to and including
      * {@link CompilePhase#BEFORE_MATCHING}.
      */
-    public static void beforeMatching(String irNodePlaceholder, String regex) {
+    private static void beforeMatching(String irNodePlaceholder, String regex) {
         IR_NODE_MAPPINGS.put(irNodePlaceholder, new RegexTypeEntry(RegexType.IDEAL_INDEPENDENT, regex));
     }
 
@@ -2434,7 +2429,7 @@ public class IRNode {
      * Apply {@code regex} on all machine dependant ideal graph phases (i.e. on the mach graph) starting from
      * {@link CompilePhase#MATCHING}.
      */
-    public static void optoOnly(String irNodePlaceholder, String regex) {
+    private static void optoOnly(String irNodePlaceholder, String regex) {
         IR_NODE_MAPPINGS.put(irNodePlaceholder, new RegexTypeEntry(RegexType.OPTO_ASSEMBLY, regex));
     }
 

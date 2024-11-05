@@ -475,6 +475,7 @@ public final class ModuleBootstrap {
 
         if (CDS.isDumpingStaticArchive()
                 && !haveUpgradeModulePath
+                && addModules.isEmpty()
                 && allJrtOrModularJar(cf)) {
             assert !isPatched;
 
