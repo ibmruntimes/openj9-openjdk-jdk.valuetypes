@@ -27,7 +27,7 @@
 # (c) Copyright IBM Corp. 2022, 2024 All Rights Reserved
 # ===========================================================================
 
-###############################################################################
+################################################################################
 # Set the debug level
 #    release: no debug information, all optimizations, no asserts.
 #    optimized: no debug information, all optimizations, no asserts, HotSpot target is 'optimized'.

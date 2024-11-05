@@ -121,7 +121,8 @@ requires.properties= \
     vm.jvmti \
     vm.openj9 \
     vm.cpu.features \
-    docker.support \
+    container.support \
+    systemd.support \
     release.implementor \
     jdk.containerized \
     jdk.foreign.linker

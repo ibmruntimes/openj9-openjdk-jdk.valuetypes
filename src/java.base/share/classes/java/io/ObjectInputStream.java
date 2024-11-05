@@ -4178,8 +4178,7 @@ public class ObjectInputStream
         }
 
         /**
-         * Returns the number of bytes read from the input stream.
-         * @return the number of bytes read from the input stream
+         * {@return the number of bytes read from the input stream}
          */
         long getBytesRead() {
             return in.getBytesRead();
