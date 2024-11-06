@@ -12,24 +12,42 @@ runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/20512
 runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
 
-# Ignore this for now - inconsistent with https://openjdk.org/jeps/8316779
-#runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
-
-### Issues to be triaged further ###
-# didn't fail in the right place - does the spec specify this?
+### verify behavior with spec ###
+# default value is set where its not expected
+compiler/valhalla/inlinetypes/TestUnloadedInlineTypeArray.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestFlatArrayThreshold.java 13182 generic-all
+# circularity error not thrown in the right place - is this dictated by the spec?
 runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
-# ClassCircularityError
+
+# ClassCastException that shouldn't have happened
+compiler/valhalla/inlinetypes/TestArrayCopyWithOops.java 13182 generic-all
+# Class init/unsafe library errors - wait for extensions update
+compiler/valhalla/inlinetypes/TestIntrinsics.java 13182 generic-all
+# this test shouldn't pass on openj9, but it also shouldn't segfault?
+compiler/valhalla/inlinetypes/TestBufferTearingC1.java 13182 generic-all
+# ClassCircularityError - shouldn't pass on openj9 but shouldn't throw this
 compiler/valhalla/inlinetypes/TestCallingConventionC1.java 13182 generic-all
-runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
+# VM assertion failure
+runtime/valhalla/inlinetypes/TestInheritedInlineTypeFields.java 13182 generic-all
+# Verification error
+runtime/valhalla/inlinetypes/verifier/StrictFields.java 13182 generic-all
 # segfault
 runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
-# Take another look at this test - it hangs occassionally
-runtime/valhalla/inlinetypes/VarArgsArray.java
-# Segfault
+# segfault
 compiler/valhalla/inlinetypes/TestBufferTearing.java 13182 generic-all
-#segfault
+# segfault
 compiler/valhalla/inlinetypes/TestLarvalState.java 13182 generic-all
-# I would guess these are hotspot specific. lets find out.
+# This test is not able to compile, wait for extensions update
+runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
+
+# Ignore this for now - inconsistent with https://openjdk.org/jeps/8316779
+runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
+runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
+
+### Hotspot specific tests - these tests can't be run ###
+# J9's flattening policy flattens volatile fields that are <= 8 bytes
+runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
+# testing vm specific layouts
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOopsNoCompressKlassPointers 13182 generic-all
@@ -38,20 +56,8 @@ runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64NoCom
 runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64NoCompressedOopsNoCompressedKlassPointers 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#CompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#NoCompressedOops 13182 generic-all
-# expects volatile fields to not be flattened
-runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
-runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
-# preload error
+# Reliant on hotspot vm logging
 compiler/valhalla/inlinetypes/TestUnresolvedInlineClass.java 13182 generic-all
-# preload error
-compiler/valhalla/inlinetypes/TestUnloadedInlineTypeArray.java 13182 generic-all
-# Cannot load from object array because "<local8>" is null
-compiler/valhalla/inlinetypes/TestArrayCopyWithOops.java 13182 generic-all
-# I think this could be saved if the command line args are set
-compiler/valhalla/inlinetypes/TestFlatArrayThreshold.java 13182 generic-all
-compiler/valhalla/inlinetypes/TestIntrinsics.java 13182 generic-all
-
-### Hotspot specific tests - these tests can't be run ###
 # Command-line option unrecognised: -Xlog:class+preload
 runtime/valhalla/inlinetypes/PreloadCircularityTest.java 13182 generic-all
 runtime/valhalla/inlinetypes/ValuePreloadTest.java 13182 generic-all
