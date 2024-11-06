@@ -39,6 +39,9 @@ import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
 import java.lang.classfile.Label;
 import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
+
+import jdk.internal.misc.PreviewFeatures;
+
 import jdk.jfr.AnnotationElement;
 import jdk.jfr.Event;
 import jdk.jfr.ValueDescriptor;
