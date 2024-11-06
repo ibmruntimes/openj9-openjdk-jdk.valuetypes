@@ -1,42 +1,29 @@
 # List of tests to exclude from inlinetypes tests
 
-# https://github.com/eclipse-openj9/openj9/issues/13797
-runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
-
-# https://github.com/eclipse-openj9/openj9/issues/13789
-runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
-
-# https://github.com/eclipse-openj9/openj9/issues/20510
-runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
-
+# https://github.com/eclipse-openj9/openj9/issues/20522
+compiler/valhalla/inlinetypes/TestArrayCopyWithOops.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/20512
 runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
-
-### verify behavior with spec ###
-# default value is set where its not expected
+# https://github.com/eclipse-openj9/openj9/issues/20472
+runtime/valhalla/inlinetypes/verifier/StrictFields.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestUnloadedInlineTypeArray.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestFlatArrayThreshold.java 13182 generic-all
-# circularity error not thrown in the right place - is this dictated by the spec?
 runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/13797
+runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/13789
+runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/20510
+runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestCallingConventionC1.java 13182 generic-all
+runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestBufferTearing.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestLarvalState.java 13182 generic-all
+runtime/valhalla/inlinetypes/TestInheritedInlineTypeFields.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestBufferTearingC1.java 13182 generic-all
 
-# ClassCastException that shouldn't have happened
-compiler/valhalla/inlinetypes/TestArrayCopyWithOops.java 13182 generic-all
 # Class init/unsafe library errors - wait for extensions update
 compiler/valhalla/inlinetypes/TestIntrinsics.java 13182 generic-all
-# this test shouldn't pass on openj9, but it also shouldn't segfault?
-compiler/valhalla/inlinetypes/TestBufferTearingC1.java 13182 generic-all
-# ClassCircularityError - shouldn't pass on openj9 but shouldn't throw this
-compiler/valhalla/inlinetypes/TestCallingConventionC1.java 13182 generic-all
-# VM assertion failure
-runtime/valhalla/inlinetypes/TestInheritedInlineTypeFields.java 13182 generic-all
-# Verification error
-runtime/valhalla/inlinetypes/verifier/StrictFields.java 13182 generic-all
-# segfault
-runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
-# segfault
-compiler/valhalla/inlinetypes/TestBufferTearing.java 13182 generic-all
-# segfault
-compiler/valhalla/inlinetypes/TestLarvalState.java 13182 generic-all
 # This test is not able to compile, wait for extensions update
 runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
 
