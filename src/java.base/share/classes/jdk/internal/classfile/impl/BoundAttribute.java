@@ -27,15 +27,7 @@ package jdk.internal.classfile.impl;
 
 import java.lang.classfile.*;
 import java.lang.classfile.attribute.*;
-import java.lang.classfile.constantpool.ClassEntry;
-import java.lang.classfile.constantpool.ConstantPool;
-import java.lang.classfile.constantpool.ConstantValueEntry;
-import java.lang.classfile.constantpool.LoadableConstantEntry;
-import java.lang.classfile.constantpool.ModuleEntry;
-import java.lang.classfile.constantpool.NameAndTypeEntry;
-import java.lang.classfile.constantpool.PackageEntry;
-import java.lang.classfile.constantpool.PoolEntry;
-import java.lang.classfile.constantpool.Utf8Entry;
+import java.lang.classfile.constantpool.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -1035,6 +1027,8 @@ public abstract sealed class BoundAttribute<T extends Attribute<T>>
                 name.equalsString(NAME_INNER_CLASSES) ? innerClasses() : null;
             case 0x653f0551 ->
                 name.equalsString(NAME_LINE_NUMBER_TABLE) ? lineNumberTable() : null;
+           case 0x5f348b64 ->
+                name.equalsString(NAME_LOADABLE_DESCRIPTORS) ? loadableDescriptors() : null;
             case 0x64c75927 ->
                 name.equalsString(NAME_LOCAL_VARIABLE_TABLE) ? localVariableTable() : null;
             case 0x6697f98d ->

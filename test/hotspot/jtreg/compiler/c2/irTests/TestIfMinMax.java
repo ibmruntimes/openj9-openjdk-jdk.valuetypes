@@ -30,11 +30,7 @@ import jdk.test.lib.Utils;
 
 /*
  * @test
-<<<<<<< HEAD
- * @bug 8324655 8329797
-=======
  * @bug 8324655 8329797 8331090
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
  * @key randomness
  * @summary Test that if expressions are properly folded into min/max nodes
  * @requires os.arch != "riscv64"
@@ -185,13 +181,8 @@ public class TestIfMinMax {
         int[] a = new int[512];
         int[] b = new int[512];
 
-<<<<<<< HEAD
-        // Fill from 1 to 50
-        for (int i = 0; i < 50; i++) {
-=======
         // Fill from 1 to 125
         for (int i = 0; i < 125; i++) {
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
             a[i] = i + 1;
             b[i] = 1;
         }
@@ -215,13 +206,8 @@ public class TestIfMinMax {
         long[] a = new long[512];
         long[] b = new long[512];
 
-<<<<<<< HEAD
-        // Fill from 1 to 50
-        for (int i = 0; i < 50; i++) {
-=======
         // Fill from 1 to 125
         for (int i = 0; i < 125; i++) {
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
             a[i] = i + 1;
             b[i] = 1;
         }

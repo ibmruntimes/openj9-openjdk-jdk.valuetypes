@@ -104,8 +104,4 @@ public class LoginModuleDebug {
                     new Subject(), null, Map.of(), Map.of(args[0], args[1]));
         }
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9

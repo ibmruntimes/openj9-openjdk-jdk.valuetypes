@@ -98,11 +98,11 @@ TEST_VM(markWord, printing) {
     ObjectLocker ol(h_obj, THREAD);
     assert_mark_word_print_pattern(h_obj, "locked");
   }
-  assert_test_pattern(h_obj, "is_unlocked no_hash");
+  assert_mark_word_print_pattern(h_obj, "is_unlocked no_hash");
 
   // Hash the object then print it.
   intx hash = h_obj->identity_hash();
-  assert_test_pattern(h_obj, "is_unlocked hash=0x");
+  assert_mark_word_print_pattern(h_obj, "is_unlocked hash=0x");
 
   // Wait gets the lock inflated.
   {

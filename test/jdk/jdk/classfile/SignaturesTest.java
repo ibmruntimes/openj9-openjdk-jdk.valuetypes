@@ -182,11 +182,7 @@ class SignaturesTest {
     @Test
     void testClassSignatureClassDesc() throws IOException {
         var observerCf = ClassFile.of().parse(Path.of(System.getProperty("test.classes"), "SignaturesTest$Observer.class"));
-<<<<<<< HEAD
-        var sig = observerCf.findAttribute(Attributes.SIGNATURE).orElseThrow().asClassSignature();
-=======
         var sig = observerCf.findAttribute(Attributes.signature()).orElseThrow().asClassSignature();
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
         var arrayListSig = sig.superclassSignature(); // ArrayList
         var arrayListTypeArg = (TypeArg.Bounded) arrayListSig.typeArgs().getFirst(); // Outer<String>.Inner<Long>
         assertEquals(TypeArg.Bounded.WildcardIndicator.NONE, arrayListTypeArg.wildcardIndicator());

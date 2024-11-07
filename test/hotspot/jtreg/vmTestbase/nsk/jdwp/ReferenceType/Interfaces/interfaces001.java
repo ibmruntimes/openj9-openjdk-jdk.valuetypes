@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
- * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
-=======
  * Copyright (c) 2001, 2024, Oracle and/or its affiliates. All rights reserved.
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -146,7 +142,7 @@ public class interfaces001 {
 
                         if (interfaceID != interfaceIDs[i]) {
                             log.complain("Unexpected interface ID for interface #" + i + " in the reply packet: " + interfaceID
-                                         + " (expected: " + interfaceIDs[i] + ")");
+                                        + " (expected: " + interfaceIDs[i] + ")");
                             success = false;
                         }
 

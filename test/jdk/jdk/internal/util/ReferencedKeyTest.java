@@ -23,11 +23,7 @@
 
 /*
  * @test
-<<<<<<< HEAD
  * @bug 8285932 8310913 8336390 8338060 8338252
-=======
- * @bug 8285932 8310913 8336390 8338060
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
  * @summary Test features provided by the ReferencedKeyMap/ReferencedKeySet classes.
  * @modules java.base/jdk.internal.util
  * @compile --patch-module java.base=${test.src} ReferencedKeyTest.java

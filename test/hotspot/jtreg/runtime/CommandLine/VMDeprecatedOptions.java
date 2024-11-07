@@ -56,14 +56,7 @@ public class VMDeprecatedOptions {
         ArrayList<String[]> deprecated = new ArrayList(
           Arrays.asList(new String[][] {
             // deprecated non-alias flags:
-<<<<<<< HEAD
-            {"DontYieldALot", "false"},
-            {"UseNotificationThread", "true"},
-            {"PreserveAllAnnotations", "true"},
-=======
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
             {"AllowRedefinitionToAddDeleteMethods", "true"},
-            {"ZGenerational", "false"},
             {"LockingMode", "1"},
 
             // deprecated alias flags (see also aliased_jvm_flags):

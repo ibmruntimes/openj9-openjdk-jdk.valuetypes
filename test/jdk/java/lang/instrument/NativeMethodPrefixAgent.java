@@ -68,43 +68,9 @@ class NativeMethodPrefixAgent {
             this.nativeMethodPrefix = "wrapped_" + trname + "_";
         }
 
-<<<<<<< HEAD
-        public byte[]
-        transform(
-            ClassLoader loader,
-            String className,
-            Class<?> classBeingRedefined,
-            ProtectionDomain    protectionDomain,
-            byte[] classfileBuffer) {
-            boolean redef = classBeingRedefined != null;
-            System.out.println(trname + ": " +
-                               (redef? "Retransforming " : "Loading ") + className);
-            if (className != null) {
-                try {
-                    byte[] newcf = Instrumentor.instrFor(classfileBuffer)
-                                   .addNativeMethodTrackingInjection(
-                                        "wrapped_" + trname + "_", (name, h) -> {
-                                            h.loadConstant(name);
-                                            h.loadConstant(transformId);
-                                            h.invokestatic(
-                                                    CD_StringIdCallbackReporter,
-                                                    "tracker",
-                                                    MTD_void_String_int);
-                                        })
-                                   .apply();
-                    /*** debugging ...
-                    if (newcf != null) {
-                        String fname = trname + (redef?"_redef" : "") + "/" + className;
-                        System.err.println("dumping to: " + fname);
-                        write_buffer(fname + "_before.class", classfileBuffer);
-                        write_buffer(fname + "_instr.class", newcf);
-                    }
-                    ***/
-=======
         @Override
         public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                                 ProtectionDomain protectionDomain, byte[] classfileBuffer) {
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
 
             try {
                 // we only transform a specific application class

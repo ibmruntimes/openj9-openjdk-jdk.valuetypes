@@ -126,7 +126,6 @@ public enum Modifier {
      * @since 18
      */
     VALUE,
-
     /**
      * The modifier {@code final}
      *

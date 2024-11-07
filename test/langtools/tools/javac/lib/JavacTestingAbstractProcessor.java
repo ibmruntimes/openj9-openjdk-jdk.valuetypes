@@ -114,11 +114,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
      * corresponding platform visitor type.
      */
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static abstract class AbstractAnnotationValueVisitor<R, P> extends AbstractAnnotationValueVisitorPreview<R, P> {
 
@@ -130,11 +126,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static abstract class AbstractElementVisitor<R, P> extends AbstractElementVisitorPreview<R, P> {
         /**
@@ -145,11 +137,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static abstract class AbstractTypeVisitor<R, P> extends AbstractTypeVisitorPreview<R, P> {
         /**
@@ -160,11 +148,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static class ElementKindVisitor<R, P> extends ElementKindVisitorPreview<R, P> {
         /**
@@ -186,11 +170,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static class ElementScanner<R, P> extends ElementScannerPreview<R, P> {
         /**
@@ -210,11 +190,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static class SimpleAnnotationValueVisitor<R, P> extends SimpleAnnotationValueVisitorPreview<R, P> {
         /**
@@ -236,11 +212,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static class SimpleElementVisitor<R, P> extends SimpleElementVisitorPreview<R, P> {
         /**
@@ -262,11 +234,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static class SimpleTypeVisitor<R, P> extends SimpleTypeVisitorPreview<R, P> {
         /**
@@ -288,11 +256,7 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         }
     }
 
-<<<<<<< HEAD
-    @SupportedSourceVersion(RELEASE_23)
-=======
     @SupportedSourceVersion(RELEASE_24)
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @SuppressWarnings("preview")
     public static class TypeKindVisitor<R, P> extends TypeKindVisitorPreview<R, P> {
         /**

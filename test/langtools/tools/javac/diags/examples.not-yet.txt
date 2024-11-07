@@ -55,7 +55,8 @@ compiler.misc.bad.constant.range                        # bad class file
 compiler.misc.bad.constant.value                        # bad class file
 compiler.misc.bad.enclosing.class                       # bad class file
 compiler.misc.bad.enclosing.method                      # bad class file
-compiler.misc.bad.runtime.invisible.param.annotations   # bad class file
+compiler.warn.runtime.invisible.parameter.annotations   # bad class file
+compiler.warn.runtime.visible.invisible.param.annotations.mismatch   # bad class file
 compiler.misc.bad.signature                             # bad class file
 compiler.misc.bad.requires.flag                         # bad class file
 compiler.misc.bad.access.flags                          # bad class file
@@ -219,12 +220,9 @@ compiler.err.annotation.unrecognized.attribute.name
 
 # this one is transitional (waiting for FFM API to exit preview)
 compiler.warn.restricted.method
-<<<<<<< HEAD
 # Value Objects
 compiler.misc.feature.value.classes
-=======
 
 # Pending removal
 compiler.note.implicit.annotation.processing
 compiler.warn.proc.use.proc.or.implicit
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9

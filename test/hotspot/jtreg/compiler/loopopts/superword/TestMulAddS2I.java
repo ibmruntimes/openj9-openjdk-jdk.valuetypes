@@ -23,11 +23,7 @@
 
 /**
  * @test
-<<<<<<< HEAD
- * @bug 8310886 8325252
-=======
  * @bug 8310886 8325252 8320622
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
  * @summary Test MulAddS2I vectorization.
  * @library /test/lib /
  * @run driver compiler.loopopts.superword.TestMulAddS2I
@@ -45,10 +41,6 @@ public class TestMulAddS2I {
 
     static short[] sArr1 = new short[RANGE];
     static short[] sArr2 = new short[RANGE];
-<<<<<<< HEAD
-    static int[] ioutArr = new int[RANGE];
-=======
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     static final int[] GOLDEN_A;
     static final int[] GOLDEN_B;
     static final int[] GOLDEN_C;
@@ -57,14 +49,11 @@ public class TestMulAddS2I {
     static final int[] GOLDEN_F;
     static final int[] GOLDEN_G;
     static final int[] GOLDEN_H;
-<<<<<<< HEAD
-=======
     static final int[] GOLDEN_I;
     static final int[] GOLDEN_J;
     static final int[] GOLDEN_K;
     static final int[] GOLDEN_L;
     static final int[] GOLDEN_M;
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
 
     static {
         for (int i = 0; i < RANGE; i++) {
@@ -73,14 +62,6 @@ public class TestMulAddS2I {
         }
         GOLDEN_A = testa();
         GOLDEN_B = testb();
-<<<<<<< HEAD
-        GOLDEN_C = testc();
-        GOLDEN_D = testd();
-        GOLDEN_E = teste();
-        GOLDEN_F = testf();
-        GOLDEN_G = testg();
-        GOLDEN_H = testh();
-=======
         GOLDEN_C = testc(new int[ITER]);
         GOLDEN_D = testd(new int[ITER]);
         GOLDEN_E = teste(new int[ITER]);
@@ -92,7 +73,6 @@ public class TestMulAddS2I {
         GOLDEN_K = testk(new int[ITER]);
         GOLDEN_L = testl(new int[ITER]);
         GOLDEN_M = testm(new int[ITER]);
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     }
 
 
@@ -101,24 +81,12 @@ public class TestMulAddS2I {
         TestFramework.runWithFlags("-XX:+IgnoreUnrecognizedVMOptions", "-XX:-AlignVector");
     }
 
-<<<<<<< HEAD
-    @Run(test = {"testa", "testb", "testc", "testd", "teste", "testf", "testg", "testh"})
-=======
     @Run(test = {"testa", "testb", "testc", "testd", "teste", "testf", "testg", "testh",
                  "testi", "testj", "testk", "testl", "testm"})
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     @Warmup(0)
     public static void run() {
         compare(testa(), GOLDEN_A, "testa");
         compare(testb(), GOLDEN_B, "testb");
-<<<<<<< HEAD
-        compare(testc(), GOLDEN_C, "testc");
-        compare(testd(), GOLDEN_D, "testd");
-        compare(teste(), GOLDEN_E, "teste");
-        compare(testf(), GOLDEN_F, "testf");
-        compare(testg(), GOLDEN_G, "testg");
-        compare(testh(), GOLDEN_H, "testh");
-=======
         compare(testc(new int[ITER]), GOLDEN_C, "testc");
         compare(testd(new int[ITER]), GOLDEN_D, "testd");
         compare(teste(new int[ITER]), GOLDEN_E, "teste");
@@ -130,7 +98,6 @@ public class TestMulAddS2I {
         compare(testk(new int[ITER]), GOLDEN_K, "testk");
         compare(testl(new int[ITER]), GOLDEN_L, "testl");
         compare(testm(new int[ITER]), GOLDEN_M, "testm");
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
     }
 
     public static void compare(int[] out, int[] golden, String name) {
@@ -282,8 +249,6 @@ public class TestMulAddS2I {
         }
         return out;
     }
-<<<<<<< HEAD
-=======
 
     @Test
     @IR(counts = {IRNode.MUL_ADD_S2I, "> 0"},
@@ -350,5 +315,4 @@ public class TestMulAddS2I {
         }
         return out;
     }
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
 }

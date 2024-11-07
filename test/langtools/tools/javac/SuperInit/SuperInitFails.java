@@ -91,11 +91,7 @@ public class SuperInitFails extends AtomicReference<Object> implements Iterable<
     }
 
     public SuperInitFails(short[] x) {
-<<<<<<< HEAD
-        this.x = x.length;              // this should work
-=======
         this.x++;                       // this should FAIL
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
         super();
     }
 

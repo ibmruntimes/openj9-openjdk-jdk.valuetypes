@@ -53,6 +53,7 @@ import jdk.internal.javac.PreviewFeature;
  * <li>{@link #enclosingMethod()}
  * <li>{@link #exceptions()}
  * <li>{@link #innerClasses()}
+ * <li>{@link #loadableDescriptors()}
  * <li>{@link #methodParameters()}
  * <li>{@link #module()}
  * <li>{@link #moduleHashes()}
@@ -299,6 +300,14 @@ public final class Attributes {
     }
 
     /**
+     * {@return Attribute mapper for the {@code LoadableDescriptors} attribute}
+     * @since 23
+     */
+    public static AttributeMapper<LoadableDescriptorsAttribute> loadableDescriptors() {
+        return LoadableDescriptorsMapper.INSTANCE;
+    }
+
+    /**
      * {@return Attribute mapper for the {@code LocalVariableTable} attribute}
      * The mapper permits multiple instances in a given location.
      * @since 23
@@ -394,11 +403,6 @@ public final class Attributes {
      */
     public static AttributeMapper<PermittedSubclassesAttribute> permittedSubclasses() {
         return PermittedSubclassesMapper.INSTANCE;
-    }
-
-    /** Attribute mapper for the {@code LoadableDescriptors} attribute */
-    public static AttributeMapper<LoadableDescriptorsAttribute> loadableDescriptors() {
-        return LoadableDescriptorsMapper.INSTANCE;
     }
 
     /**

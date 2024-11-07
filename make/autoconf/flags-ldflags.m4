@@ -27,7 +27,7 @@
 #
 
 # ===========================================================================
-# (c) Copyright IBM Corp. 2019, 2019 All Rights Reserved
+# (c) Copyright IBM Corp. 2019, 2024 All Rights Reserved
 # ===========================================================================
 
 AC_DEFUN([FLAGS_SETUP_LDFLAGS],
@@ -77,15 +77,17 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_HELPER],
     if test "x$OPENJDK_TARGET_OS" = xlinux; then
       # Clang needs the lld linker to work correctly
       BASIC_LDFLAGS="-fuse-ld=lld -Wl,--exclude-libs,ALL"
-      UTIL_REQUIRE_PROGS(LLD, lld)
+      if test "x$CXX_IS_USER_SUPPLIED" = xfalse && test "x$CC_IS_USER_SUPPLIED" = xfalse; then
+        UTIL_REQUIRE_PROGS(LLD, lld)
+      fi
     fi
     if test "x$OPENJDK_TARGET_OS" = xaix; then
-      BASIC_LDFLAGS="-Wl,-b64 -Wl,-brtl -Wl,-bnolibpath -Wl,-bnoexpall \
+      BASIC_LDFLAGS="-Wl,-b64 -Wl,-brtl -Wl,-bnolibpath -Wl,-bnoexpall -Wl,-brwexec_must \
         -Wl,-bernotok -Wl,-bdatapsize:64k -Wl,-btextpsize:64k -Wl,-bstackpsize:64k"
       BASIC_LDFLAGS_JVM_ONLY="$BASIC_LDFLAGS_JVM_ONLY -Wl,-lC_r -Wl,-bbigtoc"
     fi
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
-    BASIC_LDFLAGS="-b64 -brtl -bnolibpath -bnoexpall -bernotok -btextpsize:64K \
+    BASIC_LDFLAGS="-b64 -brtl -bnolibpath -bnoexpall -bernotok -brwexec_must -btextpsize:64K \
         -bdatapsize:64K -bstackpsize:64K"
     # libjvm.so has gotten too large for normal TOC size; compile with qpic=large and link with bigtoc
     BASIC_LDFLAGS_JVM_ONLY="-Wl,-lC_r -bbigtoc"
@@ -185,9 +187,9 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_CPU_DEP],
 
     # MIPS ABI does not support GNU hash style
     if test "x${OPENJDK_$1_CPU}" = xmips ||
-       test "x${OPENJDK_$1_CPU}" = xmipsel ||
-       test "x${OPENJDK_$1_CPU}" = xmips64 ||
-       test "x${OPENJDK_$1_CPU}" = xmips64el; then
+        test "x${OPENJDK_$1_CPU}" = xmipsel ||
+        test "x${OPENJDK_$1_CPU}" = xmips64 ||
+        test "x${OPENJDK_$1_CPU}" = xmips64el; then
       $1_CPU_LDFLAGS="${$1_CPU_LDFLAGS} -Wl,--hash-style=sysv"
     else
       $1_CPU_LDFLAGS="${$1_CPU_LDFLAGS} -Wl,--hash-style=gnu"

@@ -26,21 +26,15 @@ package java.lang.constant;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.TypeDescriptor;
-import java.util.stream.Stream;
 
+import jdk.internal.constant.ArrayClassDescImpl;
+import jdk.internal.constant.ConstantUtils;
 import jdk.internal.constant.PrimitiveClassDescImpl;
 import jdk.internal.constant.ReferenceClassDescImpl;
+import jdk.internal.constant.ClassOrInterfaceDescImpl;
 import sun.invoke.util.Wrapper;
 
-import static java.util.stream.Collectors.joining;
-import static jdk.internal.constant.ConstantUtils.MAX_ARRAY_TYPE_DESC_DIMENSIONS;
-import static jdk.internal.constant.ConstantUtils.arrayDepth;
-import static jdk.internal.constant.ConstantUtils.binaryToInternal;
-import static jdk.internal.constant.ConstantUtils.forPrimitiveType;
-import static jdk.internal.constant.ConstantUtils.internalToBinary;
-import static jdk.internal.constant.ConstantUtils.validateBinaryClassName;
-import static jdk.internal.constant.ConstantUtils.validateInternalClassName;
-import static jdk.internal.constant.ConstantUtils.validateMemberName;
+import static jdk.internal.constant.ConstantUtils.*;
 
 /**
  * A <a href="package-summary.html#nominal">nominal descriptor</a> for a
@@ -63,7 +57,9 @@ public sealed interface ClassDesc
         extends ConstantDesc,
                 TypeDescriptor.OfField<ClassDesc>
         permits PrimitiveClassDescImpl,
-                ReferenceClassDescImpl {
+                ReferenceClassDescImpl,
+                ClassOrInterfaceDescImpl,
+                ArrayClassDescImpl {
 
     /**
      * Returns a {@linkplain ClassDesc} for a class or interface type,
@@ -83,7 +79,7 @@ public sealed interface ClassDesc
      */
     static ClassDesc of(String name) {
         validateBinaryClassName(name);
-        return ClassDesc.ofDescriptor("L" + binaryToInternal(name) + ";");
+        return ConstantUtils.binaryNameToDesc(name);
     }
 
     /**
@@ -109,7 +105,7 @@ public sealed interface ClassDesc
      */
     static ClassDesc ofInternalName(String name) {
         validateInternalClassName(name);
-        return ClassDesc.ofDescriptor("L" + name + ";");
+        return ConstantUtils.internalNameToDesc(name);
     }
 
     /**
@@ -127,13 +123,13 @@ public sealed interface ClassDesc
      * not in the correct format
      */
     static ClassDesc of(String packageName, String className) {
-        validateBinaryClassName(packageName);
-        if (packageName.isEmpty()) {
-            return of(className);
-        }
+        validateBinaryPackageName(packageName);
         validateMemberName(className, false);
-        return ofDescriptor("L" + binaryToInternal(packageName) +
-                "/" + className + ";");
+        if (packageName.isEmpty()) {
+            return internalNameToDesc(className);
+        }
+        return ClassOrInterfaceDescImpl.ofValidated('L' + binaryToInternal(packageName) +
+                '/' + className + ';');
     }
 
     /**
@@ -167,7 +163,7 @@ public sealed interface ClassDesc
         return (descriptor.length() == 1)
                ? forPrimitiveType(descriptor, 0)
                // will throw IAE on descriptor.length == 0 or if array dimensions too long
-               : ReferenceClassDescImpl.of(descriptor);
+               : parseReferenceTypeDesc(descriptor);
     }
 
     /**
@@ -242,13 +238,7 @@ public sealed interface ClassDesc
      * @throws IllegalArgumentException if the nested class name is invalid
      */
     default ClassDesc nested(String nestedName) {
-        validateMemberName(nestedName, false);
-        if (!isClassOrInterface())
-            throw new IllegalStateException("Outer class is not a class or interface type");
-        String desc = descriptorString();
-        StringBuilder sb = new StringBuilder(desc.length() + nestedName.length() + 1);
-        sb.append(desc, 0, desc.length() - 1).append('$').append(nestedName).append(';');
-        return ReferenceClassDescImpl.ofValidated(sb.toString());
+        throw new IllegalStateException("Outer class is not a class or interface type");
     }
 
     /**
@@ -265,16 +255,7 @@ public sealed interface ClassDesc
      * @throws IllegalArgumentException if the nested class name is invalid
      */
     default ClassDesc nested(String firstNestedName, String... moreNestedNames) {
-        if (!isClassOrInterface())
-            throw new IllegalStateException("Outer class is not a class or interface type");
-        validateMemberName(firstNestedName, false);
-        // implicit null-check
-        for (String addNestedNames : moreNestedNames) {
-            validateMemberName(addNestedNames, false);
-        }
-        return moreNestedNames.length == 0
-               ? nested(firstNestedName)
-               : nested(firstNestedName + Stream.of(moreNestedNames).collect(joining("$", "$", "")));
+        throw new IllegalStateException("Outer class is not a class or interface type");
     }
 
     /**
@@ -283,7 +264,7 @@ public sealed interface ClassDesc
      * @return whether this {@linkplain ClassDesc} describes an array type
      */
     default boolean isArray() {
-        return descriptorString().charAt(0) == '[';
+        return false;
     }
 
     /**
@@ -292,7 +273,7 @@ public sealed interface ClassDesc
      * @return whether this {@linkplain ClassDesc} describes a primitive type
      */
     default boolean isPrimitive() {
-        return descriptorString().length() == 1;
+        return false;
     }
 
     /**
@@ -301,7 +282,7 @@ public sealed interface ClassDesc
      * @return whether this {@linkplain ClassDesc} describes a class or interface type
      */
     default boolean isClassOrInterface() {
-        return descriptorString().charAt(0) == 'L';
+        return false;
     }
 
     /**
@@ -312,14 +293,6 @@ public sealed interface ClassDesc
      * if this descriptor does not describe an array type
      */
     default ClassDesc componentType() {
-        if (isArray()) {
-            String desc = descriptorString();
-            if (desc.length() == 2) {
-                return Wrapper.forBasicType(desc.charAt(1)).basicClassDescriptor();
-            } else {
-                return ReferenceClassDescImpl.ofValidated(desc.substring(1));
-            }
-        }
         return null;
     }
 
@@ -331,11 +304,7 @@ public sealed interface ClassDesc
      * default package, or this {@linkplain ClassDesc} does not describe a class or interface type
      */
     default String packageName() {
-        if (!isClassOrInterface())
-            return "";
-        String desc = descriptorString();
-        int index = desc.lastIndexOf('/');
-        return (index == -1) ? "" : internalToBinary(desc.substring(1, index));
+        return "";
     }
 
     /**
@@ -361,7 +330,7 @@ public sealed interface ClassDesc
             ClassDesc c = this;
             for (int i=0; i<depth; i++)
                 c = c.componentType();
-            return c.displayName() + "[]".repeat(depth);
+            return c.displayName().concat("[]".repeat(depth));
         }
         else
             throw new IllegalStateException(descriptorString());

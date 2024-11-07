@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package java.lang;
 
 import jdk.internal.misc.CDS;
+import jdk.internal.value.DeserializeConstructor;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
 import jdk.internal.vm.annotation.Stable;
 
@@ -43,12 +44,12 @@ import static java.lang.constant.ConstantDescs.CD_char;
 import static java.lang.constant.ConstantDescs.DEFAULT_NAME;
 
 /**
- * The {@code Character} class wraps a value of the primitive
- * type {@code char} in an object. An object of class
- * {@code Character} contains a single field whose type is
- * {@code char}.
- * <p>
- * In addition, this class provides a large number of static methods for
+ * The {@code Character} class is the {@linkplain
+ * java.lang##wrapperClass wrapper class} for values of the primitive
+ * type {@code char}. An object of type {@code Character} contains a
+ * single field whose type is {@code char}.
+ *
+ * <p>In addition, this class provides a large number of static methods for
  * determining a character's category (lowercase letter, digit, etc.)
  * and for converting characters from uppercase to lowercase and vice
  * versa.
@@ -232,8 +233,7 @@ public final class Character implements java.io.Serializable, Comparable<Charact
      *
      * @since   1.1
      */
-    @SuppressWarnings("unchecked")
-    public static final Class<Character> TYPE = (Class<Character>) Class.getPrimitiveClass("char");
+    public static final Class<Character> TYPE = Class.getPrimitiveClass("char");
 
     /*
      * Normative general types
@@ -8985,7 +8985,7 @@ public final class Character implements java.io.Serializable, Comparable<Charact
 
             // Load and use the archived cache if it exists
             CDS.initializeFromArchive(CharacterCache.class);
-            if (archivedCache == null || archivedCache.length != size) {
+            if (archivedCache == null) {
                 Character[] c = new Character[size];
                 for (int i = 0; i < size; i++) {
                     c[i] = new Character((char) i);
@@ -8993,6 +8993,7 @@ public final class Character implements java.io.Serializable, Comparable<Charact
                 archivedCache = c;
             }
             cache = archivedCache;
+            assert cache.length == size;
         }
     }
 
@@ -9014,6 +9015,7 @@ public final class Character implements java.io.Serializable, Comparable<Charact
      * @since  1.5
      */
     @IntrinsicCandidate
+    @DeserializeConstructor
     public static Character valueOf(char c) {
         if (c <= 127) { // must cache
             return CharacterCache.cache[(int)c];
@@ -9066,8 +9068,8 @@ public final class Character implements java.io.Serializable, Comparable<Charact
      *          {@code false} otherwise.
      */
     public boolean equals(Object obj) {
-        if (obj instanceof Character) {
-            return value == ((Character)obj).charValue();
+        if (obj instanceof Character c) {
+            return value == c.charValue();
         }
         return false;
     }

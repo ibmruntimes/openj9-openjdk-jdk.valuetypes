@@ -183,6 +183,9 @@ JVM_IsContinuationsSupported(void);
 JNIEXPORT jboolean JNICALL
 JVM_IsForeignLinkerSupported(void);
 
+JNIEXPORT jboolean JNICALL
+JVM_IsStaticallyLinked(void);
+
 JNIEXPORT void JNICALL
 JVM_InitializeFromArchive(JNIEnv* env, jclass cls);
 
@@ -1153,9 +1156,6 @@ JVM_VirtualThreadMount(JNIEnv* env, jobject vthread, jboolean hide);
 
 JNIEXPORT void JNICALL
 JVM_VirtualThreadUnmount(JNIEnv* env, jobject vthread, jboolean hide);
-
-JNIEXPORT void JNICALL
-JVM_VirtualThreadHideFrames(JNIEnv* env, jclass clazz, jboolean hide);
 
 JNIEXPORT void JNICALL
 JVM_VirtualThreadDisableSuspend(JNIEnv* env, jclass clazz, jboolean enter);

@@ -82,6 +82,9 @@ int OSSL102_RSA_set0_crt_params(RSA *, BIGNUM *, BIGNUM *, BIGNUM *);
 #define EVP_CTRL_AEAD_SET_TAG EVP_CTRL_GCM_SET_TAG
 #endif
 
+/* Whether loaded library is in FIPS mode. */
+static jboolean OSSL_IS_FIPS;
+
 /* Header for EC algorithm */
 jboolean OSSL_ECGF2M;
 int setECPublicCoordinates(EC_KEY *, BIGNUM *, BIGNUM *, int);
@@ -365,6 +368,18 @@ static jlong extractVersionToJlong(const char *astring)
 }
 
 static void *crypto_library = NULL;
+
+/*
+ * Class:     jdk_crypto_jniprovider_NativeCrypto
+ * Method:    isOpenSSLFIPS
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_jdk_crypto_jniprovider_NativeCrypto_isOpenSSLFIPS
+  (JNIEnv *env, jclass clazz)
+{
+    return OSSL_IS_FIPS;
+}
+
 /*
  * Class:     jdk_crypto_jniprovider_NativeCrypto
  * Method:    loadCrypto
@@ -373,7 +388,6 @@ static void *crypto_library = NULL;
 JNIEXPORT jlong JNICALL Java_jdk_crypto_jniprovider_NativeCrypto_loadCrypto
   (JNIEnv *env, jclass thisObj, jboolean trace)
 {
-    char *error;
     typedef const char* OSSL_version_t(int);
 
     /* Determine the version of OpenSSL. */
@@ -438,6 +452,25 @@ JNIEXPORT jlong JNICALL Java_jdk_crypto_jniprovider_NativeCrypto_loadCrypto
             unload_crypto_library(crypto_library);
             crypto_library = NULL;
             return -1;
+        }
+    }
+
+    /* Check whether the loaded OpenSSL library is in FIPS mode. */
+    if (ossl_ver >= OPENSSL_VERSION_3_0_0) {
+        typedef int OSSL_fipsmode_t(OSSL_LIB_CTX *);
+        OSSL_fipsmode_t *ossl_fipsmode = (OSSL_fipsmode_t *)find_crypto_symbol(crypto_library, "EVP_default_properties_is_fips_enabled");
+        if ((NULL != ossl_fipsmode) && (1 == (*ossl_fipsmode)(NULL))) {
+            OSSL_IS_FIPS = JNI_TRUE;
+        } else {
+            OSSL_IS_FIPS = JNI_FALSE;
+        }
+    } else {
+        typedef int OSSL_fipsmode_t(void);
+        OSSL_fipsmode_t *ossl_fipsmode = (OSSL_fipsmode_t *)find_crypto_symbol(crypto_library, "FIPS_mode");
+        if ((NULL != ossl_fipsmode) && (1 == (*ossl_fipsmode)())) {
+            OSSL_IS_FIPS = JNI_TRUE;
+        } else {
+            OSSL_IS_FIPS = JNI_FALSE;
         }
     }
 
@@ -2303,7 +2336,6 @@ JNIEXPORT jint JNICALL Java_jdk_crypto_jniprovider_NativeCrypto_ChaCha20FinalEnc
   (JNIEnv *env, jobject thisObj, jlong c, jbyteArray output, jint outputOffset, jint tagLen)
 {
     int len = 0;
-    int outputLen = -1;
     unsigned char *outputNative = NULL;
     EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX*)(intptr_t) c;
 
@@ -2346,7 +2378,6 @@ JNIEXPORT jint JNICALL Java_jdk_crypto_jniprovider_NativeCrypto_ChaCha20FinalDec
 {
     int len = 0;
     int plaintext_len = 0;
-    int outputLen = 0;
     int ret = 0;
 
     unsigned char *inputNative = NULL;
@@ -2839,10 +2870,6 @@ Java_jdk_crypto_jniprovider_NativeCrypto_ECEncodeGF
     BIGNUM *yBN = NULL;
     BIGNUM *nBN = NULL;
     BIGNUM *hBN = NULL;
-    EC_GROUP *group = NULL;
-    EC_POINT *generator = NULL;
-    BN_CTX *ctx = NULL;
-    int ret = 0;
 
     nativeA = (unsigned char *)((*env)->GetPrimitiveArrayCritical(env, a, 0));
     if (NULL == nativeA) {

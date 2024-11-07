@@ -1,16 +1,9 @@
 /*
  * @test /nodynamiccopyright/
-<<<<<<< HEAD
- * @bug 8324873
- * @summary [lworld] implementation of value classes construction
- * @enablePreview
- * @compile/fail/ref=DA_DUConstructors.out -XDrawDiagnostics DA_DUConstructors.java
-=======
- * @bug 8325805
+ * @bug 8324873 8325805
  * @summary Permit non-superclass instance field assignments before this/super in constructors
- * @compile/fail/ref=DA_DUConstructors.out -XDrawDiagnostics DA_DUConstructors.java
  * @enablePreview
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
+ * @compile/fail/ref=DA_DUConstructors.out -XDrawDiagnostics DA_DUConstructors.java
  */
 
 public class DA_DUConstructors {
@@ -55,47 +48,4 @@ public class DA_DUConstructors {
             x = i;
         }
     }
-<<<<<<< HEAD
-
-    // value classes
-    value class V1 {
-        int x;
-        int y = x + 1; // allowed
-        V1() {
-            x = 12;
-            // super();
-        }
-    }
-
-    value class V2 {
-        int x;
-        V2() { this(x = 3); } // error
-        V2(int i) { x = 4; }
-    }
-
-    abstract value class AV1 {
-        AV1(int i) {}
-    }
-
-    value class V3 extends AV1 {
-        int x;
-        V3() {
-            super(x = 3); // ok
-        }
-    }
-
-    value class V4 { // OK
-        int x;
-        int y = x + 1;
-
-        V4() {
-            x = 12;
-        }
-
-        V4(int i) {
-            x = i;
-        }
-    }
-=======
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
 }

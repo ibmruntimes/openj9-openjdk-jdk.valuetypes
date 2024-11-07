@@ -1524,7 +1524,7 @@ public class Resolve {
                         (sym.flags() & STATIC) == 0) {
                     if (staticOnly)
                         return new StaticError(sym);
-                    if (env1.info.ctorPrologue && (sym.flags_field & SYNTHETIC) == 0) {
+                    if (env1.info.ctorPrologue && !isAllowedEarlyReference(pos, env1, (VarSymbol)sym)) {
                         if (!env.tree.hasTag(ASSIGN) || !TreeInfo.isIdentOrThisDotIdent(((JCAssign)env.tree).lhs)) {
                             return new RefBeforeCtorCalledError(sym);
                         }

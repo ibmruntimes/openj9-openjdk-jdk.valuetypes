@@ -23,11 +23,7 @@
 
 /*
  * @test
-<<<<<<< HEAD
- * @bug 8235369 8235550 8247444 8326879
-=======
- * @bug 8235369 8235550 8247444 8320575
->>>>>>> d032521c17215a93395974cf933ceea0982be2a9
+ * @bug 8235369 8235550 8247444 8326879 8320575
  * @summary reflection test for records
  * @build R10
  * @compile RecordReflectionTest.java

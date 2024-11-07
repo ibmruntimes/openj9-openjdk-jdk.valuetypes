@@ -39,6 +39,9 @@ import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
 import java.lang.classfile.Label;
 import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
+
+import jdk.internal.misc.PreviewFeatures;
+
 import jdk.jfr.AnnotationElement;
 import jdk.jfr.Event;
 import jdk.jfr.ValueDescriptor;
@@ -84,7 +87,7 @@ public final class EventClassBuilder {
             int index = 0;
             for (ValueDescriptor v : fields) {
                 codeBuilder.iload(1);
-                codeBuilder.ldc(index);
+                codeBuilder.loadConstant(index);
                 Label notEqual = codeBuilder.newLabel();
                 codeBuilder.if_icmpne(notEqual);
                 codeBuilder.aload(0); // this

@@ -450,7 +450,7 @@ public class ClassWriter extends BasicWriter {
 
         if (options.verbose)
             writeList(String.format("flags: (0x%04x) ", flags.flagsMask()),
-                    flagsReportUnknown(flags).stream().map(fl -> "ACC_" + fl.name()).toList(),
+                    flagsReportUnknown(flags).stream().map(fl -> "ACC_" + fl.toString()).toList(),
                     "\n");
 
         if (options.showAllAttrs) {
@@ -587,9 +587,7 @@ public class ClassWriter extends BasicWriter {
             attrWriter.write(m.attributes());
         } else if (code != null) {
             if (options.showDisassembled) {
-                println("Code:");
-                codeWriter.writeInstrs(code);
-                codeWriter.writeExceptionTable(code);
+                codeWriter.writeMinimal(code);
             }
 
             if (options.showLineAndLocalVariableTables) {
@@ -752,7 +750,7 @@ public class ClassWriter extends BasicWriter {
      */
     String getConstantValue(ClassDesc d, ConstantValueEntry cpInfo) {
         switch (cpInfo.tag()) {
-            case ClassFile.TAG_INTEGER: {
+            case PoolEntry.TAG_INTEGER: {
                 var val = (Integer)cpInfo.constantValue();
                 switch (d.descriptorString()) {
                     case "C":
@@ -766,7 +764,7 @@ public class ClassWriter extends BasicWriter {
                         return String.valueOf(val);
                 }
             }
-            case ClassFile.TAG_STRING:
+            case PoolEntry.TAG_STRING:
                 return getConstantStringValue(cpInfo.constantValue().toString());
             default:
                 return constantWriter.stringValue(cpInfo);
@@ -817,6 +815,20 @@ public class ClassWriter extends BasicWriter {
             set = flagSet;
         }
         return getModifiers(set);
+    }
+
+    private static Set<String> getClassModifiers(AccessFlags flags, int majorVersion, int minorVersion) {
+        boolean previewClassFile = minorVersion == ClassFile.PREVIEW_MINOR_VERSION;
+        Set<AccessFlag> flagSet = flags.flags();
+        if (flagSet.contains(AccessFlag.INTERFACE)) {
+            flagSet = EnumSet.copyOf(flagSet);
+            flagSet.remove(AccessFlag.ABSTRACT);
+        } else if (Source.isSupported(Source.Feature.VALUE_CLASSES, majorVersion) && previewClassFile) {
+          Set<String> classModifers = getModifiers(flagSet);
+          classModifers.add("value");
+          return classModifers;
+        }
+        return getModifiers(flagSet);
     }
 
     private static Set<String> getModifiers(Set<java.lang.reflect.AccessFlag> flags) {
