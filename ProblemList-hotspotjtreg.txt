@@ -1,0 +1,79 @@
+# List of tests to exclude from inlinetypes tests
+
+# https://github.com/eclipse-openj9/openj9/issues/20522
+compiler/valhalla/inlinetypes/TestArrayCopyWithOops.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/20512
+runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/20472
+runtime/valhalla/inlinetypes/verifier/StrictFields.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestUnloadedInlineTypeArray.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestFlatArrayThreshold.java 13182 generic-all
+runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/13797
+runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/13789
+runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
+# https://github.com/eclipse-openj9/openj9/issues/20510
+runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestCallingConventionC1.java 13182 generic-all
+runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestBufferTearing.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestLarvalState.java 13182 generic-all
+runtime/valhalla/inlinetypes/TestInheritedInlineTypeFields.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestBufferTearingC1.java 13182 generic-all
+
+# Class init/unsafe library errors - wait for extensions update
+compiler/valhalla/inlinetypes/TestIntrinsics.java 13182 generic-all
+# This test is not able to compile, wait for extensions update
+runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
+
+# Ignore this for now - inconsistent with https://openjdk.org/jeps/8316779
+runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
+runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
+
+### Hotspot specific tests - these tests can't be run ###
+# J9's flattening policy flattens volatile fields that are <= 8 bytes
+runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
+# testing vm specific layouts
+runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsCompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOopsNoCompressKlassPointers 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64CompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64NoCompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/NullMarkersTest.java#NullMarker64NoCompressedOopsNoCompressedKlassPointers 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#CompressedOops 13182 generic-all
+runtime/valhalla/inlinetypes/field_layout/FieldAlignmentTest.java#NoCompressedOops 13182 generic-all
+# Reliant on hotspot vm logging
+compiler/valhalla/inlinetypes/TestUnresolvedInlineClass.java 13182 generic-all
+# Command-line option unrecognised: -Xlog:class+preload
+runtime/valhalla/inlinetypes/PreloadCircularityTest.java 13182 generic-all
+runtime/valhalla/inlinetypes/ValuePreloadTest.java 13182 generic-all
+# Command VM.class_print_layout, not recognized
+runtime/valhalla/inlinetypes/ClassPrintLayoutDcmd.java 13182 generic-all
+# Relies on WhiteBox API which tests hotspot internals
+compiler/valhalla/inlinetypes/bootstrap/TestBootClassloader.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestArrays.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestBasicFunctionality.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestCallingConvention.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestC1.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestC2CCalls.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestDeoptimizationWhenBuffering.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestFlatInArraysFolding.java#id1 13182 generic-all
+compiler/valhalla/inlinetypes/TestGetfieldChains.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestInlineFieldNonFlattened.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestJNICalls.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestLWorld.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestLWorldProfiling.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestMethodHandles.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestMismatchHandling.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestNewAcmp.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestNullableArrays.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestNullableInlineTypes.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestOnStackReplacement.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestUnloadedInlineTypeField.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestUnloadedReturnTypes.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueClasses.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueRematDuringTypeSharpening.java 13182 generic-all
+runtime/valhalla/inlinetypes/InlineTypeDensity.java 13182 generic-all
+runtime/valhalla/inlinetypes/ValueTearing.java 13182 generic-all
