@@ -134,10 +134,10 @@ public class Util {
     }
 
     public static String toInternalName(ClassDesc cd) {
-        if (cd instanceof ClassOrInterfaceDescImpl coi) {
-            return coi.internalName();
-        }
-        throw new IllegalArgumentException(cd.descriptorString());
+        var desc = cd.descriptorString();
+        if (desc.charAt(0) == 'L')
+            return desc.substring(1, desc.length() - 1);
+        throw new IllegalArgumentException(desc);
     }
 
     public static ClassDesc toClassDesc(String classInternalNameOrArrayDesc) {

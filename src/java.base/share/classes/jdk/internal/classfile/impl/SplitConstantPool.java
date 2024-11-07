@@ -502,17 +502,6 @@ public final class SplitConstantPool implements ConstantPoolBuilder {
                 isArray && ne.typeSym instanceof ClassDesc cd ? cd : null)) : e;
     }
 
-    @Override
-    public ClassEntry classEntry(ClassDesc cd) {
-        if (cd.isClassOrInterface()) { // implicit null check
-            return classEntryForClassOrInterface(cd);
-        }
-        if (cd.isArray()) {
-            return classEntry(utf8Entry(cd), true);
-        }
-        throw new IllegalArgumentException("Cannot be encoded as ClassEntry: " + cd.displayName());
-    }
-
     AbstractPoolEntry.ClassEntryImpl cloneClassEntry(AbstractPoolEntry.ClassEntryImpl e) {
         var ce = tryFindClassEntry(e.hashCode(), e.ref1);
         if (ce != null) {
