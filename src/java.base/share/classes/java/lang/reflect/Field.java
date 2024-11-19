@@ -172,12 +172,10 @@ class Field extends AccessibleObject implements Member {
 
     /**
      * @throws InaccessibleObjectException {@inheritDoc}
-     * @throws SecurityException {@inheritDoc}
      */
     @Override
     @CallerSensitive
     public void setAccessible(boolean flag) {
-        AccessibleObject.checkPermission();
         if (flag) checkCanSetAccessible(Reflection.getCallerClass());
         setAccessible0(flag);
     }
@@ -1168,7 +1166,6 @@ class Field extends AccessibleObject implements Member {
                     modifiers);
     }
 
-    // security check is done before calling this method
     private FieldAccessor getFieldAccessor() {
         FieldAccessor a = fieldAccessor;
         return (a != null) ? a : acquireFieldAccessor();

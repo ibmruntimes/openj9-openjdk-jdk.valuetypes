@@ -78,7 +78,7 @@ public @interface PreviewFeature {
         @JEP(number=401, title="Value Classes and Objects", status = "Preview")
         VALUE_OBJECTS,
 
-        @JEP(number=477, title="Implicitly Declared Classes and Instance Main Methods", status="Third Preview")
+        @JEP(number=495, title="Simple Source Files and Instance Main Methods", status="Fourth Preview")
         IMPLICIT_CLASSES,
         @JEP(number=487, title="Scoped Values", status="Fourth Preview")
         SCOPED_VALUES,
@@ -87,7 +87,7 @@ public @interface PreviewFeature {
         @JEP(number=466, title="ClassFile API", status="Second Preview")
         CLASSFILE_API,
         STREAM_GATHERERS,
-        @JEP(number=476, title="Module Import Declarations", status="Preview")
+        @JEP(number=494, title="Module Import Declarations", status="Second Preview")
         MODULE_IMPORTS,
         @JEP(number=478, title="Key Derivation Function API", status="Preview")
         KEY_DERIVATION,
