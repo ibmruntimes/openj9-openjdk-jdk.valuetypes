@@ -52,8 +52,8 @@ import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.TypeKind;
 
 import jdk.internal.constant.ConstantUtils;
-import jdk.internal.misc.PreviewFeatures;
 import jdk.internal.loader.ClassLoaders;
+import jdk.internal.misc.PreviewFeatures;
 import jdk.internal.module.Modules;
 import jdk.internal.util.ClassFileDumper;
 
