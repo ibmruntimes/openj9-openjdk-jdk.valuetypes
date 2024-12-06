@@ -25,8 +25,6 @@
 
 package java.util;
 
-import sun.security.action.GetPropertyAction;
-
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.ref.ReferenceQueue;
@@ -1642,8 +1640,7 @@ public class WeakHashMap<K,V>
          */
         private static ValuePolicy initDefaultValuePolicy() {
             try {
-                String p = GetPropertyAction
-                        .privilegedGetProperty(WEAK_HASH_MAP_VALUE_KEY_RETENTION);
+                String p = System.getProperty(WEAK_HASH_MAP_VALUE_KEY_RETENTION);
                 if (p != null) {
                     return ValuePolicy.valueOf(p);
                 }
