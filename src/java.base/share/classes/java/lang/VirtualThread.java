@@ -29,6 +29,7 @@
  */
 package java.lang;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -37,12 +38,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import jdk.internal.event.VirtualThreadEndEvent;
 import jdk.internal.event.VirtualThreadStartEvent;
 import jdk.internal.event.VirtualThreadSubmitFailedEvent;
@@ -113,14 +114,14 @@ final class VirtualThread extends BaseVirtualThread {
      * UNBLOCKED -> RUNNING        // continue execution after blocked on monitor enter
      *
      *   RUNNING -> WAITING        // transitional state during wait on monitor
-     *   WAITING -> WAITED         // waiting on monitor
-     *    WAITED -> BLOCKED        // notified, waiting to be unblocked by monitor owner
-     *    WAITED -> UNBLOCKED      // timed-out/interrupted
+     *   WAITING -> WAIT           // waiting on monitor
+     *      WAIT -> BLOCKED        // notified, waiting to be unblocked by monitor owner
+     *      WAIT -> UNBLOCKED      // timed-out/interrupted
      *
      *       RUNNING -> TIMED_WAITING   // transition state during timed-waiting on monitor
-     * TIMED_WAITING -> TIMED_WAITED    // timed-waiting on monitor
-     *  TIMED_WAITED -> BLOCKED         // notified, waiting to be unblocked by monitor owner
-     *  TIMED_WAITED -> UNBLOCKED       // timed-out/interrupted
+     * TIMED_WAITING -> TIMED_WAIT      // timed-waiting on monitor
+     *    TIMED_WAIT -> BLOCKED         // notified, waiting to be unblocked by monitor owner
+     *    TIMED_WAIT -> UNBLOCKED       // timed-out/interrupted
      *
      *  RUNNING -> YIELDING        // Thread.yield
      * YIELDING -> YIELDED         // cont.yield successful, may be scheduled to continue
@@ -195,6 +196,13 @@ final class VirtualThread extends BaseVirtualThread {
      */
     static Executor defaultScheduler() {
         return DEFAULT_SCHEDULER;
+    }
+
+    /**
+     * Returns a stream of the delayed task schedulers used to support timed operations.
+     */
+    static Stream<ScheduledExecutorService> delayedTaskSchedulers() {
+        return Arrays.stream(DELAYED_TASK_SCHEDULERS);
     }
 
     /**
