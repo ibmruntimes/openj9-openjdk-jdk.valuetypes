@@ -4,28 +4,18 @@
 compiler/valhalla/inlinetypes/TestArrayCopyWithOops.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/20512
 runtime/valhalla/inlinetypes/TestJNIIsSameObject.java 13182 generic-all
-# https://github.com/eclipse-openj9/openj9/issues/20472
-runtime/valhalla/inlinetypes/verifier/StrictFields.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestUnloadedInlineTypeArray.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestFlatArrayThreshold.java 13182 generic-all
 runtime/valhalla/inlinetypes/CircularityTest.java 13182 generic-all
-# https://github.com/eclipse-openj9/openj9/issues/13797
-runtime/valhalla/inlinetypes/StaticFieldsTest.java 13182 generic-all
-# https://github.com/eclipse-openj9/openj9/issues/13789
-runtime/valhalla/inlinetypes/ObjectMethods.java 13182 generic-all
 # https://github.com/eclipse-openj9/openj9/issues/20510
 runtime/valhalla/inlinetypes/AnnotationsTests.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestCallingConventionC1.java 13182 generic-all
 runtime/valhalla/inlinetypes/InlineWithJni.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestBufferTearing.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestLarvalState.java 13182 generic-all
-runtime/valhalla/inlinetypes/TestInheritedInlineTypeFields.java 13182 generic-all
-compiler/valhalla/inlinetypes/TestBufferTearingC1.java 13182 generic-all
 
 # Class init/unsafe library errors - wait for extensions update
 compiler/valhalla/inlinetypes/TestIntrinsics.java 13182 generic-all
-# This test is not able to compile, wait for extensions update
-runtime/valhalla/inlinetypes/InlineTypesTest.java 13182 generic-all
 
 # Ignore this for now - inconsistent with https://openjdk.org/jeps/8316779
 runtime/valhalla/inlinetypes/NullRestrictedArrayTest.java 13182 generic-all
@@ -34,6 +24,8 @@ runtime/valhalla/inlinetypes/InlineTypeArray.java 13182 generic-all
 ### Hotspot specific tests - these tests can't be run ###
 # J9's flattening policy flattens volatile fields that are <= 8 bytes
 runtime/valhalla/inlinetypes/VolatileTest.java 13182 generic-all
+# testing compiler specific layouts
+compiler/valhalla/inlinetypes/TestAllocationMergeAndFolding.java 13182 generic-all
 # testing vm specific layouts
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsCompressedOops 13182 generic-all
 runtime/valhalla/inlinetypes/field_layout/ValueFieldInheritanceTest.java#64bitsNoCompressedOops 13182 generic-all
@@ -77,3 +69,16 @@ compiler/valhalla/inlinetypes/TestValueConstruction.java 13182 generic-all
 compiler/valhalla/inlinetypes/TestValueRematDuringTypeSharpening.java 13182 generic-all
 runtime/valhalla/inlinetypes/InlineTypeDensity.java 13182 generic-all
 runtime/valhalla/inlinetypes/ValueTearing.java 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#CompileonlyTest 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#DeoptimizeALot 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#DontInlineHelper 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#DontInlineMyAbstractInit 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#DontInlineMyValueInit 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#DontInlineObjectInit 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#DontInlineObjectInitDeoptimizeALot 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#StressIncrementalInlining 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#StressIncrementalInliningCompileOnlyTest 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#StressIncrementalInliningDontInlineMyAbstractInit 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#StressIncrementalInliningDontInlineMyValueInit 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#StressIncrementalInliningDontInlineObjectInit 13182 generic-all
+compiler/valhalla/inlinetypes/TestValueConstruction.java#Xbatch 13182 generic-all

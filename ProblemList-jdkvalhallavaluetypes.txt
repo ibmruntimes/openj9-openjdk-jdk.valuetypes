@@ -1,13 +1,6 @@
 # https 20404 generic-all//github.com/eclipse-openj9/openj9/issues/20497
 valhalla/valuetypes/RecursiveValueClass.java 20404 generic-all
 
-# https 20404 generic-all//github.com/eclipse-openj9/openj9/issues/20386
-# This should be resolved by using migrated value classes
-# Value type class ObjectMethods$ValueRecord has an invalid super class java/lang/Record
-valhalla/valuetypes/ObjectMethods.java 20404 generic-all
-valhalla/valuetypes/ObjectMethodsViaCondy.java 20404 generic-all
-valhalla/valuetypes/UseValueClassTest.java 20404 generic-all
-
 # remaining failing tests that need to be triaged with Fields issue fixed
 java/lang/invoke/FindAccessTest.java 20404 generic-all
 java/lang/invoke/LoopCombinatorLongSignatureTest.java 20404 generic-all
@@ -25,3 +18,7 @@ valhalla/valuetypes/NullRestrictedTest.java 20404 generic-all
 valhalla/valuetypes/Reflection.java 20404 generic-all
 valhalla/valuetypes/SubstitutabilityTest.java 20404 generic-all
 valhalla/valuetypes/WeakReferenceTest.java 20404 generic-all
+
+# Disable this until patch-module for migrated value classes isn't needed
+# It requires --enable-preview for all tests
+java/lang/invoke/defineHiddenClass/PreviewHiddenClass.java
