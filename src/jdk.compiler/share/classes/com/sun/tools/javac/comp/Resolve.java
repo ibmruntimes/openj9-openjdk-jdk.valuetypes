@@ -429,10 +429,10 @@ public class Resolve {
                             (env.enclClass.sym == sym.owner // fast special case
                                     ||
                                     env.enclClass.sym.outermostClass() ==
-                                            sym.owner.outermostClass())
+                                    sym.owner.outermostClass()
                                     ||
-                                    privateMemberInPermitsClauseIfAllowed(env, sym)
-                                    &&
+                                    privateMemberInPermitsClauseIfAllowed(env, sym))
+                                &&
                                     sym.isInheritedIn(site.tsym, types);
                 case 0:
                     return
@@ -465,7 +465,7 @@ public class Resolve {
             }
         } finally {
             env.enclClass.sym = enclosingCsym;
-	}
+        }
     }
 
     private boolean privateMemberInPermitsClauseIfAllowed(Env<AttrContext> env, Symbol sym) {
