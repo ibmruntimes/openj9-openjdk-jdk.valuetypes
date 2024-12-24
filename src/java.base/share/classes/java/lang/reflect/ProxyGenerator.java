@@ -42,7 +42,6 @@ import java.util.Objects;
 import jdk.internal.constant.ConstantUtils;
 import jdk.internal.constant.MethodTypeDescImpl;
 import jdk.internal.constant.ReferenceClassDescImpl;
-import sun.security.action.GetBooleanAction;
 
 import static java.lang.classfile.ClassFile.*;
 import java.lang.classfile.attribute.StackMapFrameInfo;
@@ -103,7 +102,6 @@ final class ProxyGenerator {
     /**
      * debugging flag for saving generated class files
      */
-    @SuppressWarnings("removal")
     private static final boolean SAVE_GENERATED_FILES =
             Boolean.getBoolean("jdk.proxy.ProxyGenerator.saveGeneratedFiles");
 
