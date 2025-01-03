@@ -79,8 +79,6 @@ public @interface PreviewFeature {
         VALUE_OBJECTS,
 
         @JEP(number=495, title="Simple Source Files and Instance Main Methods", status="Fourth Preview")
-
-        @JEP(number=477, title="Implicitly Declared Classes and Instance Main Methods", status="Third Preview")
         IMPLICIT_CLASSES,
         @JEP(number=487, title="Scoped Values", status="Fourth Preview")
         SCOPED_VALUES,

@@ -5204,7 +5204,7 @@ public class Check {
                     log.popDiagnosticHandler(discardHandler);
                 }
                 if (ms == null || !hasAppropriateWriteReplace(p, ms, false)) {
-                    log.warning(LintCategory.SERIAL, p,
+                    log.warning(p,
                             c.isValueClass() ? Warnings.SerializableValueClassWithoutWriteReplace1 :
                                     Warnings.SerializableValueClassWithoutWriteReplace2);
                 }
