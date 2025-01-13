@@ -25,8 +25,8 @@
 
 package java.lang.invoke;
 
-import jdk.internal.misc.PreviewFeatures;
 import jdk.internal.constant.ClassOrInterfaceDescImpl;
+import jdk.internal.misc.PreviewFeatures;
 import jdk.internal.misc.CDS;
 import jdk.internal.util.ClassFileDumper;
 import sun.invoke.util.VerifyAccess;

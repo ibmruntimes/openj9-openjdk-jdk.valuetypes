@@ -162,7 +162,6 @@ module java.base {
     exports jdk.internal.javac to
         java.compiler,
         java.desktop, // for ScopedValue
-        java.se, // for ParticipatesInPreview
         jdk.compiler,
         jdk.incubator.vector, // participates in preview features
         jdk.jartool, // participates in preview features
@@ -331,8 +330,7 @@ module java.base {
         java.desktop;
     exports sun.reflect.misc to
         java.desktop,
-        java.management,
-        java.sql.rowset;
+        java.management;
     exports sun.security.internal.interfaces to
 /*[IF OPENJCEPLUS_SUPPORT]*/
         openjceplus,
