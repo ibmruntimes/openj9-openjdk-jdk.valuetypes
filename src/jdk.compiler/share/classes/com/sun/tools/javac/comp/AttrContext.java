@@ -155,8 +155,8 @@ public class AttrContext {
         info.preferredTreeForDiagnostics = preferredTreeForDiagnostics;
         info.visitingServiceImplementation = visitingServiceImplementation;
         info.allowProtectedAccess = allowProtectedAccess;
-        info.isPermitsClause = isPermitsClause;
         info.instanceInitializerBlock = instanceInitializerBlock;
+        info.isPermitsClause = isPermitsClause;
         return info;
     }
 
