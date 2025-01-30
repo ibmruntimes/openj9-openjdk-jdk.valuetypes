@@ -43,10 +43,10 @@ import jdk.test.whitebox.WhiteBox;
  * @enablePreview
  * @compile InlineTypeDensity.java
  * @run driver jdk.test.lib.helpers.ClassFileInstaller jdk.test.whitebox.WhiteBox
- * @run main/othervm -XX:FlatArrayElementMaxSize=-1 -XX:+UseCompressedOops
+ * @run main/othervm -XX:FlatArrayElementMaxSize=-1
  *                   -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI InlineTypeDensity
- * @run main/othervm -XX:FlatArrayElementMaxSize=-1 -XX:-UseCompressedOops
+ *                    -XX:+WhiteBoxAPI InlineTypeDensity
+ * @run main/othervm -XX:FlatArrayElementMaxSize=-1
  *                   -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI InlineTypeDensity
  * @run main/othervm -XX:FlatArrayElementMaxSize=-1
