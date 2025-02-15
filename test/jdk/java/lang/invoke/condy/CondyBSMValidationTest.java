@@ -26,7 +26,7 @@
  * @bug 8186046
  * @summary Test invalid name in name and type
  * @library /java/lang/invoke/common
- * @enablePreview
+ * @build test.java.lang.invoke.lib.InstructionHelper
  * @run testng CondyBSMValidationTest
  * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:UseBootstrapCallInfo=3 CondyBSMValidationTest
  */

@@ -455,17 +455,17 @@ public final class ObjectStreamClass implements Serializable {
                     factoryMode = DeserializationMode.READ_OBJECT_VALUE;
                     if (!cl.isAnnotationPresent(MigratedValueClass.class)) {
                         serializeEx = deserializeEx = new ExceptionInfo(cl.getName(),
-                                "Value class serialization is only supported with `writeReplace`");
+                                                                        "Value class serialization is only supported with `writeReplace`");
                     } else if (Modifier.isAbstract(cl.getModifiers())) {
                         serializeEx = deserializeEx = new ExceptionInfo(cl.getName(),
-                                "value class is abstract");
+                                                                        "value class is abstract");
                     } else {
                         // Value classes should have constructor(s) annotated with {@link DeserializeConstructor}
                         canonicalCtr = getDeserializingValueCons(cl, fields);
                         deserializationCtrs = new DeserializationConstructorsCache();                            factoryMode = DeserializationMode.READ_OBJECT_VALUE;
                         if (canonicalCtr == null) {
                             serializeEx = deserializeEx = new ExceptionInfo(cl.getName(),
-                                    "no constructor or factory found for migrated value class");
+                                                                            "no constructor or factory found for migrated value class");
                         }
                     }
                 } else {
@@ -480,9 +480,9 @@ public final class ObjectStreamClass implements Serializable {
                         cl, "readObjectNoData", null, Void.TYPE);
                     hasWriteObjectData = (writeObjectMethod != null);
                     factoryMode = ((superDesc == null || superDesc.factoryMode() == DeserializationMode.READ_OBJECT_DEFAULT)
-                            && readObjectMethod == null && readObjectNoDataMethod == null)
-                            ? DeserializationMode.READ_OBJECT_DEFAULT
-                            : DeserializationMode.READ_OBJECT_CUSTOM;
+                                   && readObjectMethod == null && readObjectNoDataMethod == null)
+                        ? DeserializationMode.READ_OBJECT_DEFAULT
+                        : DeserializationMode.READ_OBJECT_CUSTOM;
                 }
                 writeReplaceMethod = getInheritableMethod(
                     cl, "writeReplace", null, Object.class);
@@ -2105,7 +2105,7 @@ public final class ObjectStreamClass implements Serializable {
                 vals[offsets[i]] = switch (typeCodes[i]) {
                     case 'L', '[' ->
                             UNSAFE.isFlatField(f)
-                                    ? UNSAFE.getValue(obj, readKeys[i], f.getType())
+                                    ? UNSAFE.getFlatValue(obj, readKeys[i], UNSAFE.fieldLayout(f), f.getType())
                                     : UNSAFE.getReference(obj, readKeys[i]);
                     default       -> throw new InternalError();
                 };
@@ -2158,7 +2158,7 @@ public final class ObjectStreamClass implements Serializable {
                         }
                         if (!dryRun) {
                             if (UNSAFE.isFlatField(f)) {
-                                UNSAFE.putValue(obj, key, f.getType(), val);
+                                UNSAFE.putFlatValue(obj, key, UNSAFE.fieldLayout(f), f.getType(), val);
                             } else {
                                 UNSAFE.putReference(obj, key, val);
                             }

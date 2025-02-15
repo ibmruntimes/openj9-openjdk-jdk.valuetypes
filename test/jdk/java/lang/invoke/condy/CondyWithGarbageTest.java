@@ -26,7 +26,7 @@
  * @bug 8186046
  * @summary Stress test ldc to ensure HotSpot correctly manages oop maps
  * @library /java/lang/invoke/common
- * @enablePreview
+ * @build test.java.lang.invoke.lib.InstructionHelper
  * @run testng CondyWithGarbageTest
  * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:UseBootstrapCallInfo=3 CondyWithGarbageTest
  */

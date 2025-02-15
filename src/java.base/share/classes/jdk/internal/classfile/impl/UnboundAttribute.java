@@ -515,6 +515,9 @@ public abstract sealed class UnboundAttribute<T extends Attribute<T>>
     public static final class UnboundLoadableDescriptorsAttribute
             extends UnboundAttribute<LoadableDescriptorsAttribute>
             implements LoadableDescriptorsAttribute {
+
+        private static final Utf8Entry NAME = TemporaryConstantPool.INSTANCE.utf8Entry(Attributes.NAME_LOADABLE_DESCRIPTORS);
+
         private final List<Utf8Entry> loadableDescriptors;
 
         private static final Utf8Entry NAME = TemporaryConstantPool.INSTANCE.utf8Entry(Attributes.NAME_LOADABLE_DESCRIPTORS);

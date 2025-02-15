@@ -5212,9 +5212,9 @@ public class Check {
                     log.popDiagnosticHandler(discardHandler);
                 }
                 if (ms == null || !hasAppropriateWriteReplace(p, ms, false)) {
-                    log.warning(p,
-                            c.isValueClass() ? Warnings.SerializableValueClassWithoutWriteReplace1 :
-                                    Warnings.SerializableValueClassWithoutWriteReplace2);
+                    log.warning(p.pos(),
+                            c.isValueClass() ? LintWarnings.SerializableValueClassWithoutWriteReplace1 :
+                                    LintWarnings.SerializableValueClassWithoutWriteReplace2);
                 }
             }
             return null;
@@ -5688,7 +5688,7 @@ public class Check {
                 if (warn) {
                     log.warning(
                             TreeInfo.diagnosticPositionFor(method, tree),
-                            LintWarnings.SerialConcreteInstanceMethod(method.getSimpleName()));
+                                LintWarnings.SerialConcreteInstanceMethod(method.getSimpleName()));
                 }
                 return false;
             }
@@ -5710,7 +5710,7 @@ public class Check {
                     log.warning(
                             TreeInfo.diagnosticPositionFor(method, tree),
                             LintWarnings.SerialMethodUnexpectedReturnType(method.getSimpleName(),
-                                    rtype, expectedReturnType));
+                                                                      rtype, expectedReturnType));
                 }
                 return false;
             }
@@ -5801,7 +5801,7 @@ public class Check {
                             log.warning(
                                     TreeInfo.diagnosticPositionFor(method, tree),
                                     LintWarnings.SerialMethodUnexpectedException(method.getSimpleName(),
-                                            thrownType));
+                                                                             thrownType));
                         }
                         return false;
                     }

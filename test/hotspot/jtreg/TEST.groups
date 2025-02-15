@@ -270,7 +270,6 @@ tier1_compiler_no_valhalla = \
   :tier1_compiler_1 \
   :tier1_compiler_2 \
   :tier1_compiler_3 \
-  :tier1_compiler_not_xcomp \
   -compiler/valhalla
 
 ctw_1 = \

@@ -422,9 +422,6 @@ public class ObjectOutputStream
      * writeUnshared, and not to any transitively referenced sub-objects in the
      * object graph to be serialized.
      *
-     * <p>Serialization and deserialization of value classes is described in
-     * {@linkplain ObjectOutputStream##valueclass-serialization value class serialization}.
-     *
      * @param   obj object to write to stream
      * @throws  NotSerializableException if an object in the graph to be
      *          serialized does not implement the Serializable interface

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,34 @@
  * questions.
  */
 
-package jdk.experimental.bytecode;
+#include <jvmti.h>
+#include <cstdlib>
+#include <cstring>
 
-public interface Type {
-    TypeTag getTag();
+namespace {
+jvmtiEnv *jvmti = nullptr;
+
+void checkJvmti(int code, const char* message) {
+  if (code != JVMTI_ERROR_NONE) {
+    printf("Error %s: %d\n", message, code);
+    abort();
+  }
 }
+
+}
+
+extern "C" JNIEXPORT jint JNICALL Java_ValueGetObjectHashCodeTest_getHash0(JNIEnv* jni_env, jclass clazz, jobject object) {
+  jint hash = 0;
+  jvmtiError err = jvmti->GetObjectHashCode(object, &hash);
+  checkJvmti(err, "GetObjectHashCode failed");
+  return hash;
+}
+
+extern "C" JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
+  if (vm->GetEnv(reinterpret_cast<void **>(&jvmti), JVMTI_VERSION) != JNI_OK || !jvmti) {
+    printf("Could not initialize JVMTI\n");
+    abort();
+  }
+  return JVMTI_ERROR_NONE;
+}
+

@@ -73,8 +73,10 @@ import static java.util.stream.Collectors.toMap;
  */
 final class ValueObjectMethods {
     private ValueObjectMethods() {}
-    private static final boolean VERBOSE = System.getProperty("value.bsm.debug") != null;
-    private static final int MAX_NODE_VISITS = Integer.getInteger("jdk.value.recursion.threshold", Integer.MAX_VALUE);
+    private static final boolean VERBOSE =
+            System.getProperty("value.bsm.debug") != null;
+    private static final int MAX_NODE_VISITS =
+            Integer.getInteger("jdk.value.recursion.threshold", Integer.MAX_VALUE);
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
     static class MethodHandleBuilder {

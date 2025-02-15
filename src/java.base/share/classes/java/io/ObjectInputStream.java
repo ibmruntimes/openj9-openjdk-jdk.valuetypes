@@ -264,7 +264,8 @@ import jdk.internal.util.ByteArray;
 public class ObjectInputStream
     extends InputStream implements ObjectInput, ObjectStreamConstants
 {
-    private static final String TRACE_DEST = System.getProperty("TRACE");
+    private static final String TRACE_DEST =
+            System.getProperty("TRACE");
 
     static void TRACE(String format, Object... args) {
         if (TRACE_DEST != null) {
@@ -668,9 +669,6 @@ public class ObjectInputStream
      * <p>The deserialization filter, when not {@code null}, is invoked for
      * each object (regular or class) read to reconstruct the root object.
      * See {@link #setObjectInputFilter(ObjectInputFilter) setObjectInputFilter} for details.
-     *
-     * <p>Serialization and deserialization of value classes is described in
-     * {@linkplain ObjectOutputStream##valueclass-serialization value class serialization}.
      *
      * @return  reference to deserialized object
      * @throws  ClassNotFoundException if class of an object to deserialize

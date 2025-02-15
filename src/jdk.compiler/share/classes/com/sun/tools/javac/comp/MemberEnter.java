@@ -303,7 +303,7 @@ public class MemberEnter extends JCTree.Visitor {
                 initEnv.info.enclVar = v;
                 initEnv = initEnv(tree, initEnv);
                 initEnv.info.ctorPrologue = (v.owner.kind == TYP && v.owner.isValueClass() && !v.isStatic());
-                v.setLazyConstValue(initEnv, env, attr, tree);
+                v.setLazyConstValue(initEnv(tree, initEnv), env, attr, tree);
             }
         }
 

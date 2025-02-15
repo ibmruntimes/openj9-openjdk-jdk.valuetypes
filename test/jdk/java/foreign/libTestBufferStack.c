@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,33 +21,19 @@
  * questions.
  */
 
-package jdk.experimental.bytecode;
+#include "export.h"
 
-public enum PoolTag {
-    CONSTANT_UTF8(1),
-    CONSTANT_UNICODE(2),
-    CONSTANT_INTEGER(3),
-    CONSTANT_FLOAT(4),
-    CONSTANT_LONG(5),
-    CONSTANT_DOUBLE(6),
-    CONSTANT_CLASS(7),
-    CONSTANT_STRING(8),
-    CONSTANT_FIELDREF(9),
-    CONSTANT_METHODREF(10),
-    CONSTANT_INTERFACEMETHODREF(11),
-    CONSTANT_NAMEANDTYPE(12),
-    CONSTANT_METHODHANDLE(15),
-    CONSTANT_METHODTYPE(16),
-    CONSTANT_DYNAMIC(17),
-    CONSTANT_INVOKEDYNAMIC(18);
+typedef struct { double x, y, z; } HVAPoint3D;
 
-    public final int tag;
+EXPORT HVAPoint3D recurse(int depth, HVAPoint3D (*cb)(int)) {
+  if (depth == 0) {
+    HVAPoint3D result = { 2, 1, 0};
+    return result;
+  }
 
-    PoolTag(int tag) {
-        this.tag = tag;
-    }
-
-    static PoolTag from(int tag) {
-        return values()[tag - 1];
-    }
+  HVAPoint3D result = cb(depth - 1);
+  result.x += 1;
+  result.y += 1;
+  result.z += 1;
+  return result;
 }

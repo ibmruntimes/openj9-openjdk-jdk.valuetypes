@@ -26,7 +26,7 @@
  * @bug 8186046
  * @summary Test for an interface using condy with default overpass methods
  * @library /java/lang/invoke/common
- * @enablePreview
+ * @build test.java.lang.invoke.lib.InstructionHelper
  * @run testng CondyInterfaceWithOverpassMethods
  * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:UseBootstrapCallInfo=3 CondyInterfaceWithOverpassMethods
  */

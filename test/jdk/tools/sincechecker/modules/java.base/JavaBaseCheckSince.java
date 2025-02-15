@@ -26,5 +26,5 @@
  * @bug 8331051
  * @summary Test for `@since` in java.base module
  * @library /test/lib /test/jdk/tools/sincechecker
- * @run main SinceChecker java.base --exclude java.lang.classfile
+ * @run main SinceChecker java.base --ignoreSince Valhalla --exclude java.lang.classfile
  */
