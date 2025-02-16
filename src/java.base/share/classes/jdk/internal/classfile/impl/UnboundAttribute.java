@@ -520,8 +520,6 @@ public abstract sealed class UnboundAttribute<T extends Attribute<T>>
 
         private final List<Utf8Entry> loadableDescriptors;
 
-        private static final Utf8Entry NAME = TemporaryConstantPool.INSTANCE.utf8Entry(Attributes.NAME_LOADABLE_DESCRIPTORS);
-
         public UnboundLoadableDescriptorsAttribute(List<Utf8Entry> loadableDescriptors) {
             super(Attributes.loadableDescriptors());
             this.loadableDescriptors = List.copyOf(loadableDescriptors);

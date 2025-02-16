@@ -1276,7 +1276,7 @@ public class Check {
                         MethodFlags & ~SYNCHRONIZED : MethodFlags;
             }
             if ((flags & STRICTFP) != 0) {
-                warnOnExplicitStrictfp(pos);
+                warnOnExplicitStrictfp(tree);
             }
             if ((flags & STRICTFP) != 0) {
                 warnOnExplicitStrictfp(tree);
