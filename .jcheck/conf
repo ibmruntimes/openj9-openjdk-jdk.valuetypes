@@ -18,9 +18,6 @@ ignore-tabs=.*\.gmk|Makefile
 [checks "committer"]
 role=committer
 
-[checks "issues"]
-pattern=^([124-8][0-9]{6}): (\S.*)$
-
 [checks "problemlists"]
 dirs=test/jdk|test/langtools|test/lib-test|test/hotspot/jtreg|test/jaxp
 

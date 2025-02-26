@@ -1279,7 +1279,7 @@ public class Check {
                 warnOnExplicitStrictfp(tree);
             }
             if ((flags & STRICTFP) != 0) {
-                warnOnExplicitStrictfp(tree);
+                warnOnExplicitStrictfp(pos);
             }
             // Imply STRICTFP if owner has STRICTFP set.
             if (((flags|implicit) & Flags.ABSTRACT) == 0 ||
