@@ -2668,19 +2668,6 @@ public class IRNode {
                                                                           CompilePhase.BEFORE_MATCHING));
     }
 
-    /**
-     * Apply a regex that matches a macro node IR node name {@code macroNodeName} exactly on all machine independent
-     * ideal graph phases up to and including {@link CompilePhase#BEFORE_MACRO_EXPANSION}. By default, we match on
-     * {@link CompilePhase#BEFORE_MACRO_EXPANSION} when no {@link CompilePhase} is chosen.
-     */
-    private static void macroNodes(String irNodePlaceholder, String macroNodeName) {
-        String macroNodeRegex = START + macroNodeName + "\\b" + MID + END;
-        IR_NODE_MAPPINGS.put(irNodePlaceholder, new SinglePhaseRangeEntry(CompilePhase.BEFORE_MACRO_EXPANSION,
-                                                                          macroNodeRegex,
-                                                                          CompilePhase.BEFORE_STRINGOPTS,
-                                                                          CompilePhase.BEFORE_MACRO_EXPANSION));
-    }
-
     private static void trapNodes(String irNodePlaceholder, String trapReason) {
         String regex = START + "CallStaticJava" + MID + "uncommon_trap.*" + trapReason + END;
         beforeMatching(irNodePlaceholder, regex);
