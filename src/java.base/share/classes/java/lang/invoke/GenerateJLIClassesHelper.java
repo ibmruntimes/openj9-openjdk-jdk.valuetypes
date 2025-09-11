@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -378,13 +379,7 @@ class GenerateJLIClassesHelper {
         ArrayList<String> names = new ArrayList<>();
         HashSet<String> dedupSet = new HashSet<>();
         for (LambdaForm.BasicType type : LambdaForm.BasicType.values()) {
-            LambdaForm zero = LambdaForm.zeroForm(type);
-            String name = zero.kind.defaultLambdaName
-                   + "_" + zero.returnType().basicTypeChar();
-            if (dedupSet.add(name)) {
-                names.add(name);
-                forms.add(zero);
-            }
+            String name;
 
             LambdaForm identity = LambdaForm.identityForm(type);
             name = identity.kind.defaultLambdaName
@@ -392,6 +387,16 @@ class GenerateJLIClassesHelper {
             if (dedupSet.add(name)) {
                 names.add(name);
                 forms.add(identity);
+            }
+
+            if (type != V_TYPE) {
+                LambdaForm constant = LambdaForm.constantForm(type);
+                name = constant.kind.defaultLambdaName
+                        + "_" + constant.returnType().basicTypeChar();
+                if (dedupSet.add(name)) {
+                    names.add(name);
+                    forms.add(constant);
+                }
             }
         }
         return generateCodeBytesForLFs(className,
@@ -425,26 +430,42 @@ class GenerateJLIClassesHelper {
             forms.add(form);
             names.add(form.kind.defaultLambdaName);
         }
-        for (Wrapper wrapper : Wrapper.values()) {
-            if (wrapper == Wrapper.VOID) {
-                continue;
+        record FieldLfToken(byte formOp, int ftypeKind) {}
+        List<FieldLfToken> tokens = new ArrayList<>();
+        for (int i = 0; i <= DirectMethodHandle.FT_CHECKED_REF; i++) {
+            for (byte formOp = DirectMethodHandle.AF_GETFIELD; formOp < DirectMethodHandle.AF_LIMIT; formOp++) {
+                tokens.add(new FieldLfToken(formOp, i));
             }
-            for (byte b = DirectMethodHandle.AF_GETFIELD; b < DirectMethodHandle.AF_LIMIT; b++) {
-                int ftype = DirectMethodHandle.ftypeKind(wrapper.primitiveType());
-                LambdaForm form = DirectMethodHandle
-                        .makePreparedFieldLambdaForm(b, /*isVolatile*/false, ftype);
-                if (form.kind != LambdaForm.Kind.GENERIC) {
-                    forms.add(form);
-                    names.add(form.kind.defaultLambdaName);
-                }
-                // volatile
-                form = DirectMethodHandle
-                        .makePreparedFieldLambdaForm(b, /*isVolatile*/true, ftype);
-                if (form.kind != LambdaForm.Kind.GENERIC) {
-                    forms.add(form);
-                    names.add(form.kind.defaultLambdaName);
+        }
+        for (int i : new int[] {DirectMethodHandle.FT_UNCHECKED_NR_REF, DirectMethodHandle.FT_CHECKED_NR_REF}) {
+            for (byte formOp = DirectMethodHandle.AF_GETFIELD; formOp < DirectMethodHandle.AF_LIMIT; formOp++) {
+                boolean isGetter = (formOp & 1) == (DirectMethodHandle.AF_GETFIELD & 1);
+                if (!isGetter) {
+                    tokens.add(new FieldLfToken(formOp, i));
                 }
             }
+        }
+        // Only legal flat combinations; no static
+        tokens.add(new FieldLfToken(DirectMethodHandle.AF_GETFIELD, DirectMethodHandle.FT_NULLABLE_FLAT));
+        tokens.add(new FieldLfToken(DirectMethodHandle.AF_PUTFIELD, DirectMethodHandle.FT_NULLABLE_FLAT));
+        tokens.add(new FieldLfToken(DirectMethodHandle.AF_PUTFIELD, DirectMethodHandle.FT_NR_FLAT));
+        // Compile
+        for (var token : tokens) {
+            byte b = token.formOp;
+            int ftype = token.ftypeKind;
+            LambdaForm form = DirectMethodHandle
+                    .makePreparedFieldLambdaForm(b, /*isVolatile*/false, ftype);
+            if (form.kind == GENERIC)
+                throw new InternalError(b + " non-volatile " + ftype);
+            forms.add(form);
+            names.add(form.kind.defaultLambdaName);
+            // volatile
+            form = DirectMethodHandle
+                    .makePreparedFieldLambdaForm(b, /*isVolatile*/true, ftype);
+            if (form.kind == GENERIC)
+                throw new InternalError(b + " volatile " + ftype);
+            forms.add(form);
+            names.add(form.kind.defaultLambdaName);
         }
         return generateCodeBytesForLFs(className,
                 names.toArray(new String[0]),

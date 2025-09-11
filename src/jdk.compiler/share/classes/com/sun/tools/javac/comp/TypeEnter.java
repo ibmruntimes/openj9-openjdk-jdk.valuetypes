@@ -341,20 +341,6 @@ public class TypeEnter implements Completer {
                     (cls.mods.flags & IMPLICIT_CLASS) != 0;
             if (isImplicitClass) {
                 doModuleImport(make.ModuleImport(make.QualIdent(syms.java_base)));
-                if (peekTypeExists(syms.ioType.tsym)) {
-                    doImport(make.Import(make.Select(make.QualIdent(syms.ioType.tsym),
-                            names.asterisk), true), false);
-                }
-            }
-        }
-
-        private boolean peekTypeExists(TypeSymbol type) {
-            try {
-                type.complete();
-                return !type.type.isErroneous();
-            } catch (CompletionFailure cf) {
-                //does not exist
-                return false;
             }
         }
 
@@ -528,8 +514,7 @@ public class TypeEnter implements Completer {
 
         Type attribImportType(JCTree tree, Env<AttrContext> env) {
             Assert.check(completionEnabled);
-            Lint prevLint = chk.setLint(allowDeprecationOnImport ?
-                    lint : lint.suppress(LintCategory.DEPRECATION, LintCategory.REMOVAL, LintCategory.PREVIEW));
+            boolean prevImportSuppression = chk.setImportSuppression(!allowDeprecationOnImport);
             try {
                 // To prevent deep recursion, suppress completion of some
                 // types.
@@ -537,7 +522,7 @@ public class TypeEnter implements Completer {
                 return attr.attribType(tree, env);
             } finally {
                 completionEnabled = true;
-                chk.setLint(prevLint);
+                chk.setImportSuppression(prevImportSuppression);
             }
         }
 

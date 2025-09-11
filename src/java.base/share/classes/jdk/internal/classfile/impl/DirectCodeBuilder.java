@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.constant.ConstantDescs.INIT_NAME;
 import static java.util.Objects.requireNonNull;
 import static jdk.internal.classfile.impl.BytecodeHelpers.*;
 import static jdk.internal.classfile.impl.RawBytecodeHelper.*;
@@ -48,10 +49,8 @@ public final class DirectCodeBuilder
         extends AbstractDirectBuilder<CodeModel>
         implements TerminalCodeBuilder {
     private static final CharacterRange[] EMPTY_CHARACTER_RANGE = {};
-    private static final DeferredLabel[] EMPTY_LABEL_ARRAY = {};
     private static final LocalVariable[] EMPTY_LOCAL_VARIABLE_ARRAY = {};
     private static final LocalVariableType[] EMPTY_LOCAL_VARIABLE_TYPE_ARRAY = {};
-    private static final AbstractPseudoInstruction.ExceptionCatchImpl[] EMPTY_HANDLER_ARRAY = {};
     private static final DeferredLabel[] EMPTY_DEFERRED_LABEL_ARRAY = {};
 
     final List<AbstractPseudoInstruction.ExceptionCatchImpl> handlers = new ArrayList<>();
@@ -73,6 +72,9 @@ public final class DirectCodeBuilder
 
     private DeferredLabel[] deferredLabels = EMPTY_DEFERRED_LABEL_ARRAY;
     private int deferredLabelsCount = 0;
+
+    private int maxStackHint = -1;
+    private int maxLocalsHint = -1;
 
     /* Locals management
        lazily computed maxLocal = -1
@@ -171,6 +173,12 @@ public final class DirectCodeBuilder
 
     public MethodInfo methodInfo() {
         return methodInfo;
+    }
+
+    public static void withMaxs(CodeBuilder cob, int stacks, int locals) {
+        var dcb = (DirectCodeBuilder) cob;
+        dcb.maxStackHint = stacks;
+        dcb.maxLocalsHint = locals;
     }
 
     private UnboundAttribute<CodeAttribute> content = null;
@@ -319,6 +327,8 @@ public final class DirectCodeBuilder
                 if (codeMatch) {
                     var originalAttribute = (CodeImpl) original;
                     buf.writeU2U2(originalAttribute.maxStack(), originalAttribute.maxLocals());
+                } else if (maxLocalsHint >= 0 && maxStackHint >= 0) {
+                    buf.writeU2U2(maxStackHint, maxLocalsHint);
                 } else {
                     StackCounter cntr = StackCounter.of(DirectCodeBuilder.this, buf);
                     buf.writeU2U2(cntr.maxStack(), cntr.maxLocals());
@@ -354,7 +364,6 @@ public final class DirectCodeBuilder
             @Override
             public void writeBody(BufWriterImpl buf) {
                 DirectCodeBuilder dcb = DirectCodeBuilder.this;
-                buf.setLabelContext(dcb);
 
                 int codeLength = curPc();
                 if (codeLength == 0 || codeLength >= 65536) {
@@ -365,7 +374,8 @@ public final class DirectCodeBuilder
                             dcb.methodInfo.methodTypeSymbol().displayDescriptor()));
                 }
 
-                boolean codeMatch = dcb.original != null && codeAndExceptionsMatch(codeLength);
+                boolean codeMatch = dcb.codeAndExceptionsMatch(codeLength, buf);
+                buf.setLabelContext(dcb, codeMatch);
                 var context = dcb.context;
                 if (context.stackMapsWhenRequired()) {
                     if (codeMatch) {
@@ -384,7 +394,7 @@ public final class DirectCodeBuilder
                 buf.writeBytes(dcb.bytecodesBufWriter);
                 dcb.writeExceptionHandlers(buf);
                 dcb.attributes.writeTo(buf);
-                buf.setLabelContext(null);
+                buf.setLabelContext(null, false);
             }
 
             @Override
@@ -443,7 +453,7 @@ public final class DirectCodeBuilder
         }
     }
 
-    private boolean codeAndExceptionsMatch(int codeLength) {
+    private boolean codeAndExceptionsMatch(int codeLength, BufWriterImpl buf) {
         boolean codeAttributesMatch;
         if (original instanceof CodeImpl cai && canWriteDirect(cai.constantPool())) {
             codeAttributesMatch = cai.codeLength == curPc()
@@ -452,6 +462,22 @@ public final class DirectCodeBuilder
                 var bw = new BufWriterImpl(constantPool, context);
                 writeExceptionHandlers(bw);
                 codeAttributesMatch = cai.classReader.compare(bw, 0, cai.exceptionHandlerPos, bw.size());
+            }
+
+            if (codeAttributesMatch) {
+                var thisIsConstructor = methodInfo.methodName().equalsString(INIT_NAME);
+                var originalIsConstructor = cai.enclosingMethod.methodName().equalsString(INIT_NAME);
+                if (thisIsConstructor || originalIsConstructor) {
+                    if (thisIsConstructor != originalIsConstructor) {
+                        codeAttributesMatch = false;
+                    }
+                }
+
+                if (codeAttributesMatch && thisIsConstructor) {
+                    if (!buf.strictFieldsMatch(cai.classReader.getContainedClass())) {
+                        codeAttributesMatch = false;
+                    }
+                }
             }
         }
         else
