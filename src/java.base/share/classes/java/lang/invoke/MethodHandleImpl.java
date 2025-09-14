@@ -1532,6 +1532,11 @@ abstract class MethodHandleImpl {
     }
 
     static {
+        runtimeSetup();
+    }
+
+    // Also called from JVM when loading an AOT cache
+    private static void runtimeSetup() {
         SharedSecrets.setJavaLangInvokeAccess(new JavaLangInvokeAccess() {
             @Override
             public Class<?> getDeclaringClass(Object rmname) {
@@ -1648,6 +1653,10 @@ abstract class MethodHandleImpl {
                 return IMPL_LOOKUP.serializableConstructor(decl, ctorToCall);
             }
 
+            @Override
+            public MethodHandle assertAsType(MethodHandle original, MethodType assertedType) {
+                return original.viewAsType(assertedType, false);
+            }
         });
     }
 

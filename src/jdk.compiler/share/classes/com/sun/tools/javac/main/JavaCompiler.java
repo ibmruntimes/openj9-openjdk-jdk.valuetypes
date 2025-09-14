@@ -85,8 +85,6 @@ import com.sun.tools.javac.util.Log.WriterKind;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 
-import com.sun.tools.javac.code.Lint;
-import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
@@ -237,10 +235,6 @@ public class JavaCompiler {
     /** The log to be used for error reporting.
      */
     public Log log;
-
-    /** Whether or not the options lint category was initially disabled
-     */
-    boolean optionsCheckingInitiallyDisabled;
 
     /** Factory for creating diagnostic objects
      */
@@ -439,12 +433,6 @@ public class JavaCompiler {
         moduleFinder.moduleNameFromSourceReader = this::readModuleName;
 
         options = Options.instance(context);
-        // See if lint options checking was explicitly disabled by the
-        // user; this is distinct from the options check being
-        // enabled/disabled.
-        optionsCheckingInitiallyDisabled =
-            options.isSet(Option.XLINT_CUSTOM, "-options") ||
-            options.isSet(Option.XLINT_CUSTOM, "none");
 
         verbose       = options.isSet(VERBOSE);
         sourceOutput  = options.isSet(PRINTSOURCE); // used to be -s
@@ -928,11 +916,6 @@ public class JavaCompiler {
             checkReusable();
         hasBeenUsed = true;
 
-        // forcibly set the equivalent of -Xlint:-options, so that no further
-        // warnings about command line options are generated from this point on
-        options.put(XLINT_CUSTOM.primaryName + "-" + LintCategory.OPTIONS.option, "true");
-        options.remove(XLINT_CUSTOM.primaryName + LintCategory.OPTIONS.option);
-
         start_msec = now();
 
         try {
@@ -1166,7 +1149,7 @@ public class JavaCompiler {
                 genEndPos = true;
                 if (!taskListener.isEmpty())
                     taskListener.started(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING));
-                deferredDiagnosticHandler = new Log.DeferredDiagnosticHandler(log);
+                deferredDiagnosticHandler = log.new DeferredDiagnosticHandler();
                 procEnvImpl.getFiler().setInitialState(initialFiles, initialClassNames);
             }
         } else { // free resources
@@ -1635,8 +1618,8 @@ public class JavaCompiler {
         ScanNested scanner = new ScanNested();
         scanner.scan(env.tree);
         for (Env<AttrContext> dep: scanner.dependencies) {
-        if (!compileStates.isDone(dep, CompileState.WARN))
-            desugaredEnvs.put(dep, desugar(warn(flow(attribute(dep)))));
+            if (!compileStates.isDone(dep, CompileState.WARN))
+                desugaredEnvs.put(dep, desugar(warn(flow(attribute(dep)))));
         }
 
         //We need to check for error another time as more classes might
@@ -1715,6 +1698,13 @@ public class JavaCompiler {
                 }
                 compileStates.put(env, CompileState.UNLAMBDA);
             }
+
+            if (shouldStop(CompileState.STRICT_FIELDS_PROXIES))
+                return;
+            for (JCTree def : cdefs) {
+                LocalProxyVarsGen.instance(context).translateTopLevelClass(def, localMake);
+            }
+            compileStates.put(env, CompileState.STRICT_FIELDS_PROXIES);
 
             //generate code for each class
             for (List<JCTree> l = cdefs; l.nonEmpty(); l = l.tail) {
@@ -1898,7 +1888,7 @@ public class JavaCompiler {
 
     private Name parseAndGetName(JavaFileObject fo,
                                  Function<JCTree.JCCompilationUnit, Name> tree2Name) {
-        DiagnosticHandler dh = new DiscardDiagnosticHandler(log);
+        DiagnosticHandler dh = log.new DiscardDiagnosticHandler();
         JavaFileObject prevSource = log.useSource(fo);
         try {
             JCTree.JCCompilationUnit t = parse(fo, fo.getCharContent(false), true);

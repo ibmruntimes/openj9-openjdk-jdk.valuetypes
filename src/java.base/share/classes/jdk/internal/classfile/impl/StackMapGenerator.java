@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2025, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2024, Alibaba Group Holding Limited. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,12 +30,7 @@ import java.lang.classfile.Attribute;
 import java.lang.classfile.Attributes;
 import java.lang.classfile.Label;
 import java.lang.classfile.attribute.StackMapTableAttribute;
-import java.lang.classfile.constantpool.ClassEntry;
-import java.lang.classfile.constantpool.ConstantDynamicEntry;
-import java.lang.classfile.constantpool.ConstantPoolBuilder;
-import java.lang.classfile.constantpool.InvokeDynamicEntry;
-import java.lang.classfile.constantpool.MemberRefEntry;
-import java.lang.classfile.constantpool.Utf8Entry;
+import java.lang.classfile.constantpool.*;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.util.ArrayList;
@@ -44,6 +39,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import jdk.internal.classfile.impl.WritableField.UnsetField;
 import jdk.internal.constant.ClassOrInterfaceDescImpl;
 import jdk.internal.util.Preconditions;
 
@@ -157,6 +153,7 @@ public final class StackMapGenerator {
                 dcb.bytecodesBufWriter.bytecodeView(),
                 dcb.constantPool,
                 dcb.context,
+                buf.getStrictInstanceFields(),
                 dcb.handlers);
     }
 
@@ -198,6 +195,7 @@ public final class StackMapGenerator {
     private final List<AbstractPseudoInstruction.ExceptionCatchImpl> handlers;
     private final List<RawExceptionCatch> rawHandlers;
     private final ClassHierarchyImpl classHierarchy;
+    private final UnsetField[] strictFieldsToPut; // exact-sized, do not modify this copy!
     private final boolean patchDeadCode;
     private final boolean filterDeadLabels;
     private Frame[] frames = EMPTY_FRAME_ARRAY;
@@ -229,6 +227,7 @@ public final class StackMapGenerator {
                      RawBytecodeHelper.CodeRange bytecode,
                      SplitConstantPool cp,
                      ClassFileImpl context,
+                     UnsetField[] strictFields,
                      List<AbstractPseudoInstruction.ExceptionCatchImpl> handlers) {
         this.thisType = Type.referenceType(thisClass);
         this.methodName = methodName;
@@ -243,6 +242,11 @@ public final class StackMapGenerator {
         this.patchDeadCode = context.patchDeadCode();
         this.filterDeadLabels = context.dropDeadLabels();
         this.currentFrame = new Frame(classHierarchy);
+        if (OBJECT_INITIALIZER_NAME.equals(methodName)) {
+            this.strictFieldsToPut = strictFields;
+        } else {
+            this.strictFieldsToPut = UnsetField.EMPTY_ARRAY;
+        }
         generate();
     }
 
@@ -391,9 +395,13 @@ public final class StackMapGenerator {
         return framesCount == 0 ? null : new UnboundAttribute.AdHocAttribute<>(Attributes.stackMapTable()) {
             @Override
             public void writeBody(BufWriterImpl b) {
+                int countPos = b.size();
+                if (framesCount != (char) framesCount) {
+                    throw generatorError("Too many frames: " + framesCount);
+                }
                 b.writeU2(framesCount);
                 Frame prevFrame =  new Frame(classHierarchy);
-                prevFrame.setLocalsFromArg(methodName, methodDesc, isStatic, thisType);
+                prevFrame.setLocalsFromArg(methodName, methodDesc, isStatic, thisType, strictFieldsToPut);
                 prevFrame.trimAndCompress();
                 for (int i = 0; i < framesCount; i++) {
                     var fr = frames[i];
@@ -417,9 +425,8 @@ public final class StackMapGenerator {
     private void processMethod() {
         var frames = this.frames;
         var currentFrame = this.currentFrame;
-        currentFrame.setLocalsFromArg(methodName, methodDesc, isStatic, thisType);
+        currentFrame.setLocalsFromArg(methodName, methodDesc, isStatic, thisType, strictFieldsToPut);
         currentFrame.stackSize = 0;
-        currentFrame.flags = 0;
         currentFrame.offset = -1;
         int stackmapIndex = 0;
         var bcs = bytecode.start();
@@ -716,7 +723,7 @@ public final class StackMapGenerator {
             case TAG_METHOD_TYPE ->
                 currentFrame.pushStack(Type.METHOD_TYPE);
             case TAG_DYNAMIC ->
-                currentFrame.pushStack(cp.entryByIndex(index, ConstantDynamicEntry.class).asSymbol().constantType());
+                currentFrame.pushStack(cp.entryByIndex(index, ConstantDynamicEntry.class).typeSymbol());
             default ->
                 throw generatorError("CP entry #%d %s is not loadable constant".formatted(index, cp.entryByIndex(index).tag()));
         }
@@ -762,7 +769,8 @@ public final class StackMapGenerator {
     }
 
     private void processFieldInstructions(RawBytecodeHelper bcs) {
-        var desc = Util.fieldTypeSymbol(cp.entryByIndex(bcs.getIndexU2(), MemberRefEntry.class).type());
+        var nameAndType = cp.entryByIndex(bcs.getIndexU2(), MemberRefEntry.class).nameAndType();
+        var desc = Util.fieldTypeSymbol(nameAndType.type());
         var currentFrame = this.currentFrame;
         switch (bcs.opcode()) {
             case GETSTATIC ->
@@ -775,6 +783,9 @@ public final class StackMapGenerator {
                 currentFrame.pushStack(desc);
             }
             case PUTFIELD -> {
+                if (strictFieldsToPut.length > 0) {
+                    currentFrame.putStrictField(nameAndType);
+                }
                 currentFrame.decStack(Util.isDoubleSlot(desc) ? 3 : 2);
             }
             default -> throw new AssertionError("Should not reach here");
@@ -798,7 +809,14 @@ public final class StackMapGenerator {
                     if (inTryBlock) {
                         processExceptionHandlerTargets(bci, true);
                     }
+                    var owner = cp.entryByIndex(index, MemberRefEntry.class).owner();
+                    if (!owner.name().equalsString(((ClassOrInterfaceDescImpl) thisType.sym).internalName())
+                            && currentFrame.unsetFieldsSize != 0) {
+                        throw generatorError("Unset fields mismatch");
+                    }
                     currentFrame.initializeObject(type, thisType);
+                    currentFrame.unsetFieldsSize = 0;
+                    currentFrame.unsetFields = UnsetField.EMPTY_ARRAY;
                     thisUninit = true;
                 } else if (type.tag == ITEM_UNINITIALIZED) {
                     Type new_class_type = cpIndexToType(bcs.getU2(type.bci + 1), cp);
@@ -941,7 +959,7 @@ public final class StackMapGenerator {
     private final class Frame {
 
         int offset;
-        int localsSize, stackSize;
+        int localsSize, stackSize, unsetFieldsSize;
         int flags;
         int frameMaxStack = 0, frameMaxLocals = 0;
         boolean dirty = false;
@@ -950,6 +968,7 @@ public final class StackMapGenerator {
         private final ClassHierarchyImpl classHierarchy;
 
         private Type[] locals, stack;
+        private UnsetField[] unsetFields = UnsetField.EMPTY_ARRAY; // sorted, modifiable oversized array
 
         Frame(ClassHierarchyImpl classHierarchy) {
             this(-1, 0, 0, 0, null, null, classHierarchy);
@@ -971,7 +990,10 @@ public final class StackMapGenerator {
 
         @Override
         public String toString() {
-            return (dirty ? "frame* @" : "frame @") + offset + " with locals " + (locals == null ? "[]" : Arrays.asList(locals).subList(0, localsSize)) + " and stack " + (stack == null ? "[]" : Arrays.asList(stack).subList(0, stackSize));
+            return (dirty ? "frame* @" : "frame @") + offset +
+                    " with locals " + (locals == null ? "[]" : Arrays.asList(locals).subList(0, localsSize)) +
+                    " and stack " + (stack == null ? "[]" : Arrays.asList(stack).subList(0, stackSize)) +
+                    " and unset fields " + (unsetFields == null ? "[]" : Arrays.asList(unsetFields).subList(0, unsetFieldsSize));
         }
 
         Frame pushStack(ClassDesc desc) {
@@ -1026,7 +1048,8 @@ public final class StackMapGenerator {
                 }
             }
             if (old_object == Type.UNITIALIZED_THIS_TYPE) {
-                flags = 0;
+                flags &= ~FLAG_THIS_UNINIT;
+                assert flags == 0 : flags;
             }
         }
 
@@ -1041,6 +1064,24 @@ public final class StackMapGenerator {
                 Arrays.fill(locals, current, locals.length, Type.TOP_TYPE);
             }
             return this;
+        }
+
+        void putStrictField(NameAndTypeEntry nat) {
+            int shift = 0;
+            var array = unsetFields;
+            for (int i = 0; i < unsetFieldsSize; i++) {
+                var f = array[i];
+                if (f.name().equals(nat.name()) && f.type().equals(nat.type())) {
+                    shift++;
+                } else if (shift != 0) {
+                    array[i - shift] = array[i];
+                    array[i] = null;
+                }
+            }
+            if (shift > 1) {
+                throw generatorError(nat + "; discovered " + shift);
+            }
+            unsetFieldsSize -= shift;
         }
 
         private void checkStack(int index) {
@@ -1061,7 +1102,7 @@ public final class StackMapGenerator {
             locals[index] = type;
         }
 
-        void setLocalsFromArg(String name, MethodTypeDesc methodDesc, boolean isStatic, Type thisKlass) {
+        void setLocalsFromArg(String name, MethodTypeDesc methodDesc, boolean isStatic, Type thisKlass, UnsetField[] strictFieldsToPut) {
             int localsSize = 0;
             // Pre-emptively create a locals array that encompass all parameter slots
             checkLocal(Util.parameterSlots(methodDesc) + (isStatic ? -1 : 0));
@@ -1069,10 +1110,16 @@ public final class StackMapGenerator {
             Type[] locals = this.locals;
             if (!isStatic) {
                 if (OBJECT_INITIALIZER_NAME.equals(name) && !CD_Object.equals(thisKlass.sym)) {
+                    int strictFieldCount = strictFieldsToPut.length;
+                    this.unsetFields = UnsetField.copyArray(strictFieldsToPut, strictFieldCount);
+                    this.unsetFieldsSize = strictFieldCount;
                     type = Type.UNITIALIZED_THIS_TYPE;
-                    flags |= FLAG_THIS_UNINIT;
+                    this.flags = FLAG_THIS_UNINIT;
                 } else {
+                    this.unsetFields = UnsetField.EMPTY_ARRAY;
+                    this.unsetFieldsSize = 0;
                     type = thisKlass;
+                    this.flags = 0;
                 }
                 locals[localsSize++] = type;
             }
@@ -1109,6 +1156,8 @@ public final class StackMapGenerator {
             stackSize = src.stackSize;
             checkStack(src.stackSize - 1);
             if (src.stackSize > 0) System.arraycopy(src.stack, 0, stack, 0, src.stackSize);
+            unsetFieldsSize = src.unsetFieldsSize;
+            unsetFields = UnsetField.copyArray(src.unsetFields, src.unsetFieldsSize);
             flags = src.flags;
             localsChanged = true;
         }
@@ -1116,6 +1165,7 @@ public final class StackMapGenerator {
         void checkAssignableTo(Frame target) {
             int localsSize = this.localsSize;
             int stackSize = this.stackSize;
+            int myUnsetFieldsSize = this.unsetFieldsSize;
             if (target.flags == -1) {
                 target.locals = locals == null ? null : locals.clone();
                 target.localsSize = localsSize;
@@ -1123,6 +1173,8 @@ public final class StackMapGenerator {
                     target.stack = stack.clone();
                     target.stackSize = stackSize;
                 }
+                target.unsetFields = UnsetField.copyArray(this.unsetFields, myUnsetFieldsSize);
+                target.unsetFieldsSize = myUnsetFieldsSize;
                 target.flags = flags;
                 target.dirty = true;
             } else {
@@ -1140,6 +1192,9 @@ public final class StackMapGenerator {
                     if (merge(stack[i], target.stack, i, target) == Type.TOP_TYPE) {
                         throw generatorError("Stack content mismatch");
                     }
+                }
+                if (myUnsetFieldsSize != 0) {
+                    mergeUnsetFields(target);
                 }
             }
         }
@@ -1197,6 +1252,51 @@ public final class StackMapGenerator {
             return newTo;
         }
 
+        // Merge this frame's unset fields into the target frame
+        private void mergeUnsetFields(Frame target) {
+            int myUnsetSize = unsetFieldsSize;
+            int targetUnsetSize = target.unsetFieldsSize;
+            var myUnsets = unsetFields;
+            var targetUnsets = target.unsetFields;
+            if (UnsetField.matches(myUnsets, myUnsetSize, targetUnsets, targetUnsetSize)) {
+                return; // no merge
+            }
+            // merge sort
+            var merged = new UnsetField[StackMapGenerator.this.strictFieldsToPut.length];
+            int mergedSize = 0;
+            int i = 0;
+            int j = 0;
+            while (i < myUnsetSize && j < targetUnsetSize) {
+                var myCandidate = myUnsets[i];
+                var targetCandidate = targetUnsets[j];
+                var cmp = myCandidate.compareTo(targetCandidate);
+                if (cmp == 0) {
+                    merged[mergedSize++] = myCandidate;
+                    i++;
+                    j++;
+                } else if (cmp < 0) {
+                    merged[mergedSize++] = myCandidate;
+                    i++;
+                } else {
+                    merged[mergedSize++] = targetCandidate;
+                    j++;
+                }
+            }
+            if (i < myUnsetSize) {
+                int len = myUnsetSize - i;
+                System.arraycopy(myUnsets, i, merged, mergedSize, len);
+                mergedSize += len;
+            } else if (j < targetUnsetSize) {
+                int len = targetUnsetSize - j;
+                System.arraycopy(targetUnsets, j, merged, mergedSize, len);
+                mergedSize += len;
+            }
+
+            target.unsetFieldsSize = mergedSize;
+            target.unsetFields = merged;
+            target.dirty = true;
+        }
+
         private static int trimAndCompress(Type[] types, int count) {
             while (count > 0 && types[count - 1] == Type.TOP_TYPE) count--;
             int compressed = 0;
@@ -1216,12 +1316,42 @@ public final class StackMapGenerator {
             stackSize = trimAndCompress(stack, stackSize);
         }
 
+        boolean hasUninitializedThis() {
+            int size = this.localsSize;
+            var localVars = this.locals;
+            for (int i = 0; i < size; i++) {
+                if (localVars[i] == Type.UNITIALIZED_THIS_TYPE)
+                    return true;
+            }
+            return false;
+        }
+
         private static boolean equals(Type[] l1, Type[] l2, int commonSize) {
             if (l1 == null || l2 == null) return commonSize == 0;
             return Arrays.equals(l1, 0, commonSize, l2, 0, commonSize);
         }
 
+        // In sync with StackMapDecoder::needsLarvalFrameForTransition
+        private boolean needsLarvalFrame(Frame prevFrame) {
+            if (UnsetField.matches(unsetFields, unsetFieldsSize, prevFrame.unsetFields, prevFrame.unsetFieldsSize))
+                return false;
+            if (!hasUninitializedThis()) {
+                assert unsetFieldsSize == 0 : this; // Should have been handled by processInvokeInstructions
+                return false;
+            }
+            return true;
+        }
+
         void writeTo(BufWriterImpl out, Frame prevFrame, ConstantPoolBuilder cp) {
+            // enclosing frames
+            if (needsLarvalFrame(prevFrame)) {
+                out.writeU1U2(StackMapDecoder.EARLY_LARVAL, unsetFieldsSize);
+                for (int i = 0; i < unsetFieldsSize; i++) {
+                    var f = unsetFields[i];
+                    out.writeIndex(cp.nameAndTypeEntry(f.name(), f.type()));
+                }
+            }
+            // base frame
             int localsSize = this.localsSize;
             int stackSize = this.stackSize;
             int offsetDelta = offset - prevFrame.offset - 1;
