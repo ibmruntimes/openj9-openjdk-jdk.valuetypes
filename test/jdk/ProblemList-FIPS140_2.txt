@@ -251,6 +251,7 @@ sun/security/krb5/auto/UseCacheAndStoreKey.java https://github.com/ibmruntimes/o
 sun/security/krb5/auto/W83.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 sun/security/krb5/etype/KerberosAesSha2.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 sun/security/krb5/etype/WeakCrypto.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
+sun/security/krb5/Krb5NameEquals.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 sun/security/krb5/KrbCredSubKey.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 sun/security/krb5/ktab/BufferBoundary.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 sun/security/krb5/ktab/FileKeyTab.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
@@ -273,7 +274,7 @@ javax/xml/crypto/dsig/SecureValidation.java https://github.com/ibmruntimes/openj
 javax/xml/crypto/dsig/SecurityManager/XMLDSigWithSecMgr.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 javax/xml/crypto/dsig/TransformService/NullParent.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 javax/xml/crypto/dsig/ValidationTests.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
-javax/xml/crypto/dsig/FileSocketPermissions.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
+javax/xml/crypto/dsig/ResolveReferenceURIs.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
 
 # Related to SunJCE or SunRsaSign, no such provider: SunJCE or no such provider: SunRsaSign
 javax/crypto/Cipher/CipherInputStreamExceptions.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/116 linux-x64,linux-ppc64le,linux-s390x
@@ -879,7 +880,7 @@ sun/security/pkcs/pkcs8/PKCS8Test.java https://github.com/ibmruntimes/openj9-ope
 sun/security/pkcs/pkcs8/TestLeadingZeros.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/pkcs12/Bug6415637.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/pkcs12/EmptyPassword.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
-sun/security/pkcs12/KeytoolOpensslInteropTest.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
+sun/security/pkcs12/KeytoolOpensslInteropTest.java#UseExistingPKCS12 https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/pkcs12/P12SecretKey.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/pkcs12/PBES2Encoding.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/pkcs12/PKCS12SameKeyId.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
@@ -940,7 +941,7 @@ sun/security/provider/PolicyFile/TrustedCert.java https://github.com/ibmruntimes
 
 # NoSuchAlgorithmException: DRBG, SHA1PRNG, NativePRNG SecureRandom not available.
 
-java/security/Security/ClassLoaderDeadlock/Deadlock.sh https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
+java/security/Security/ClassLoaderDeadlock/Deadlock.java https://github.com/eclipse-openj9/openj9/issues/21919 linux-x64,linux-ppc64le,linux-s390x
 sun/security/ec/ed/TestEdOps.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/provider/SecureRandom/AutoReseed.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/provider/SecureRandom/CommonSeeder.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
@@ -954,6 +955,7 @@ sun/security/provider/SeedGenerator/SeedGeneratorChoice.java https://github.com/
 # javax.net.ssl.SSLHandshakeException: Received fatal alert: handshake_failure.
 # All the below hard coded static String keyStoreFile = "keystore"; in the test codes. In FIPS mode, keystore must be NONE.
 
+javax/rmi/ssl/SocketFactoryTest.java https://github.com/eclipse-openj9/openj9/issues/21756 linux-x64,linux-ppc64le,linux-s390x
 sun/security/ssl/AppInputStream/ReadZeroBytes.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/ssl/AppInputStream/RemoveMarkReset.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
 sun/security/ssl/AppOutputStream/NoExceptionOnClose.java https://github.com/ibmruntimes/openj9-openjdk-jdk17/issues/131 linux-x64,linux-ppc64le,linux-s390x
@@ -1233,3 +1235,8 @@ java/foreign/TestFallbackLookup.java    https://github.ibm.com/runtimes/backlog/
 sun/security/krb5/auto/Cleaners.java    https://github.ibm.com/runtimes/backlog/issues/1089 linux-x64,linux-ppc64le,linux-s390x
 sun/security/krb5/auto/S4U2selfNotF.java    https://github.ibm.com/runtimes/backlog/issues/1089 linux-x64,linux-ppc64le,linux-s390x
 java/util/jar/JarFile/IgnoreUnrelatedSignatureFiles.java    https://github.ibm.com/runtimes/backlog/issues/1089 linux-x64,linux-ppc64le,linux-s390x
+
+# Exclude the below tests from sanity.openjdk according to the issues:
+# https://github.ibm.com/runtimes/backlog/issues/1089
+javax/security/auth/kerberos/StandardNames.java https://github.ibm.com/runtimes/backlog/issues/1089 linux-x64,linux-ppc64le,linux-s390x
+sun/security/krb5/auto/CaseSensitive.java https://github.ibm.com/runtimes/backlog/issues/1089 linux-x64,linux-ppc64le,linux-s390x

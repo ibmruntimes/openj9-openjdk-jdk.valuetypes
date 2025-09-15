@@ -23,7 +23,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2020, 2022 All Rights Reserved
+ * (c) Copyright IBM Corp. 2020, 2025 All Rights Reserved
  * ===========================================================================
  */
 
@@ -91,8 +91,8 @@ public class Basic {
     static final String libpath = System.getenv("LIBPATH");
 
     /* Used for regex String matching for long error messages */
-    static final String PERMISSION_DENIED_ERROR_MSG = "(Permission denied|error=13)";
-    static final String NO_SUCH_FILE_ERROR_MSG = "(No such file|error=2)";
+    static final String PERMISSION_DENIED_ERROR_MSG = "(Permission denied|error: 13)";
+    static final String NO_SUCH_FILE_ERROR_MSG = "(No such file|error: 2)";
     static final String SPAWNHELPER_FAILURE_MSG = "(Possible reasons:)";
 
     /**
@@ -703,7 +703,7 @@ public class Basic {
         public static String path() { return path; }
         private static final String path = path0();
         private static String path0(){
-            if (!Platform.isBusybox("/bin/true")) {
+            if (!Files.isSymbolicLink(Paths.get("/bin/true"))) {
                 return "/bin/true";
             } else {
                 File trueExe = new File("true");
@@ -718,7 +718,7 @@ public class Basic {
         public static String path() { return path; }
         private static final String path = path0();
         private static String path0(){
-            if (!Platform.isBusybox("/bin/false")) {
+            if (!Files.isSymbolicLink(Paths.get("/bin/false"))) {
                 return "/bin/false";
             } else {
                 File falseExe = new File("false");

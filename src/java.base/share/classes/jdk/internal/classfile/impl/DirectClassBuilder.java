@@ -82,7 +82,7 @@ public final class DirectClassBuilder
 
     @Override
     public ClassBuilder withFlags(int flags) {
-        setFlags(flags);
+        setFlags(Util.checkFlags(flags));
         return this;
     }
 

@@ -51,7 +51,7 @@ $(eval $(call SetupCopyFiles,COPY_OVERLAY_FILES, \
 		src/java.base/share/classes/java/util/concurrent/ConcurrentHashMap.java \
 		src/java.base/share/classes/java/util/zip/ZipFile.java \
 		src/java.base/share/classes/jdk/internal/access/JavaNetInetAddressAccess.java \
-		src/java.base/share/classes/jdk/internal/ref/PhantomCleanable.java \
+		src/java.base/share/classes/jdk/internal/ref/CleanerImpl.java \
 		src/java.base/share/classes/module-info.java \
 		src/java.base/share/classes/sun/security/jca/ProviderConfig.java \
 		src/java.base/share/classes/sun/security/jca/ProviderList.java \
@@ -71,11 +71,6 @@ $(eval $(call SetupCopyFiles,COPY_OVERLAY_FILES, \
 	))
 
 IncludeIfUnsure := -includeIfUnsure -noWarnIncludeIf
-
-# OLDEST_BOOT_JDK is not available directly, but it can be extracted
-# from BOOT_JDK_SOURCETARGET which has a value like:
-#     -source $OLDEST_BOOT_JDK -target $OLDEST_BOOT_JDK -Xlint:-options
-BOOT_JDK_VERSION := $(word 2, $(BOOT_JDK_SOURCETARGET))
 
 $(J9JCL_SOURCES_DONEFILE) : \
 		$(foreach dir, $(JppSourceDirs), $(call RecursiveWildcard,$(dir),*)) \
@@ -98,7 +93,7 @@ $(J9JCL_SOURCES_DONEFILE) : \
     # Also generate source that can be used with the boot JDK.
 	@$(ECHO) Generating DDR_VM interim sources
 	$(call RunJPP, GENERIC, $(OPENJ9_TOPDIR)/debugtools/DDR_VM/src, /ddr/interim, \
-		$(IncludeIfUnsure) -macro:define JAVA_SPEC_VERSION=$(BOOT_JDK_VERSION))
+		$(IncludeIfUnsure) -macro:define JAVA_SPEC_VERSION=$(OLDEST_BOOT_JDK_VERSION))
   endif # OPENJ9_ENABLE_DDR
 	@$(MKDIR) -p $(@D)
 	@$(TOUCH) $@

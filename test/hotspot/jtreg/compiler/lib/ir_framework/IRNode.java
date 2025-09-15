@@ -692,6 +692,11 @@ public class IRNode {
         fromAfterCountedLoops(COUNTED_LOOP_MAIN, regex);
     }
 
+    public static final String DECODE_HEAP_OOP_NOT_NULL = PREFIX + "DECODE_HEAP_OOP_NOT_NULL" + POSTFIX;
+    static {
+        machOnly(DECODE_HEAP_OOP_NOT_NULL, "decodeHeapOop_not_null");
+    }
+
     public static final String DIV = PREFIX + "DIV" + POSTFIX;
     static {
         beforeMatchingNameRegex(DIV, "Div(I|L|F|D)");
@@ -911,6 +916,12 @@ public class IRNode {
     public static final String IS_INFINITE_F = PREFIX + "IS_INFINITE_F" + POSTFIX;
     static {
         beforeMatchingNameRegex(IS_INFINITE_F, "IsInfiniteF");
+    }
+
+    // Only supported on x86.
+    public static final String LEA_P = PREFIX + "LEA_P" + POSTFIX;
+    static {
+        machOnly(LEA_P, "leaP(CompressedOopOffset|(8|32)Narrow)");
     }
 
     public static final String LOAD = PREFIX + "LOAD" + POSTFIX;
@@ -1255,6 +1266,11 @@ public class IRNode {
         beforeMatchingNameRegex(MEMBAR_VOLATILE, "MemBarVolatile");
     }
 
+    public static final String MEM_TO_REG_SPILL_COPY = PREFIX + "MEM_TO_REG_SPILL_COPY" + POSTFIX;
+    static {
+        machOnly(MEM_TO_REG_SPILL_COPY, "MemToRegSpillCopy");
+    }
+
     public static final String MIN = PREFIX + "MIN" + POSTFIX;
     static {
         beforeMatchingNameRegex(MIN, "Min(I|L)");
@@ -1420,6 +1436,21 @@ public class IRNode {
         vectorNode(UMAX_VL, "UMaxV", TYPE_LONG);
     }
 
+    public static final String MASK_ALL = PREFIX + "MASK_ALL" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(MASK_ALL, "MaskAll");
+    }
+
+    public static final String VECTOR_LONG_TO_MASK = PREFIX + "VECTOR_LONG_TO_MASK" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(VECTOR_LONG_TO_MASK, "VectorLongToMask");
+    }
+
+    public static final String VECTOR_MASK_TO_LONG = PREFIX + "VECTOR_MASK_TO_LONG" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(VECTOR_MASK_TO_LONG, "VectorMaskToLong");
+    }
+
     // Can only be used if avx512_vnni is available.
     public static final String MUL_ADD_VS2VI_VNNI = PREFIX + "MUL_ADD_VS2VI_VNNI" + POSTFIX;
     static {
@@ -1514,16 +1545,6 @@ public class IRNode {
     public static final String MAX_REDUCTION_V = PREFIX + "MAX_REDUCTION_V" + POSTFIX;
     static {
         superWordNodes(MAX_REDUCTION_V, "MaxReductionV");
-    }
-
-    public static final String NEG_F = PREFIX + "NEG_F" + POSTFIX;
-    static {
-        beforeMatchingNameRegex(NEG_F, "NegF");
-    }
-
-    public static final String NEG_D = PREFIX + "NEG_D" + POSTFIX;
-    static {
-        beforeMatchingNameRegex(NEG_D, "NegD");
     }
 
     public static final String NEG_VF = VECTOR_PREFIX + "NEG_VF" + POSTFIX;
@@ -1694,6 +1715,11 @@ public class IRNode {
     public static final String RANGE_CHECK_TRAP = PREFIX + "RANGE_CHECK_TRAP" + POSTFIX;
     static {
         trapNodes(RANGE_CHECK_TRAP, "range_check");
+    }
+
+    public static final String SHORT_RUNNING_LOOP_TRAP = PREFIX + "SHORT_RUNNING_LOOP_TRAP" + POSTFIX;
+    static {
+        trapNodes(SHORT_RUNNING_LOOP_TRAP, "short_running_loop");
     }
 
     public static final String REINTERPRET_S2HF = PREFIX + "REINTERPRET_S2HF" + POSTFIX;
@@ -2877,6 +2903,46 @@ public class IRNode {
     public static final String BLACKHOLE = PREFIX + "BLACKHOLE" + POSTFIX;
     static {
         fromBeforeRemoveUselessToFinalCode(BLACKHOLE, "Blackhole");
+    }
+
+    public static final String SELECT_FROM_TWO_VECTOR_VB = VECTOR_PREFIX + "SELECT_FROM_TWO_VECTOR_VB" + POSTFIX;
+    static {
+        vectorNode(SELECT_FROM_TWO_VECTOR_VB, "SelectFromTwoVector", TYPE_BYTE);
+    }
+
+    public static final String SELECT_FROM_TWO_VECTOR_VS = VECTOR_PREFIX + "SELECT_FROM_TWO_VECTOR_VS" + POSTFIX;
+    static {
+        vectorNode(SELECT_FROM_TWO_VECTOR_VS, "SelectFromTwoVector", TYPE_SHORT);
+    }
+
+    public static final String SELECT_FROM_TWO_VECTOR_VI = VECTOR_PREFIX + "SELECT_FROM_TWO_VECTOR_VI" + POSTFIX;
+    static {
+        vectorNode(SELECT_FROM_TWO_VECTOR_VI, "SelectFromTwoVector", TYPE_INT);
+    }
+
+    public static final String SELECT_FROM_TWO_VECTOR_VF = VECTOR_PREFIX + "SELECT_FROM_TWO_VECTOR_VF" + POSTFIX;
+    static {
+        vectorNode(SELECT_FROM_TWO_VECTOR_VF, "SelectFromTwoVector", TYPE_FLOAT);
+    }
+
+    public static final String SELECT_FROM_TWO_VECTOR_VD = VECTOR_PREFIX + "SELECT_FROM_TWO_VECTOR_VD" + POSTFIX;
+    static {
+        vectorNode(SELECT_FROM_TWO_VECTOR_VD, "SelectFromTwoVector", TYPE_DOUBLE);
+    }
+
+    public static final String SELECT_FROM_TWO_VECTOR_VL = VECTOR_PREFIX + "SELECT_FROM_TWO_VECTOR_VL" + POSTFIX;
+    static {
+        vectorNode(SELECT_FROM_TWO_VECTOR_VL, "SelectFromTwoVector", TYPE_LONG);
+    }
+
+    public static final String REPLICATE_HF = PREFIX + "REPLICATE_HF" + POSTFIX;
+    static {
+        machOnlyNameRegex(REPLICATE_HF, "replicateHF");
+    }
+
+    public static final String REPLICATE_HF_IMM8 = PREFIX + "REPLICATE_HF_IMM8" + POSTFIX;
+    static {
+        machOnlyNameRegex(REPLICATE_HF_IMM8, "replicateHF_imm8_gt128b");
     }
 
     /*

@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
+ * (c) Copyright IBM Corp. 2023, 2025 All Rights Reserved
  * ===========================================================================
  */
 
@@ -49,6 +49,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import jdk.crypto.jniprovider.NativeCrypto;
 
+import sun.security.util.KeyUtil;
 import sun.security.x509.X509Key;
 
 public class NativeXDHKeyAgreement extends KeyAgreementSpi {
@@ -159,7 +160,18 @@ public class NativeXDHKeyAgreement extends KeyAgreementSpi {
             }
 
             if (!(key instanceof XDHPublicKeyImpl)) {
-                throw new InvalidKeyException("Unsupported key type");
+                if (!(key instanceof XECPublicKey)) {
+                    throw new InvalidKeyException("Unsupported key type");
+                }
+                try {
+                    XDHKeyFactory kf = new XDHKeyFactory();
+                    key = kf.engineTranslateKey(key);
+                } catch (Exception exception) {
+                    throw new InvalidKeyException("Unable to translate key", exception);
+                }
+                if (!(key instanceof XDHPublicKeyImpl)) {
+                    throw new InvalidKeyException("Unsupported key type");
+                }
             }
 
             XDHPublicKeyImpl publicKey = (XDHPublicKeyImpl) key;
@@ -259,8 +271,9 @@ public class NativeXDHKeyAgreement extends KeyAgreementSpi {
             throw new NoSuchAlgorithmException("Algorithm must not be null");
         }
 
-        if (!(algorithm.equals("TlsPremasterSecret"))) {
-            throw new NoSuchAlgorithmException("Only supported for algorithm TlsPremasterSecret");
+        if (!KeyUtil.isSupportedKeyAgreementOutputAlgorithm(algorithm)) {
+            throw new NoSuchAlgorithmException(
+                    "Unsupported secret key algorithm: " + algorithm);
         }
         return new SecretKeySpec(engineGenerateSecret(), algorithm);
     }

@@ -41,12 +41,14 @@ import openj9.internal.criu.InternalCRIUSupport;
 public class NativeCrypto {
 
     /* Define constants for the native digest algorithm indices. */
-    public static final int SHA1_160 = 0;
-    public static final int SHA2_224 = 1;
-    public static final int SHA2_256 = 2;
-    public static final int SHA5_384 = 3;
-    public static final int SHA5_512 = 4;
-    public static final int MD5 = 5;
+    public static final int MD5 = 0;
+    public static final int SHA1_160 = 1;
+    public static final int SHA2_224 = 2;
+    public static final int SHA2_256 = 3;
+    public static final int SHA5_384 = 4;
+    public static final int SHA5_512 = 5;
+    public static final int SHA5_512_224 = 6;
+    public static final int SHA5_512_256 = 7;
 
     /* Define constants for the EC field types. */
     public static final int ECField_Fp = 0;
@@ -88,20 +90,29 @@ public class NativeCrypto {
             // Load jncrypto JNI library.
             System.loadLibrary("jncrypto");
 
+            // Get user-specified option to skip bundled OpenSSL library.
+            boolean skipBundled = Boolean.getBoolean("jdk.native.openssl.skipBundled");
+
             // Get user-specified OpenSSL library to use, if available.
-            String nativeLibName = System.getProperty("jdk.native.openssl.lib", "");
+            String nativeLibName = System.getProperty("jdk.native.openssl.lib");
+
+            // Check that these mutually exclusive flags are not used at the same time.
+            if (skipBundled && (nativeLibName != null)) {
+                throw new RuntimeException("Conflicting properties " +
+                        "jdk.native.openssl.skipBundled and jdk.native.openssl.lib");
+            }
 
             // Get the JDK location.
             String javaHome = StaticProperty.javaHome();
 
             // Load OpenSSL crypto library dynamically.
-            osslVersion = loadCrypto(traceEnabled, nativeLibName, javaHome);
+            osslVersion = loadCrypto(traceEnabled, skipBundled, nativeLibName, javaHome);
             if (osslVersion != -1) {
                 if (traceEnabled) {
                     System.err.println("Native crypto library load succeeded - using native crypto library.");
                 }
             } else {
-                if (!nativeLibName.isEmpty()) {
+                if ((nativeLibName != null) && !nativeLibName.isEmpty()) {
                     throw new RuntimeException(nativeLibName + " is not available, crypto libraries are not loaded");
                 }
             }
@@ -267,6 +278,7 @@ public class NativeCrypto {
     /* OpenSSL utility interfaces */
 
     private static final native long loadCrypto(boolean trace,
+                                                boolean skipBundled,
                                                 String libName,
                                                 String javaHome);
 
@@ -515,4 +527,11 @@ public class NativeCrypto {
                                               byte[] computedSecret,
                                               int computedSecretLength,
                                               int curveType);
+
+    /* Password based key derivation functions (PBKDF). */
+    public final native byte[] PBKDF2Derive(byte[] password,
+                                            byte[] salt,
+                                            int iterations,
+                                            int keyLength,
+                                            int hashAlgorithm);
 }

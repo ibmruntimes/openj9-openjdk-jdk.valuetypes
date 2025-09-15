@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,17 @@
  */
 
 /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2025, 2025 All Rights Reserved
+ * ===========================================================================
+ */
+
+/*
  * @test id=default
  * @summary Verifies JVMTI StopThread support for virtual threads.
  * @requires vm.continuations
  * @library /test/lib
  * @run main/othervm/native -agentlib:StopThreadTest StopThreadTest
- */
-
-/*
- * @test id=no-vmcontinuations
- * @summary Verifies JVMTI StopThread support for bound virtual threads.
- * @library /test/lib
- * @run main/othervm/native -agentlib:StopThreadTest -XX:+UnlockExperimentalVMOptions -XX:-VMContinuations -DboundVThread=true StopThreadTest
  */
 
 /*
@@ -45,9 +44,6 @@
 
 import jdk.test.lib.Platform;
 import java.lang.AssertionError;
-
-import com.sun.management.HotSpotDiagnosticMXBean;
-import java.lang.management.ManagementFactory;
 
 /*
  *     The test exercises the JVMTI function: StopThread(jthread).
@@ -214,7 +210,6 @@ public class StopThreadTest {
                 log("TestTask.run: caught expected AssertionError from method A()");
                 seenExceptionFromA = true;
             }
-            Thread.interrupted();
             if (!seenExceptionFromA && !preemptableVirtualThread()) {
                 StopThreadTest.setFailed("TestTask.run: expected AssertionError from method A()");
             }
@@ -227,7 +222,6 @@ public class StopThreadTest {
                 log("TestTask.run: caught expected AssertionError from method B()");
                 seenExceptionFromB = true;
             }
-            Thread.interrupted();
             if (!seenExceptionFromB) {
                 StopThreadTest.setFailed("TestTask.run: expected AssertionError from method B()");
             }
@@ -240,7 +234,6 @@ public class StopThreadTest {
                 log("TestTask.run: caught expected AssertionError from method C()");
                 seenExceptionFromC = true;
             }
-            Thread.interrupted();
             if (!seenExceptionFromC) {
                 StopThreadTest.setFailed("TestTask.run: expected AssertionError from method C()");
             }
@@ -277,8 +270,6 @@ public class StopThreadTest {
     }
 
     static boolean preemptableVirtualThread() {
-        boolean legacyLockingMode = ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class)
-                                        .getVMOption("LockingMode").getValue().equals("1");
-        return is_virtual && !isBoundVThread && !legacyLockingMode;
+        return is_virtual && !isBoundVThread;
     }
 }

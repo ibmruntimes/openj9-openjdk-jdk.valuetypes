@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2023, 2024 All Rights Reserved
+ * (c) Copyright IBM Corp. 2023, 2025 All Rights Reserved
  * ===========================================================================
  */
 
@@ -110,6 +110,10 @@ public final class ProviderList {
         if (!RestrictedSecurity.isProviderAllowed(p.getClass())) {
             // We're in restricted security mode which does not allow this provider,
             // return without adding.
+            if (debug != null) {
+                debug.println("In RestrictedSecurity mode. Provider " +
+                        p.getClass().getName() + " not allowed to be inserted.");
+            }
             return providerList;
         }
         if (providerList.getProvider(p.getName()) != null) {
@@ -395,8 +399,7 @@ public final class ProviderList {
                     continue;
                 }
                 Service s = p.getService(type, name);
-                if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
-                    // We found a service that is allowed in restricted security mode.
+                if (s != null) {
                     return s;
                 }
             }
@@ -404,8 +407,7 @@ public final class ProviderList {
         for (i = 0; i < configs.length; i++) {
             Provider p = getProvider(i);
             Service s = p.getService(type, name);
-            if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
-                // We found a service that is allowed in restricted security mode.
+            if (s != null) {
                 return s;
             }
         }
@@ -527,14 +529,14 @@ public final class ProviderList {
                 if (type != null) {
                     // simple lookup
                     Service s = p.getService(type, algorithm);
-                    if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
+                    if (s != null) {
                         addService(s);
                     }
                 } else {
                     // parallel lookup
                     for (ServiceId id : ids) {
                         Service s = p.getService(id.type, id.algorithm);
-                        if ((s != null) && RestrictedSecurity.isServiceAllowed(s)) {
+                        if (s != null) {
                             addService(s);
                         }
                     }

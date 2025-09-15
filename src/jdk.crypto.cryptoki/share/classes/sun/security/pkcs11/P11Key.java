@@ -401,10 +401,10 @@ abstract class P11Key implements Key, Length {
             try {
                 byte[] key = SunPKCS11.mysunpkcs11.exportKey(session.id(), attrs, keyID);
                 SecretKey secretKey = new SecretKeySpec(key, algorithm);
-                return new P11PBEKey(session, keyID, algorithm, keyLength, attrs, password, salt, iterationCount, secretKey);
+                return new P11PBKDFKey(session, keyID, algorithm, keyLength, attrs, password, salt, iterationCount, secretKey);
             } catch (PKCS11Exception e) {
                 if (debug != null) {
-                    debug.println("Attempt failed, creating a regular P11PBEKey for " + algorithm);
+                    debug.println("Attempt failed, creating a regular P11PBKDFKey for " + algorithm);
                 }
             }
         }
@@ -628,7 +628,7 @@ abstract class P11Key implements Key, Length {
         }
 
         // fips
-        P11PBEKey(Session session, long keyID, String algorithm,
+        P11PBKDFKey(Session session, long keyID, String algorithm,
                 int keyLength, CK_ATTRIBUTE[] attributes,
                 char[] password, byte[] salt, int iterationCount, SecretKey key) {
             super(session, keyID, algorithm, keyLength, attributes, key);

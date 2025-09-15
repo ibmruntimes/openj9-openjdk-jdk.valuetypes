@@ -184,7 +184,6 @@ RestrictedSecurity.NSS.140-2.securerandom.provider = SunPKCS11-NSS-FIPS
 RestrictedSecurity.NSS.140-2.securerandom.algorithm = PKCS11
 #endif
 
-#if defined aix-ppc || defined linux-ppc || defined linux-s390 || defined linux-x86 || defined windows
 #
 # Strict Restricted Security mode profile for FIPS 140-3. This policy represents only allowable
 # approved cryptography in the OpenJCEPlusFIPS provider along with other non-cryptographic algorithms
@@ -212,7 +211,7 @@ RestrictedSecurity.NSS.140-2.securerandom.algorithm = PKCS11
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.name = OpenJCEPlusFIPS Cryptographic Module FIPS 140-3
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.default = false
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.fips = true
-RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.hash = SHA256:165e640b29e9a250409e353039f735c47dcd1043b056fb5ccd224698d9ae8a1e
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.hash = SHA256:ec0c39e03e01931233de1699882241c3c782382c23bfa51d19d915bf61660f9e
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.number = Certificate #XXX
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.policy = https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.sunsetDate = 2026-09-21
@@ -261,6 +260,14 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {Cipher, AES, *}, \
     {Cipher, AES/CCM/NoPadding, *}, \
     {Cipher, AES/GCM/NoPadding, *}, \
+    {Cipher, AES/KW/NoPadding, *}, \
+    {Cipher, AES/KWP/NoPadding, *}, \
+    {Cipher, AES_128/KW/NoPadding, *}, \
+    {Cipher, AES_128/KWP/NoPadding, *}, \
+    {Cipher, AES_192/KW/NoPadding, *}, \
+    {Cipher, AES_192/KWP/NoPadding, *}, \
+    {Cipher, AES_256/KW/NoPadding, *}, \
+    {Cipher, AES_256/KWP/NoPadding, *}, \
     {KeyAgreement, ECDH, *}, \
     {KeyFactory, DSA, *}, \
     {KeyFactory, EC, *}, \
@@ -271,10 +278,6 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {KeyGenerator, HmacSHA256, *}, \
     {KeyGenerator, HmacSHA384, *}, \
     {KeyGenerator, HmacSHA512, *}, \
-    {KeyGenerator, kda-hkdf-with-sha224, *}, \
-    {KeyGenerator, kda-hkdf-with-sha256, *}, \
-    {KeyGenerator, kda-hkdf-with-sha384, *}, \
-    {KeyGenerator, kda-hkdf-with-sha512, *}, \
     {KeyGenerator, SunTls12KeyMaterial, *}, \
     {KeyGenerator, SunTls12MasterSecret, *}, \
     {KeyGenerator, SunTls12Prf, *}, \
@@ -286,6 +289,9 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {KeyPairGenerator, EC, *}, \
     {KeyPairGenerator, RSA, *}, \
     {KeyPairGenerator, RSAPSS, *}, \
+    {KDF, HKDF-SHA256, *}, \
+    {KDF, HKDF-SHA384, *}, \
+    {KDF, HKDF-SHA512, *}, \
     {Mac, HmacSHA224, *}, \
     {Mac, HmacSHA256, *}, \
     {Mac, HmacSHA3-224, *}, \
@@ -343,9 +349,104 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.3 = sun.security.ssl.S
     {TrustManagerFactory, PKIX, *}, \
     {TrustManagerFactory, SunX509, *}]
 
-RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.javax.net.ssl.keyStore = NONE
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.securerandom.provider = OpenJCEPlusFIPS
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.securerandom.algorithm = SHA512DRBG
+
+# Strongly enforced restricted security mode profile for FIPS 140-3.
+#
+# This profile extends OpenJCEPlusFIPS.FIPS140-3 and includes non-cryptographic
+# algorithms and common configuration options used by Java services.
+# Highlights include:
+# + Configuration options to enable PKCS12 keystore and associated cryptography.
+# + Allowances for RMI.
+# + Enablement of the JdkSASL and SunJGSS providers.
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.desc.name = OpenJCEPlusFIPS Cryptographic Module FIPS 140-3 Including Additional Java Services
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.desc.default = false
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.desc.hash = SHA256:5b6fa14538ed0a7b89bc187da998519fe0650d7b25b9270e419536deff39467a
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.extends = RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.1 = com.ibm.crypto.plus.provider.OpenJCEPlusFIPS [+ \
+    {MessageDigest, MD5, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {MessageDigest, SHA-1, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {MessageDigest, SHA-1, *, ModuleAndFullClassName:java.rmi/sun.rmi.server.Util}]
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.2 = sun.security.provider.Sun [+ \
+    {KeyStore, PKCS12, *, ModuleAndFullClassName:java.base/java.security.KeyStore}]
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.4 = com.sun.crypto.provider.SunJCE [ \
+    {AlgorithmParameters, PBE, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBES2, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA1AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA1AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA384AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA384AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithMD5AndDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithMD5AndTripleDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndDESede, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC2_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC2_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC4_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC4_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBE, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA1AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA1AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA384AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA384AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithMD5AndDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithMD5AndTripleDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndDESede, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC2_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC2_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC4_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC4_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA1, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA224, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA384, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA512, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA512/224, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA512/256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBE, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA1AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA1AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA384AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA384AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithMD5AndDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithMD5AndTripleDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndDESede, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC2_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC2_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC4_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC4_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}]
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.5 = sun.security.jgss.SunProvider
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.6 = com.sun.security.sasl.gsskerb.JdkSASL
 
 # Weakly-Enforced Restricted Security mode profile for FIPS 140-3. This profile allows for all algorithms
 # within the OpenJCEPlusFIPS provider to be callable, even though algorithms may or may not be allowable
@@ -375,7 +476,6 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.9 = or
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.10 = sun.security.smartcardio.SunPCSC
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.11 = sun.security.provider.certpath.ldap.JdkLDAP
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.12 = com.sun.security.sasl.gsskerb.JdkSASL
-#endif
 
 #
 # A list of preferred providers for specific algorithms. These providers will

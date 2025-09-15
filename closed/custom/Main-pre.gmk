@@ -18,6 +18,8 @@
 # 2 along with this work; if not, see <http://www.gnu.org/licenses/>.
 # ===========================================================================
 
+ifeq ($(INCLUDE), true)
+
 CLEAN_DIRS += vm
 
 .PHONY : \
@@ -39,10 +41,13 @@ OPENJ9_MAKE := $(MAKE) $(MAKE_ARGS) -f $(TOPDIR)/closed/OpenJ9.gmk
 # modules specific to OpenJ9 will be found and included in that set. The next two
 # rules make that happen.
 
-create-main-targets-include java.base-gensrc : generate-j9jcl-sources
+# We don't need to build the preprocessor and generate j9jcl code when cleaning.
+ifeq (,$(filter clean dist-clean, $(SEQUENTIAL_TARGETS)))
+  create-main-targets-include java.base-gensrc : generate-j9jcl-sources
+endif
 
 j9vm-build : buildtools-langtools
-  ifeq ($(BUILD_OPENSSL),yes)
+  ifeq ($(BUILD_OPENSSL), true)
 	@+$(MAKE) $(MAKE_ARGS) -f $(TOPDIR)/closed/openssl.gmk
   endif # BUILD_OPENSSL
 	@+$(OPENJ9_MAKE) build-j9
@@ -139,3 +144,5 @@ openjceplus-clean :
 clean-openjceplus : openjceplus-clean
 
 endif # BUILD_OPENJCEPLUS
+
+endif # include guard

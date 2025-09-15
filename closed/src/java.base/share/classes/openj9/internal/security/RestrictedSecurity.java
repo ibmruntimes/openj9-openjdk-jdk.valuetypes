@@ -64,7 +64,7 @@ public final class RestrictedSecurity {
     private static final boolean allowSetProperties;
 
     private static final boolean isNSSSupported;
-    private static final boolean isOpenJCEPlusSupported;
+    private static final boolean isOpenJCEPlusCertifiedPlatform;
 
     private static final boolean userSetProfile;
     private static final boolean shouldEnableSecurity;
@@ -77,53 +77,26 @@ public final class RestrictedSecurity {
 
     private static ProfileParser profileParser;
 
+    private static boolean enableCheckHashes;
+
     private static RestrictedSecurityProperties restricts;
 
     private static final Set<String> unmodifiableProperties = new HashSet<>();
 
-    private static final Map<String, List<String>> supportedPlatformsNSS = new HashMap<>();
-    private static final Map<String, List<String>> supportedPlatformsOpenJCEPlus = new HashMap<>();
-
     static {
-        supportedPlatformsNSS.put("Arch", List.of("amd64", "ppc64le", "s390x"));
-        supportedPlatformsNSS.put("OS", List.of("Linux"));
-
-        supportedPlatformsOpenJCEPlus.put("Arch", List.of("amd64", "ppc64", "s390x"));
-        supportedPlatformsOpenJCEPlus.put("OS", List.of("Linux", "AIX", "Windows"));
-
+        final List<String> nssSupportedArch = List.of("amd64", "ppc64le", "s390x");
+        final List<String> openjceplusCertifiedArch = List.of("amd64", "ppc64", "s390x");
+        final List<String> openjceplusCertifiedOS = List.of("AIX", "Linux", "Windows");
         String osName = System.getProperty("os.name");
         String osArch = System.getProperty("os.arch");
 
-        boolean isOsSupported, isArchSupported;
         // Check whether the NSS FIPS solution is supported.
-        isOsSupported = false;
-        for (String os: supportedPlatformsNSS.get("OS")) {
-            if (osName.contains(os)) {
-                isOsSupported = true;
-            }
-        }
-        isArchSupported = false;
-        for (String arch: supportedPlatformsNSS.get("Arch")) {
-            if (osArch.contains(arch)) {
-                isArchSupported = true;
-            }
-        }
-        isNSSSupported = isOsSupported && isArchSupported;
+        isNSSSupported = osName.contains("Linux")
+                && containsAny(osArch, nssSupportedArch);
 
-        // Check whether the OpenJCEPlus FIPS solution is supported.
-        isOsSupported = false;
-        for (String os: supportedPlatformsOpenJCEPlus.get("OS")) {
-            if (osName.contains(os)) {
-                isOsSupported = true;
-            }
-        }
-        isArchSupported = false;
-        for (String arch: supportedPlatformsOpenJCEPlus.get("Arch")) {
-            if (osArch.contains(arch)) {
-                isArchSupported = true;
-            }
-        }
-        isOpenJCEPlusSupported = isOsSupported && isArchSupported;
+        // Check whether the OpenJCEPlus FIPS solution is certified.
+        isOpenJCEPlusCertifiedPlatform = containsAny(osName, openjceplusCertifiedOS)
+                && containsAny(osArch, openjceplusCertifiedArch);
 
         // Check the default solution to see if FIPS is supported.
         isFIPSSupported = isNSSSupported;
@@ -161,6 +134,18 @@ public final class RestrictedSecurity {
         super();
     }
 
+    private static boolean isJarVerifierInStackTrace() {
+        java.util.function.Predicate<Class<?>> isJarVerifier =
+                clazz -> "java.util.jar.JarVerifier".equals(clazz.getName())
+                      && "java.base".equals(clazz.getModule().getName());
+
+        java.util.function.Function<Stream<StackWalker.StackFrame>, Boolean> matcher =
+                stream -> stream.map(StackWalker.StackFrame::getDeclaringClass)
+                                .anyMatch(isJarVerifier);
+
+        return StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).walk(matcher);
+    }
+
     /**
      * Check loaded profiles' hash values.
      *
@@ -169,9 +154,19 @@ public final class RestrictedSecurity {
      * is calculated and compared to the expected value.
      */
     public static void checkHashValues() {
-        if (profileParser != null) {
-            profileParser.checkHashValues();
-            profileParser = null;
+        checkHashValues(true);
+    }
+
+    private static void checkHashValues(boolean fromProviders) {
+        ProfileParser parser = profileParser;
+        if (parser != null) {
+            if (fromProviders) {
+                enableCheckHashes = true;
+            }
+            if (enableCheckHashes && !isJarVerifierInStackTrace()) {
+                profileParser = null;
+                parser.checkHashValues();
+            }
         }
     }
 
@@ -244,6 +239,7 @@ public final class RestrictedSecurity {
      */
     public static boolean isServiceAllowed(Service service) {
         if (securityEnabled) {
+            checkHashValues(false);
             return restricts.isRestrictedServiceAllowed(service, true);
         }
         return true;
@@ -257,6 +253,7 @@ public final class RestrictedSecurity {
      */
     public static boolean canServiceBeRegistered(Service service) {
         if (securityEnabled) {
+            checkHashValues(false);
             return restricts.isRestrictedServiceAllowed(service, false);
         }
         return true;
@@ -270,6 +267,7 @@ public final class RestrictedSecurity {
      */
     public static boolean isProviderAllowed(String providerName) {
         if (securityEnabled) {
+            checkHashValues(false);
             // Remove argument, e.g. -NSS-FIPS, if present.
             int pos = providerName.indexOf('-');
             if (pos >= 0) {
@@ -289,6 +287,7 @@ public final class RestrictedSecurity {
      */
     public static boolean isProviderAllowed(Class<?> providerClazz) {
         if (securityEnabled) {
+            checkHashValues(false);
             String providerClassName = providerClazz.getName();
 
             // Check if the specified class extends java.security.Provider.
@@ -384,12 +383,14 @@ public final class RestrictedSecurity {
                     + " on this platform.");
         }
 
-        if (profileID.contains("OpenJCEPlus") && !isOpenJCEPlusSupported) {
-            printStackTraceAndExit("OpenJCEPlus RestrictedSecurity profiles are not supported"
-                    + " on this platform.");
-        }
-
         if (debug != null) {
+            if (profileID.contains("OpenJCEPlus")) {
+                if (isOpenJCEPlusCertifiedPlatform) {
+                    debug.println("OpenJCEPlus RestrictedSecurity profile running on a certified platform.");
+                } else {
+                    debug.println("OpenJCEPlus RestrictedSecurity profile running in developer mode.");
+                }
+            }
             debug.println("RestrictedSecurity profile " + profileID
                     + " is supported on this platform.");
         }
@@ -679,6 +680,15 @@ public final class RestrictedSecurity {
      */
     private static boolean isAsterisk(String string) {
         return "*".equals(string);
+    }
+
+    private static boolean containsAny(String string, List<String> substrings) {
+        for (String substring : substrings) {
+            if (string.contains(substring)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1522,7 +1532,7 @@ public final class RestrictedSecurity {
 
             // Check whether constraints are properly specified.
             final String typeRE = "\\w+";
-            final String algoRE = "[A-Za-z0-9./_-]+";
+            final String algoRE = "[A-Za-z0-9./_:#-]+";
             final String attrRE = "[A-Za-z0-9=*|.:]+";
             final String usesRE = "[A-Za-z0-9._:/$]+";
             final String consRE = "\\{(" + typeRE + "),(" + algoRE + "),(" + attrRE + ")(," + usesRE + ")?\\}";
@@ -1868,7 +1878,7 @@ public final class RestrictedSecurity {
                 + "(\\["                                // constraints [optional]
                     + "\\s*"
                     + "([+-])?"                         // action [optional]
-                    + "[A-Za-z0-9{}.=*|:$,/_\\s-]+"     // constraint definition
+                    + "[A-Za-z0-9{}.=*|:$#,/_\\s-]+"    // constraint definition
                 + "\\])?"
                 + "\\s*"
                 + "$");
@@ -1882,8 +1892,8 @@ public final class RestrictedSecurity {
 
                 String action = m.group(4);
                 if (!update && !isNullOrBlank(action)) {
-                    printStackTraceAndExit("You cannot add or remove to provider "
-                            + m.group(1) + ". This is the base profile.");
+                    printStackTraceAndExit("Constraints of provider not previously specified"
+                            + " cannot be modified: " + providerName);
                 }
             } else {
                 printStackTraceAndExit("Provider format is incorrect: " + providerInfo);

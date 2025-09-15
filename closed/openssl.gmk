@@ -92,6 +92,12 @@ ifeq (,$(OPENSSL_TARGET))
   $(error Unsupported platform $(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU))
 endif # OPENSSL_TARGET
 
+ifeq ($(OPENJDK_TARGET_CPU), s390x)
+  OPENSSL_CONFIG_CFLAGS := -march=z10
+else
+  OPENSSL_CONFIG_CFLAGS :=
+endif
+
 ifneq (,$(CCACHE))
   # If ccache is enabled and the environment contains either CC or CXX, their
   # values (as defined in this make) are propagated to the instance of make
@@ -101,9 +107,9 @@ ifneq (,$(CCACHE))
 endif # CCACHE
 
 build_openssl :
-	@$(ECHO) Compiling OpenSSL in $(OPENSSL_DIR) for $(OPENSSL_TARGET)
-	( $(OPENSSL_CONFIG_SETUP) $(CD) $(OPENSSL_DIR) && $(PERL) Configure $(OPENSSL_TARGET) shared )
+	@$(ECHO) Compiling OpenSSL in $(OPENSSL_DIR) for $(OPENSSL_TARGET)$(if $(OPENSSL_CONFIG_CFLAGS), with additional CFLAGS $(OPENSSL_CONFIG_CFLAGS))
+	( $(OPENSSL_CONFIG_SETUP) $(CD) $(OPENSSL_DIR) && $(PERL) Configure $(OPENSSL_CONFIG_CFLAGS) $(OPENSSL_TARGET) no-makedepend no-tests shared )
 	$(OPENSSL_PATCH)
-	( $(OPENSSL_MAKE_SETUP) $(CD) $(OPENSSL_DIR) && $(OPENSSL_MAKE) )
+	+ ( $(OPENSSL_MAKE_SETUP) $(CD) $(OPENSSL_DIR) && $(OPENSSL_MAKE) )
 
 .PHONY : build_openssl
