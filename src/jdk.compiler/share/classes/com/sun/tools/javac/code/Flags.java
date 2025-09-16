@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
 
 import com.sun.tools.javac.util.Assert;
+import com.sun.tools.javac.util.StringUtils;
 
 /** Access flags and other modifiers for Java classes and members.
  *
@@ -159,7 +160,6 @@ public class Flags {
 
     /** Class is an implicitly declared top level class.
      */
-    @Use({FlagTarget.CLASS})
     public static final int IMPLICIT_CLASS    = 1<<23;
 
     /** Flag is set for compiler-generated anonymous method symbols

@@ -161,7 +161,9 @@ module java.base {
     // module declaration be annotated with jdk.internal.javac.ParticipatesInPreview
     exports jdk.internal.javac to
         java.compiler,
-        jdk.compiler;
+        jdk.compiler,
+        jdk.jdeps, // participates in preview features
+        jdk.jfr; // participates in preview features
     exports jdk.internal.access to
         java.desktop,
         java.logging,
