@@ -1,4 +1,9 @@
-# https 20404 generic-all//github.com/eclipse-openj9/openj9/issues/20497
+# new failures (all segfaults)
+valhalla/valuetypes/ArrayElementVarHandleTest.java 
+valhalla/valuetypes/ObjectMethods.java 
+valhalla/valuetypes/StreamTest.java
+
+# https//github.com/eclipse-openj9/openj9/issues/20497
 valhalla/valuetypes/RecursiveValueClass.java 20404 generic-all
 
 # remaining failing tests that need to be triaged with Fields issue fixed
