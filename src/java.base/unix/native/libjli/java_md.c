@@ -420,7 +420,6 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
                 snprintf(new_runpath, new_runpath_size, LD_LIBRARY_PATH "="
                         "%s:"
                         "%s/lib:"
-                        "%s/../lib"
 #ifdef AIX
                         "%s" /* For zlibNX on eligible AIX systems */
 #endif
