@@ -1,14 +1,8 @@
-# new failures (all segfaults)
-valhalla/valuetypes/ArrayElementVarHandleTest.java 
-valhalla/valuetypes/ObjectMethods.java 
-valhalla/valuetypes/StreamTest.java
-
-# https//github.com/eclipse-openj9/openj9/issues/20497
-valhalla/valuetypes/RecursiveValueClass.java 20404 generic-all
+# github.com/eclipse-openj9/openj9/issues/20497
+# this can be updated and closed
+#valhalla/valuetypes/RecursiveValueClass.java 20404 generic-all
 
 # remaining failing tests that need to be triaged with Fields issue fixed
-java/lang/invoke/FindAccessTest.java 20404 generic-all
-java/lang/invoke/LoopCombinatorLongSignatureTest.java 20404 generic-all
 java/lang/invoke/MethodHandleProxies/WrapperHiddenClassTest.java 20404 generic-all
 java/lang/invoke/MethodHandlesGeneralTest.java 20404 generic-all
 java/lang/invoke/PrivateInvokeTest.java 20404 generic-all
@@ -16,14 +10,21 @@ java/lang/invoke/SpecialInterfaceCall.java 20404 generic-all
 java/lang/invoke/VarHandles/VarHandleTestAccessValue.java 20404 generic-all
 java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessValue.java 20404 generic-all
 java/lang/invoke/defineHiddenClass/BasicTest.java 20404 generic-all
-valhalla/valuetypes/MHZeroValue.java 20404 generic-all
 valhalla/valuetypes/MethodHandleTest.java 20404 generic-all
-valhalla/valuetypes/NullRestrictedArraysTest.java 20404 generic-all
-valhalla/valuetypes/NullRestrictedTest.java 20404 generic-all
 valhalla/valuetypes/Reflection.java 20404 generic-all
 valhalla/valuetypes/SubstitutabilityTest.java 20404 generic-all
 valhalla/valuetypes/WeakReferenceTest.java 20404 generic-all
+valhalla/valuetypes/ArrayElementVarHandleTest.java 
+valhalla/valuetypes/ObjectMethods.java 
+valhalla/valuetypes/StreamTest.java
+
+# related to nullable types
+valhalla/valuetypes/NullRestrictedArraysTest.java 20404 generic-all
+valhalla/valuetypes/NullRestrictedTest.java 20404 generic-all
 
 # Disable this until patch-module for migrated value classes isn't needed
 # It requires --enable-preview for all tests
 java/lang/invoke/defineHiddenClass/PreviewHiddenClass.java
+
+# Not related to value types https://github.com/eclipse-openj9/openj9/issues/6868
+java/lang/invoke/FindAccessTest.java 20404 generic-all
