@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.Modifier;
 
 import com.sun.tools.javac.util.Assert;
-import com.sun.tools.javac.util.StringUtils;
 
 /** Access flags and other modifiers for Java classes and members.
  *
@@ -124,14 +123,18 @@ public class Flags {
     // bit positions, we translate them when reading and writing class
     // files into unique bits positions: ACC_SYNTHETIC <-> SYNTHETIC,
     // for example.
-    public static final int ACC_IDENTITY = 0x0020;
-    public static final int ACC_STRICT   = 0x0800;
+    @Use({FlagTarget.CLASS})
+    @NoToStringValue
+    public static final int ACC_IDENTITY = 1<<5;
     @Use({FlagTarget.METHOD})
     @NoToStringValue
     public static final int ACC_BRIDGE   = 1<<6;
     @Use({FlagTarget.METHOD})
     @NoToStringValue
     public static final int ACC_VARARGS  = 1<<7;
+    @Use({FlagTarget.VARIABLE})
+    @NoToStringValue
+    public static final int ACC_STRICT   = 1<<11;
     @Use({FlagTarget.CLASS})
     @NoToStringValue
     public static final int ACC_MODULE   = 1<<15;
@@ -156,19 +159,22 @@ public class Flags {
      * (a) abstract class not declared `value'
      * (b) older class files with ACC_SUPER bit set
      */
-    public static final int IDENTITY_TYPE            = 1<<19;
+    @Use({FlagTarget.CLASS})
+    public static final int IDENTITY_TYPE            = 1<<18;
 
     /** Class is an implicitly declared top level class.
      */
-    public static final int IMPLICIT_CLASS    = 1<<23;
+    @Use({FlagTarget.CLASS})
+    public static final int IMPLICIT_CLASS    = 1<<19;
 
     /** Flag is set for compiler-generated anonymous method symbols
      *  that `own' an initializer block.
      */
     @Use({FlagTarget.METHOD})
-    public static final int BLOCK            = 1<<20;
+    public static final int BLOCK            = 1<<21;
 
     /** Marks a type as a value class */
+    @Use({FlagTarget.CLASS})
     public static final int VALUE_CLASS      = 1<<20;
 
     /** Flag is set for ClassSymbols that are being compiled from source.
@@ -408,6 +414,7 @@ public class Flags {
     /**
      * Flag to indicate the given ClassSymbol is a value based.
      */
+    @Use({FlagTarget.CLASS})
     public static final long MIGRATED_VALUE_CLASS = 1L<<57; //ClassSymbols only
 
     /**
@@ -512,12 +519,14 @@ public class Flags {
     /**
      * Flag to indicate that a class has at least one strict field
      */
+    @Use({FlagTarget.CLASS})
     public static final long HAS_STRICT = 1L<<52; // ClassSymbols, temporary hack
 
     /**
      * Flag to indicate that a field is strict
      */
-    public static final long STRICT = 1L<<53; // VarSymbols
+    @Use({FlagTarget.VARIABLE})
+    public static final long STRICT = 1L<<19; // VarSymbols
 
     /**
      * Describe modifier flags as they might appear in source code, i.e.,
@@ -606,99 +615,6 @@ public class Flags {
         return symbol.getConstValue() != null;
     }
 
-    public enum Flag {
-        PUBLIC(Flags.PUBLIC),
-        PRIVATE(Flags.PRIVATE),
-        PROTECTED(Flags.PROTECTED),
-        STATIC(Flags.STATIC),
-        FINAL(Flags.FINAL),
-        SYNCHRONIZED(Flags.SYNCHRONIZED),
-        VOLATILE(Flags.VOLATILE),
-        TRANSIENT(Flags.TRANSIENT),
-        NATIVE(Flags.NATIVE),
-        INTERFACE(Flags.INTERFACE),
-        ABSTRACT(Flags.ABSTRACT),
-        DEFAULT(Flags.DEFAULT),
-        STRICTFP(Flags.STRICTFP),
-        BRIDGE(Flags.BRIDGE),
-        SYNTHETIC(Flags.SYNTHETIC),
-        ANNOTATION(Flags.ANNOTATION),
-        DEPRECATED(Flags.DEPRECATED),
-        HASINIT(Flags.HASINIT),
-        IDENTITY_TYPE(Flags.IDENTITY_TYPE) {
-            @Override
-            public String toString() {
-                return "identity";
-            }
-        },
-        VALUE(Flags.VALUE_CLASS),
-        IMPLICIT_CLASS(Flags.IMPLICIT_CLASS),
-        BLOCK(Flags.BLOCK),
-        FROM_SOURCE(Flags.FROM_SOURCE),
-        ENUM(Flags.ENUM),
-        MANDATED(Flags.MANDATED),
-        NOOUTERTHIS(Flags.NOOUTERTHIS),
-        EXISTS(Flags.EXISTS),
-        COMPOUND(Flags.COMPOUND),
-        CLASS_SEEN(Flags.CLASS_SEEN),
-        SOURCE_SEEN(Flags.SOURCE_SEEN),
-        LOCKED(Flags.LOCKED),
-        UNATTRIBUTED(Flags.UNATTRIBUTED),
-        ANONCONSTR(Flags.ANONCONSTR),
-        ACYCLIC(Flags.ACYCLIC),
-        PARAMETER(Flags.PARAMETER),
-        VARARGS(Flags.VARARGS),
-        ACYCLIC_ANN(Flags.ACYCLIC_ANN),
-        GENERATEDCONSTR(Flags.GENERATEDCONSTR),
-        HYPOTHETICAL(Flags.HYPOTHETICAL),
-        PROPRIETARY(Flags.PROPRIETARY),
-        UNION(Flags.UNION),
-        EFFECTIVELY_FINAL(Flags.EFFECTIVELY_FINAL),
-        CLASH(Flags.CLASH),
-        AUXILIARY(Flags.AUXILIARY),
-        NOT_IN_PROFILE(Flags.NOT_IN_PROFILE),
-        BAD_OVERRIDE(Flags.BAD_OVERRIDE),
-        SIGNATURE_POLYMORPHIC(Flags.SIGNATURE_POLYMORPHIC),
-        THROWS(Flags.THROWS),
-        LAMBDA_METHOD(Flags.LAMBDA_METHOD),
-        TYPE_TRANSLATED(Flags.TYPE_TRANSLATED),
-        MODULE(Flags.MODULE),
-        AUTOMATIC_MODULE(Flags.AUTOMATIC_MODULE),
-        SYSTEM_MODULE(Flags.SYSTEM_MODULE),
-        DEPRECATED_ANNOTATION(Flags.DEPRECATED_ANNOTATION),
-        DEPRECATED_REMOVAL(Flags.DEPRECATED_REMOVAL),
-        HAS_RESOURCE(Flags.HAS_RESOURCE),
-        // Bit 48 is currently available
-        ANONCONSTR_BASED(Flags.ANONCONSTR_BASED),
-        NAME_FILLED(Flags.NAME_FILLED),
-        PREVIEW_API(Flags.PREVIEW_API),
-        PREVIEW_REFLECTIVE(Flags.PREVIEW_REFLECTIVE),
-        MATCH_BINDING(Flags.MATCH_BINDING),
-        MATCH_BINDING_TO_OUTER(Flags.MATCH_BINDING_TO_OUTER),
-        RECORD(Flags.RECORD),
-        RECOVERABLE(Flags.RECOVERABLE),
-        SEALED(Flags.SEALED),
-        NON_SEALED(Flags.NON_SEALED) {
-            @Override
-            public String toString() {
-                return "non-sealed";
-            }
-        },
-        STRICT(Flags.STRICT);
-
-        Flag(long flag) {
-            this.value = flag;
-            this.lowercaseName = StringUtils.toLowerCase(name());
-        }
-
-        @Override
-        public String toString() {
-            return lowercaseName;
-        }
-
-        final long value;
-        final String lowercaseName;
-    }
     public enum FlagTarget {
         /** This flag can appear the JCBlock.
          */

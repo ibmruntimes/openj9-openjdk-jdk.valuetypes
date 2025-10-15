@@ -77,9 +77,9 @@ public class ClassAccessFlagsRawTest {
 
         // Test that the modifier flags return element type flags.
         flags = (int)arr.getClass().getModifiers();
-        if (flags != (Modifier.ABSTRACT | Modifier.FINAL | Modifier.PUBLIC)) {
+        if (flags != (Modifier.ABSTRACT | Modifier.FINAL | Modifier.PUBLIC | Modifier.IDENTITY)) {
             throw new RuntimeException(
-                "expected 0x411, got 0x" + Integer.toHexString(flags) + " for primitive type");
+                "expected 0x431, got 0x" + Integer.toHexString(flags) + " for primitive type");
         }
 
         // Test that AccessFlags set will return element type access flags.
@@ -98,9 +98,17 @@ public class ClassAccessFlagsRawTest {
 
         // Test object array component type.
         flags = (int)m.invoke((new SUPERnotset[2]).getClass().getComponentType());
-        if (flags != Modifier.PUBLIC) {
+        // Because of the repurposing of ACC_SUPER into ACC_IDENTITY by JEP 401, the VM now fixes missing ACC_IDENTITY flags in old class files
+        if (flags != (Modifier.PUBLIC | Modifier.IDENTITY)) {
             throw new RuntimeException(
                 "expected 0x1, got 0x" + Integer.toHexString(flags) + " for object array");
+        }
+
+        // test multi-dimensional object array.  should return flags of component.
+        flags = (int)m.invoke((new SUPERnotset[4][2]).getClass());
+        if (flags != 0) {
+            throw new RuntimeException(
+                "expected 0x0, got 0x" + Integer.toHexString(flags) + " for object array");
         }
     }
 }

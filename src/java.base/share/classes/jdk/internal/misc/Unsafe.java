@@ -25,6 +25,7 @@
 
 package jdk.internal.misc;
 
+import jdk.internal.value.ValueClass;
 import jdk.internal.vm.annotation.AOTRuntimeSetup;
 import jdk.internal.vm.annotation.AOTSafeClassInitializer;
 import jdk.internal.vm.annotation.ForceInline;
