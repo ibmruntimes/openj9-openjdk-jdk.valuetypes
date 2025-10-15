@@ -215,7 +215,6 @@ public class Flow {
     private final Resolve rs;
     private final JCDiagnostic.Factory diags;
     private Env<AttrContext> attrEnv;
-    private       Lint lint;
     private final Infer infer;
     private final UnsetFieldsInfo unsetFieldsInfo;
     private final boolean allowValueClasses;
@@ -340,7 +339,6 @@ public class Flow {
         syms = Symtab.instance(context);
         types = Types.instance(context);
         chk = Check.instance(context);
-        lint = Lint.instance(context);
         infer = Infer.instance(context);
         rs = Resolve.instance(context);
         diags = JCDiagnostic.Factory.instance(context);
@@ -589,10 +587,8 @@ public class Flow {
             if (tree.sym == null) return;
             Liveness alivePrev = alive;
             ListBuffer<PendingExit> pendingExitsPrev = pendingExits;
-            Lint lintPrev = lint;
 
             pendingExits = new ListBuffer<>();
-            lint = lint.augment(tree.sym);
 
             try {
                 // process all the nested classes
@@ -623,30 +619,22 @@ public class Flow {
             } finally {
                 pendingExits = pendingExitsPrev;
                 alive = alivePrev;
-                lint = lintPrev;
             }
         }
 
         public void visitMethodDef(JCMethodDecl tree) {
             if (tree.body == null) return;
-            Lint lintPrev = lint;
-
-            lint = lint.augment(tree.sym);
 
             Assert.check(pendingExits.isEmpty());
 
-            try {
-                alive = Liveness.ALIVE;
-                scanStat(tree.body);
-                tree.completesNormally = alive != Liveness.DEAD;
+            alive = Liveness.ALIVE;
+            scanStat(tree.body);
+            tree.completesNormally = alive != Liveness.DEAD;
 
-                if (alive == Liveness.ALIVE && !tree.sym.type.getReturnType().hasTag(VOID))
-                    log.error(TreeInfo.diagEndPos(tree.body), Errors.MissingRetStmt);
+            if (alive == Liveness.ALIVE && !tree.sym.type.getReturnType().hasTag(VOID))
+                log.error(TreeInfo.diagEndPos(tree.body), Errors.MissingRetStmt);
 
-                clearPendingExits(true);
-            } finally {
-                lint = lintPrev;
-            }
+            clearPendingExits(true);
         }
 
         private void clearPendingExits(boolean inMethod) {
@@ -661,15 +649,7 @@ public class Flow {
         }
 
         public void visitVarDef(JCVariableDecl tree) {
-            if (tree.init != null) {
-                Lint lintPrev = lint;
-                lint = lint.augment(tree.sym);
-                try{
-                    scan(tree.init);
-                } finally {
-                    lint = lintPrev;
-                }
-            }
+            scan(tree.init);
         }
 
         public void visitBlock(JCBlock tree) {
@@ -1259,7 +1239,7 @@ public class Flow {
                 tree.finallyCanCompleteNormally = alive != Liveness.DEAD;
                 if (alive == Liveness.DEAD) {
                     log.warning(TreeInfo.diagEndPos(tree.finalizer),
-                            LintWarnings.FinallyCannotComplete);
+                                LintWarnings.FinallyCannotComplete);
                 } else {
                     while (exits.nonEmpty()) {
                         pendingExits.append(exits.next());
@@ -1479,7 +1459,6 @@ public class Flow {
             List<Type> thrownPrev = thrown;
             List<Type> caughtPrev = caught;
             ListBuffer<PendingExit> pendingExitsPrev = pendingExits;
-            Lint lintPrev = lint;
             boolean anonymousClass = tree.name == names.empty;
             pendingExits = new ListBuffer<>();
             if (!anonymousClass) {
@@ -1487,7 +1466,6 @@ public class Flow {
             }
             classDef = tree;
             thrown = List.nil();
-            lint = lint.augment(tree.sym);
 
             try {
                 // process all the nested classes
@@ -1536,7 +1514,6 @@ public class Flow {
                 pendingExits = pendingExitsPrev;
                 caught = caughtPrev;
                 classDef = classDefPrev;
-                lint = lintPrev;
             }
         }
 
@@ -1545,9 +1522,6 @@ public class Flow {
 
             List<Type> caughtPrev = caught;
             List<Type> mthrown = tree.sym.type.getThrownTypes();
-            Lint lintPrev = lint;
-
-            lint = lint.augment(tree.sym);
 
             Assert.check(pendingExits.isEmpty());
 
@@ -1580,20 +1554,11 @@ public class Flow {
                 }
             } finally {
                 caught = caughtPrev;
-                lint = lintPrev;
             }
         }
 
         public void visitVarDef(JCVariableDecl tree) {
-            if (tree.init != null) {
-                Lint lintPrev = lint;
-                lint = lint.augment(tree.sym);
-                try{
-                    scan(tree.init);
-                } finally {
-                    lint = lintPrev;
-                }
-            }
+            scan(tree.init);
         }
 
         public void visitBlock(JCBlock tree) {
@@ -2425,82 +2390,76 @@ public class Flow {
                 return;
             }
 
-            Lint lintPrev = lint;
-            lint = lint.augment(tree.sym);
+            JCClassDecl classDefPrev = classDef;
+            int firstadrPrev = firstadr;
+            int nextadrPrev = nextadr;
+            ListBuffer<PendingExit> pendingExitsPrev = pendingExits;
+
+            pendingExits = new ListBuffer<>();
+            if (tree.name != names.empty) {
+                firstadr = nextadr;
+            }
+            classDef = tree;
             try {
-                JCClassDecl classDefPrev = classDef;
-                int firstadrPrev = firstadr;
-                int nextadrPrev = nextadr;
-                ListBuffer<PendingExit> pendingExitsPrev = pendingExits;
-
-                pendingExits = new ListBuffer<>();
-                if (tree.name != names.empty) {
-                    firstadr = nextadr;
+                // define all the static fields
+                for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+                    if (l.head.hasTag(VARDEF)) {
+                        JCVariableDecl def = (JCVariableDecl)l.head;
+                        if ((def.mods.flags & STATIC) != 0) {
+                            VarSymbol sym = def.sym;
+                            if (trackable(sym)) {
+                                newVar(def);
+                            }
+                        }
+                    }
                 }
-                classDef = tree;
-                try {
-                    // define all the static fields
-                    for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
-                        if (l.head.hasTag(VARDEF)) {
-                            JCVariableDecl def = (JCVariableDecl)l.head;
-                            if ((def.mods.flags & STATIC) != 0) {
-                                VarSymbol sym = def.sym;
-                                if (trackable(sym)) {
-                                    newVar(def);
-                                }
+
+                // process all the static initializers
+                forEachInitializer(tree, true, def -> {
+                    scan(def);
+                    clearPendingExits(false);
+                });
+
+                // verify all static final fields got initialized
+                for (int i = firstadr; i < nextadr; i++) {
+                    JCVariableDecl vardecl = vardecls[i];
+                    VarSymbol var = vardecl.sym;
+                    if (var.owner == classDef.sym && var.isStatic()) {
+                        checkInit(TreeInfo.diagnosticPositionFor(var, vardecl), var);
+                    }
+                }
+
+                // define all the instance fields
+                for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+                    if (l.head.hasTag(VARDEF)) {
+                        JCVariableDecl def = (JCVariableDecl)l.head;
+                        if ((def.mods.flags & STATIC) == 0) {
+                            VarSymbol sym = def.sym;
+                            if (trackable(sym)) {
+                                newVar(def);
                             }
                         }
                     }
+                }
 
-                    // process all the static initializers
-                    forEachInitializer(tree, true, def -> {
-                        scan(def);
-                        clearPendingExits(false);
-                    });
-
-                    // verify all static final fields got initialized
-                    for (int i = firstadr; i < nextadr; i++) {
-                        JCVariableDecl vardecl = vardecls[i];
-                        VarSymbol var = vardecl.sym;
-                        if (var.owner == classDef.sym && var.isStatic()) {
-                            checkInit(TreeInfo.diagnosticPositionFor(var, vardecl), var);
-                        }
+                // process all the methods
+                for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+                    if (l.head.hasTag(METHODDEF)) {
+                        scan(l.head);
                     }
+                }
 
-                    // define all the instance fields
-                    for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
-                        if (l.head.hasTag(VARDEF)) {
-                            JCVariableDecl def = (JCVariableDecl)l.head;
-                            if ((def.mods.flags & STATIC) == 0) {
-                                VarSymbol sym = def.sym;
-                                if (trackable(sym)) {
-                                    newVar(def);
-                                }
-                            }
-                        }
+                // process all the nested classes
+                for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
+                    if (l.head.hasTag(CLASSDEF)) {
+                        scan(l.head);
                     }
-
-                    // process all the methods
-                    for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
-                        if (l.head.hasTag(METHODDEF)) {
-                            scan(l.head);
-                        }
-                    }
-
-                    // process all the nested classes
-                    for (List<JCTree> l = tree.defs; l.nonEmpty(); l = l.tail) {
-                        if (l.head.hasTag(CLASSDEF)) {
-                            scan(l.head);
-                        }
-                    }
-                } finally {
-                    pendingExits = pendingExitsPrev;
-                    nextadr = nextadrPrev;
-                    firstadr = firstadrPrev;
-                    classDef = classDefPrev;
                 }
             } finally {
-                lint = lintPrev;
+                pendingExits = pendingExitsPrev;
+                nextadr = nextadrPrev;
+                firstadr = firstadrPrev;
+                classDef = classDefPrev;
             }
         }
 
@@ -2579,15 +2538,18 @@ public class Flow {
                                      */
                                         var.flags_field |= UNINITIALIZED_FIELD;
                                     } else {
-                                        checkInit(TreeInfo.diagnosticPositionFor(var, vardecl), var);
+                                        checkInit(TreeInfo.diagEndPos(tree.body), var);
                                     }
                                 } else {
-                                    checkInit(TreeInfo.diagEndPos(tree.body), var);
+                                    checkInit(TreeInfo.diagnosticPositionFor(var, vardecl), var);
                                 }
+                            } else {
+                                checkInit(TreeInfo.diagEndPos(tree.body), var);
                             }
                         }
                     }
                 }
+                clearPendingExits(true);
             } finally {
                 inits.assign(initsPrev);
                 uninits.assign(uninitsPrev);
@@ -2634,21 +2596,15 @@ public class Flow {
         }
 
         public void visitVarDef(JCVariableDecl tree) {
-            Lint lintPrev = lint;
-            lint = lint.augment(tree.sym);
-            try{
-                boolean track = trackable(tree.sym);
-                if (track && (tree.sym.owner.kind == MTH || tree.sym.owner.kind == VAR)) {
-                    newVar(tree);
+            boolean track = trackable(tree.sym);
+            if (track && (tree.sym.owner.kind == MTH || tree.sym.owner.kind == VAR)) {
+                newVar(tree);
+            }
+            if (tree.init != null) {
+                scanExpr(tree.init);
+                if (track) {
+                    letInit(tree.pos(), tree.sym);
                 }
-                if (tree.init != null) {
-                    scanExpr(tree.init);
-                    if (track) {
-                        letInit(tree.pos(), tree.sym);
-                    }
-                }
-            } finally {
-                lint = lintPrev;
             }
         }
 
@@ -2900,8 +2856,7 @@ public class Flow {
             final Bits uninitsEnd = new Bits(uninits);
             int nextadrCatch = nextadr;
 
-            if (!resourceVarDecls.isEmpty() &&
-                    lint.isEnabled(Lint.LintCategory.TRY)) {
+            if (!resourceVarDecls.isEmpty()) {
                 for (JCVariableDecl resVar : resourceVarDecls) {
                     if (unrefdResources.includes(resVar.sym) && !resVar.sym.isUnnamedVariable()) {
                         log.warning(resVar.pos(),

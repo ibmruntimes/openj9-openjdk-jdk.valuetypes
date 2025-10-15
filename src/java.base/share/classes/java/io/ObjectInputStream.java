@@ -2261,7 +2261,7 @@ public class ObjectInputStream
                 desc.hasReadResolveMethod())
             {
                 /* user code is invoked */
-                refreshLudcl = true;
+            	cachedLudcl = null;
                 Object rep = desc.invokeReadResolve(obj);
                 if (unshared && rep.getClass().isArray()) {
                     rep = cloneArray(rep);
@@ -2591,6 +2591,9 @@ public class ObjectInputStream
             curContext = new SerialCallbackContext(obj, slotDesc);
 
             bin.setBlockDataMode(true);
+
+            /* user code is invoked */
+            cachedLudcl = null;
             slotDesc.invokeReadObject(obj, this);
         } catch (ClassNotFoundException ex) {
             /*
