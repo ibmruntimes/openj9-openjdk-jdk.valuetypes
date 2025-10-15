@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2021, 2024 All Rights Reserved
+ * (c) Copyright IBM Corp. 2021, 2025 All Rights Reserved
  * ===========================================================================
  */
 
@@ -241,7 +241,7 @@ public class Thread implements Runnable {
     private volatile ClassLoader contextClassLoader;
 
     // Additional fields for platform threads.
-    // All fields, except task, are accessed directly by the VM.
+    // All fields, except task and terminatingThreadLocals, are accessed directly by the VM.
     private static class FieldHolder {
         final ThreadGroup group;
         final Runnable task;
@@ -249,6 +249,9 @@ public class Thread implements Runnable {
         volatile int priority;
         volatile boolean daemon;
         volatile int threadStatus;
+
+        // This map is maintained by the ThreadLocal class
+        ThreadLocal.ThreadLocalMap terminatingThreadLocals;
 
         FieldHolder(ThreadGroup group,
                     Runnable task,
@@ -265,17 +268,41 @@ public class Thread implements Runnable {
     }
     private final FieldHolder holder;
 
+    ThreadLocal.ThreadLocalMap terminatingThreadLocals() {
+        return holder.terminatingThreadLocals;
+    }
+
+    void setTerminatingThreadLocals(ThreadLocal.ThreadLocalMap map) {
+        holder.terminatingThreadLocals = map;
+    }
+
     /*
      * ThreadLocal values pertaining to this thread. This map is maintained
      * by the ThreadLocal class.
      */
-    ThreadLocal.ThreadLocalMap threadLocals;
+    private ThreadLocal.ThreadLocalMap threadLocals;
+
+    ThreadLocal.ThreadLocalMap threadLocals() {
+        return threadLocals;
+    }
+
+    void setThreadLocals(ThreadLocal.ThreadLocalMap map) {
+        threadLocals = map;
+    }
 
     /*
      * InheritableThreadLocal values pertaining to this thread. This map is
      * maintained by the InheritableThreadLocal class.
      */
-    ThreadLocal.ThreadLocalMap inheritableThreadLocals;
+    private ThreadLocal.ThreadLocalMap inheritableThreadLocals;
+
+    ThreadLocal.ThreadLocalMap inheritableThreadLocals() {
+        return inheritableThreadLocals;
+    }
+
+    void setInheritableThreadLocals(ThreadLocal.ThreadLocalMap map) {
+        inheritableThreadLocals = map;
+    }
 
     /*
      * Scoped value bindings are maintained by the ScopedValue class.
@@ -1416,7 +1443,7 @@ public class Thread implements Runnable {
 
             // start thread
             boolean started = false;
-            container.onStart(this);  // may throw
+            container.add(this);  // may throw
             try {
                 // scoped values may be inherited
                 inheritScopedValueBindings(container);
@@ -1425,7 +1452,7 @@ public class Thread implements Runnable {
                 started = true;
             } finally {
                 if (!started) {
-                    container.onExit(this);
+                    container.remove(this);
                 }
             }
         }
@@ -1499,12 +1526,12 @@ public class Thread implements Runnable {
                 // notify container that thread is exiting
                 ThreadContainer container = threadContainer();
                 if (container != null) {
-                    container.onExit(this);
+                    container.remove(this);
                 }
             }
 
             try {
-                if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
+                if (terminatingThreadLocals() != null) {
                     TerminatingThreadLocal.threadTerminated();
                 }
             } finally {
@@ -1646,7 +1673,7 @@ public class Thread implements Runnable {
 
     final void clearInterrupt() {
         // assert Thread.currentCarrierThread() == this;
-        if (interrupted) {
+        if (interrupted || isInterruptedImpl()) {
             interrupted = false;
             clearInterruptEvent();
         }
@@ -1657,17 +1684,23 @@ public class Thread implements Runnable {
         if (com.ibm.oti.vm.VM.isJVMInSingleThreadedMode()) {
             return interruptedImpl();
         }
-        boolean oldValue = interrupted;
+
+        /*
+         * It is possible for the Java and native interrupt status to get out of sync. Sending
+         * two interrupts to the same thread in quick succession can cause this. It is critical
+         * that clearing the interrupt status also clears the native status. If the Java
+         * interrupt status is false, it is important to verify that this is consistent with the
+         * native status to prevent an unexpected interrupt exception the next time
+         * sleep() or wait() is called.
+         */
+        boolean oldValue = interrupted || isInterruptedImpl();
         if (oldValue) {
             synchronized (interruptLock) {
-                oldValue = interrupted;
                 // We may have been interrupted the moment after we read the field,
                 // so only clear the field if we saw that it was set and will return
                 // true; otherwise we could lose an interrupt.
-                if (oldValue) {
-                    interrupted = false;
-                    clearInterruptEvent();
-                }
+                interrupted = false;
+                clearInterruptEvent();
             }
         }
         return oldValue;

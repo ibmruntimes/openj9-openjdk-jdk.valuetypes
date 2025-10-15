@@ -22,21 +22,25 @@
  */
 
 /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2025, 2025 All Rights Reserved
+ * ===========================================================================
+ */
+
+/*
  * @test id=default
  * @bug 8284161 8286788 8321270
  * @summary Test Thread API with virtual threads
- * @modules java.base/java.lang:+open jdk.management
+ * @modules java.base/com.ibm.oti.vm java.base/java.lang:+open jdk.management
  * @library /test/lib
- * @build LockingMode
  * @run junit/othervm/native --enable-native-access=ALL-UNNAMED ThreadAPI
  */
 
 /*
  * @test id=no-vmcontinuations
  * @requires vm.continuations
- * @modules java.base/java.lang:+open jdk.management
+ * @modules java.base/com.ibm.oti.vm java.base/java.lang:+open jdk.management
  * @library /test/lib
- * @build LockingMode
  * @run junit/othervm/native -XX:+UnlockExperimentalVMOptions -XX:-VMContinuations
  *     --enable-native-access=ALL-UNNAMED ThreadAPI
  */
@@ -70,7 +74,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.condition.DisabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -1112,7 +1115,6 @@ class ThreadAPI {
      * Test Thread.yield releases carrier thread when virtual thread holds a monitor.
      */
     @Test
-    @DisabledIf("LockingMode#isLegacy")
     void testYieldReleasesCarrierWhenHoldingMonitor() throws Exception {
         assumeTrue(VThreadScheduler.supportsCustomScheduler(), "No support for custom schedulers");
         var list = new CopyOnWriteArrayList<String>();

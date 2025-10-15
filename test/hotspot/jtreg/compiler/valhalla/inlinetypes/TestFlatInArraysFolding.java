@@ -52,7 +52,6 @@ package compiler.valhalla.inlinetypes;
 
 import compiler.lib.ir_framework.*;
 
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import jdk.internal.vm.annotation.LooselyConsistentValue;
 
 public class TestFlatInArraysFolding {
@@ -79,6 +78,7 @@ public class TestFlatInArraysFolding {
     static int iFld;
 
     public static void main(String[] args) {
+        // TODO 8350865 Scenarios are equivalent, FlatArrayElementMaxSize does not exist anymore
         Scenario flatArrayElementMaxSize1Scenario = new Scenario(1, "-XX:-UseArrayFlattening");
         Scenario flatArrayElementMaxSize4Scenario = new Scenario(2, "-XX:-UseArrayFlattening");
         Scenario noFlagsScenario = new Scenario(3);
@@ -95,7 +95,7 @@ public class TestFlatInArraysFolding {
             // Use IgnoreUnrecognizedVMOptions since LoopMaxUnroll is a C2 flag.
             // testSubTypeCheck() only triggers with SerialGC.
             Scenario serialGCScenario = new Scenario(4, "-XX:+UseSerialGC", "-XX:+IgnoreUnrecognizedVMOptions",
-                                                     "-XX:LoopMaxUnroll=0");
+                                                     "-XX:LoopMaxUnroll=0", "-XX:+UseArrayFlattening");
             testFramework.addScenarios(serialGCScenario);
         }
         Scenario noMethodTraps = new Scenario(5, "-XX:PerMethodTrapLimit=0", "-Xbatch");
@@ -118,9 +118,15 @@ public class TestFlatInArraysFolding {
                   IRNode.STORE_I, "1"}, // CmpP folded in unswitched loop version with flat in array?
         applyIf = {"LoopMaxUnroll", "0"})
     static void testCmpP() {
+        Object[] arr = oArr;
+        if (arr == null) {
+            // Needed for the 'arrayElement == arr' to fold in
+            // the flat array case because both could be null.
+            throw new NullPointerException("arr is null");
+        }
         for (int i = 0; i < 100; i++) {
             Object arrayElement = oArrArr[i];
-            if (arrayElement == oArr) {
+            if (arrayElement == arr) {
                 iFld = 34;
             }
         }
@@ -158,6 +164,7 @@ public class TestFlatInArraysFolding {
         }
     }
 
+    // TODO 8350865 FlatArrayElementMaxSize does not exist anymore
     // PUnique is the unique concrete sub class of AUnique and is not flat in array (with FlatArrayElementMaxSize=4).
     // The CheckCastPP output of the sub type check uses PUnique while the sub type check itself uses AUnique. This leads
     // to a bad graph because the type system determines that the flat in array super klass cannot be met with the
@@ -236,7 +243,6 @@ public class TestFlatInArraysFolding {
         abstract void foo();
     }
 
-    @ImplicitlyConstructible
     @LooselyConsistentValue
     static value class PUnique extends AUnique {
         int x;
@@ -258,7 +264,6 @@ public class TestFlatInArraysFolding {
         abstract void foo();
     }
 
-    @ImplicitlyConstructible
     @LooselyConsistentValue
     static value class FlatInArray extends A implements I {
         int x;
@@ -270,6 +275,7 @@ public class TestFlatInArraysFolding {
         public void bar() {}
     }
 
+    // TODO 8350865 FlatArrayElementMaxSize does not exist anymore
     // Not flat in array with -XX:FlatArrayElementMaxSize=4
     static value class NotFlatInArray extends A implements I {
         int x;

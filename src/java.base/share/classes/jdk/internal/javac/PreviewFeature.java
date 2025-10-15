@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,11 +21,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- */
-/*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2024, 2024 All Rights Reserved
- * ===========================================================================
  */
 
 package jdk.internal.javac;
@@ -78,25 +73,22 @@ public @interface PreviewFeature {
         @JEP(number=401, title="Value Classes and Objects", status = "Preview")
         VALUE_OBJECTS,
 
-        @JEP(number=495, title="Simple Source Files and Instance Main Methods", status="Fourth Preview")
-        IMPLICIT_CLASSES,
-        @JEP(number=487, title="Scoped Values", status="Fourth Preview")
+        // while building the interim javac, the ClassReader will produce a warning when loading a class
+        // keeping the constant of a feature that has been integrated or dropped, serves the purpose of muting such warnings.
+        //---
+        IMPLICIT_CLASSES, //to be removed when boot JDK is 25
         SCOPED_VALUES,
-        @JEP(number=499, title="Structured Concurrency", status="Fourth Preview")
+        @JEP(number=505, title="Structured Concurrency", status="Fifth Preview")
         STRUCTURED_CONCURRENCY,
         CLASSFILE_API,
         STREAM_GATHERERS,
-        @JEP(number=494, title="Module Import Declarations", status="Second Preview")
-        MODULE_IMPORTS,
-        @JEP(number=478, title="Key Derivation Function API", status="Preview")
-        KEY_DERIVATION,
+        MODULE_IMPORTS, //remove when the boot JDK is JDK 25
+        KEY_DERIVATION, //remove when the boot JDK is JDK 25
+        @JEP(number = 502, title = "Stable Values", status = "Preview")
+        STABLE_VALUES,
+        @JEP(number=470, title="PEM Encodings of Cryptographic Objects", status="Preview")
+        PEM_API,
         LANGUAGE_MODEL,
-        // Not used, but required by interim javac with Java 21 bootjdk.
-        @JEP(number=445, title="Unnamed Classes and Instance Main Methods", status="Deprecated")
-        UNNAMED_CLASSES,
-        FOREIGN,
-        @JEP(number=459, title="String Templates", status="Second Preview")
-        STRING_TEMPLATES,
         /**
          * A key for testing.
          */

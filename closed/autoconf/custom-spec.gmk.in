@@ -24,16 +24,15 @@
 # arguments:
 # $1 the name of the makefile
 define IncludeCustomExtension
-  ifndef OPENJDK
-    custom_include_file := $(TOPDIR)/closed/custom/$(strip $1)
-    ifneq ($$(wildcard $$(custom_include_file)), )
-      include $$(custom_include_file)
-    endif
+  custom_include_file := $(TOPDIR)/closed/custom/$(strip $1)
+  ifneq ($$(wildcard $$(custom_include_file)), )
+    include $$(custom_include_file)
   endif
 endef
 
 OPENJ9_TOPDIR           := @OPENJ9_TOPDIR@
 OPENJ9OMR_TOPDIR        := @OPENJ9OMR_TOPDIR@
+VENDOR_TOPDIR           := @VENDOR_TOPDIR@
 
 # compiler overrides
 OPENJ9_CC               := @OPENJ9_CC@
@@ -56,7 +55,7 @@ WARNING_MODULES := \
 	#
 
 ifneq (,$(filter $(WARNING_MODULES),$(MODULE)))
-  JAVA_WARNINGS_ARE_ERRORS :=
+  JAVA_WARNINGS_AS_ERRORS := false
 endif
 
 # CUDA
@@ -80,7 +79,7 @@ OPENJ9_ENABLE_JITSERVER              := @OPENJ9_ENABLE_JITSERVER@
 OPENJ9_ENABLE_SNAPSHOTS              := @OPENJ9_ENABLE_SNAPSHOTS@
 
 # for constructing version output
-COMPILER_VERSION_STRING := @COMPILER_VERSION_STRING@
+CXX_VERSION_STRING := @CXX_VERSION_STRING@
 
 include $(TOPDIR)/closed/openjdk-tag.gmk
 

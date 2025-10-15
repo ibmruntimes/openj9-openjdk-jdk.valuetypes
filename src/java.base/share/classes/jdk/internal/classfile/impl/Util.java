@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,8 @@ import java.lang.classfile.*;
 import java.lang.classfile.attribute.CodeAttribute;
 import jdk.internal.classfile.components.ClassPrinter;
 import java.lang.classfile.constantpool.ClassEntry;
+import java.lang.classfile.constantpool.ConstantPool;
+import java.lang.classfile.constantpool.ConstantPoolBuilder;
 import java.lang.classfile.constantpool.ModuleEntry;
 import java.lang.classfile.constantpool.PoolEntry;
 import java.lang.classfile.constantpool.Utf8Entry;
@@ -35,6 +37,7 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.lang.constant.ModuleDesc;
 import java.lang.reflect.AccessFlag;
+import java.lang.reflect.ClassFileFormatVersion;
 import java.util.AbstractList;
 import java.util.Collection;
 import java.util.List;
@@ -47,6 +50,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 
 import static java.lang.classfile.ClassFile.ACC_STATIC;
+import static java.lang.constant.ConstantDescs.INIT_NAME;
 import static jdk.internal.constant.PrimitiveClassDescImpl.CD_double;
 import static jdk.internal.constant.PrimitiveClassDescImpl.CD_long;
 import static jdk.internal.constant.PrimitiveClassDescImpl.CD_void;
@@ -56,7 +60,7 @@ import static jdk.internal.constant.PrimitiveClassDescImpl.CD_void;
  * represented as JVM type descriptor strings and symbols are represented as
  * name strings
  */
-public class Util {
+public final class Util {
 
     private Util() {
     }
@@ -146,6 +150,33 @@ public class Util {
                 : ClassDesc.ofInternalName(classInternalNameOrArrayDesc);
     }
 
+    /// Sanitizes an input list to make it immutable, and verify its size can
+    /// be represented with U1, throwing IAE otherwise.
+    public static <T> List<T> sanitizeU1List(List<T> input) {
+        var copy = List.copyOf(input);
+        checkU1(copy.size(), "list size");
+        return copy;
+    }
+
+    /// Sanitizes an input list to make it immutable, and verify its size can
+    /// be represented with U2, throwing IAE otherwise.
+    public static <T> List<T> sanitizeU2List(Collection<T> input) {
+        var copy = List.copyOf(input);
+        checkU2(copy.size(), "list size");
+        return copy;
+    }
+
+    /// Sanitizes an input nested list of parameter annotations.
+    public static List<List<Annotation>> sanitizeParameterAnnotations(List<List<Annotation>> input) {
+        var array = input.toArray().clone();
+        checkU1(array.length, "parameter count");
+        for (int i = 0; i < array.length; i++) {
+            array[i] = sanitizeU2List((List<?>) array[i]);
+        }
+
+        return SharedSecrets.getJavaUtilCollectionAccess().listFromTrustedArray(array);
+    }
+
     public static<T, U> List<U> mappedList(List<? extends T> list, Function<T, U> mapper) {
         return new AbstractList<>() {
             @Override
@@ -186,6 +217,31 @@ public class Util {
                 String.format("Wrong opcode kind specified; found %s(%s), expected %s", op, op.kind(), k));
     }
 
+    /// Ensures the given value won't be truncated when written as a u1
+    public static int checkU1(int incoming, String valueName) {
+        if ((incoming & ~0xFF) != 0) {
+            throw outOfRangeException(incoming, valueName, "u1");
+        }
+        return incoming;
+    }
+
+    /// Ensures the given value won't be truncated when written as a u2
+    public static char checkU2(int incoming, String valueName) {
+        if ((incoming & ~0xFFFF) != 0)
+            throw outOfRangeException(incoming, valueName, "u2");
+        return (char) incoming;
+    }
+
+    public static IllegalArgumentException outOfRangeException(int value, String fieldName, String typeName) {
+        return new IllegalArgumentException(
+		String.format("%s out of range of %s: %d", fieldName, typeName, value));
+    }
+
+    /// Ensures the given mask won't be truncated when written as an access flag
+    public static char checkFlags(int mask) {
+        return checkU2(mask, "access flags");
+    }
+
     public static int flagsToBits(AccessFlag.Location location, Collection<AccessFlag> flags) {
         int i = 0;
         for (AccessFlag f : flags) {
@@ -200,7 +256,7 @@ public class Util {
     public static int flagsToBits(AccessFlag.Location location, AccessFlag... flags) {
         int i = 0;
         for (AccessFlag f : flags) {
-            if (!f.locations().contains(location)) {
+            if (!f.locations().contains(location) && !f.locations(ClassFileFormatVersion.CURRENT_PREVIEW_FEATURES).contains(location)) {
                 throw new IllegalArgumentException("unexpected flag: " + f + " use in target location: " + location);
             }
             i |= f.mask();
@@ -209,7 +265,8 @@ public class Util {
     }
 
     public static boolean has(AccessFlag.Location location, int flagsMask, AccessFlag flag) {
-        return (flag.mask() & flagsMask) == flag.mask() && flag.locations().contains(location);
+        return (flag.mask() & flagsMask) == flag.mask() && (flag.locations().contains(location)
+                || flag.locations(ClassFileFormatVersion.CURRENT_PREVIEW_FEATURES).contains(location));
     }
 
     public static ClassDesc fieldTypeSymbol(Utf8Entry utf8) {
@@ -234,6 +291,7 @@ public class Util {
     @ForceInline
     public static void writeAttributes(BufWriterImpl buf, List<? extends Attribute<?>> list) {
         int size = list.size();
+        Util.checkU2(size, "attributes count");
         buf.writeU2(size);
         for (int i = 0; i < size; i++) {
             writeAttribute(buf, list.get(i));
@@ -242,6 +300,7 @@ public class Util {
 
     @ForceInline
     static void writeList(BufWriterImpl buf, Writable[] array, int size) {
+        Util.checkU2(size, "member count");
         buf.writeU2(size);
         for (int i = 0; i < size; i++) {
             array[i].writeTo(buf);
@@ -258,6 +317,14 @@ public class Util {
 
     public static boolean isDoubleSlot(ClassDesc desc) {
         return desc == CD_double || desc == CD_long;
+    }
+
+    public static boolean checkConstantPoolsCompatible(ConstantPool one, ConstantPool two) {
+        if (one.equals(two))
+            return true;
+        if (one instanceof ConstantPoolBuilder cpb && cpb.canWriteDirect(two))
+            return true;
+        return two instanceof ConstantPoolBuilder cpb && cpb.canWriteDirect(one);
     }
 
     public static void dumpMethod(SplitConstantPool cp,
@@ -301,6 +368,17 @@ public class Util {
             }
             dump.accept(" %02x".formatted(bytes[i]));
         }
+    }
+
+    public static boolean canSkipMethodInflation(ClassReader cr, MethodInfo method, BufWriterImpl buf) {
+        if (!buf.canWriteDirect(cr)) {
+            return false;
+        }
+        if (method.methodName().equalsString(INIT_NAME) &&
+                !buf.strictFieldsMatch(((ClassReaderImpl) cr).getContainedClass())) {
+            return false;
+        }
+        return true;
     }
 
     public static void writeListIndices(BufWriter writer, List<? extends PoolEntry> list) {

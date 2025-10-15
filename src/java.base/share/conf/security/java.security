@@ -184,7 +184,6 @@ RestrictedSecurity.NSS.140-2.securerandom.provider = SunPKCS11-NSS-FIPS
 RestrictedSecurity.NSS.140-2.securerandom.algorithm = PKCS11
 #endif
 
-#if defined aix-ppc || defined linux-ppc || defined linux-s390 || defined linux-x86 || defined windows
 #
 # Strict Restricted Security mode profile for FIPS 140-3. This policy represents only allowable
 # approved cryptography in the OpenJCEPlusFIPS provider along with other non-cryptographic algorithms
@@ -212,7 +211,7 @@ RestrictedSecurity.NSS.140-2.securerandom.algorithm = PKCS11
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.name = OpenJCEPlusFIPS Cryptographic Module FIPS 140-3
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.default = false
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.fips = true
-RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.hash = SHA256:165e640b29e9a250409e353039f735c47dcd1043b056fb5ccd224698d9ae8a1e
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.hash = SHA256:ec0c39e03e01931233de1699882241c3c782382c23bfa51d19d915bf61660f9e
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.number = Certificate #XXX
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.policy = https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.desc.sunsetDate = 2026-09-21
@@ -261,6 +260,14 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {Cipher, AES, *}, \
     {Cipher, AES/CCM/NoPadding, *}, \
     {Cipher, AES/GCM/NoPadding, *}, \
+    {Cipher, AES/KW/NoPadding, *}, \
+    {Cipher, AES/KWP/NoPadding, *}, \
+    {Cipher, AES_128/KW/NoPadding, *}, \
+    {Cipher, AES_128/KWP/NoPadding, *}, \
+    {Cipher, AES_192/KW/NoPadding, *}, \
+    {Cipher, AES_192/KWP/NoPadding, *}, \
+    {Cipher, AES_256/KW/NoPadding, *}, \
+    {Cipher, AES_256/KWP/NoPadding, *}, \
     {KeyAgreement, ECDH, *}, \
     {KeyFactory, DSA, *}, \
     {KeyFactory, EC, *}, \
@@ -271,10 +278,6 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {KeyGenerator, HmacSHA256, *}, \
     {KeyGenerator, HmacSHA384, *}, \
     {KeyGenerator, HmacSHA512, *}, \
-    {KeyGenerator, kda-hkdf-with-sha224, *}, \
-    {KeyGenerator, kda-hkdf-with-sha256, *}, \
-    {KeyGenerator, kda-hkdf-with-sha384, *}, \
-    {KeyGenerator, kda-hkdf-with-sha512, *}, \
     {KeyGenerator, SunTls12KeyMaterial, *}, \
     {KeyGenerator, SunTls12MasterSecret, *}, \
     {KeyGenerator, SunTls12Prf, *}, \
@@ -286,6 +289,9 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.1 = com.ibm.crypto.plu
     {KeyPairGenerator, EC, *}, \
     {KeyPairGenerator, RSA, *}, \
     {KeyPairGenerator, RSAPSS, *}, \
+    {KDF, HKDF-SHA256, *}, \
+    {KDF, HKDF-SHA384, *}, \
+    {KDF, HKDF-SHA512, *}, \
     {Mac, HmacSHA224, *}, \
     {Mac, HmacSHA256, *}, \
     {Mac, HmacSHA3-224, *}, \
@@ -343,9 +349,104 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.jce.provider.3 = sun.security.ssl.S
     {TrustManagerFactory, PKIX, *}, \
     {TrustManagerFactory, SunX509, *}]
 
-RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.javax.net.ssl.keyStore = NONE
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.securerandom.provider = OpenJCEPlusFIPS
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3.securerandom.algorithm = SHA512DRBG
+
+# Strongly enforced restricted security mode profile for FIPS 140-3.
+#
+# This profile extends OpenJCEPlusFIPS.FIPS140-3 and includes non-cryptographic
+# algorithms and common configuration options used by Java services.
+# Highlights include:
+# + Configuration options to enable PKCS12 keystore and associated cryptography.
+# + Allowances for RMI.
+# + Enablement of the JdkSASL and SunJGSS providers.
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.desc.name = OpenJCEPlusFIPS Cryptographic Module FIPS 140-3 Including Additional Java Services
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.desc.default = false
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.desc.hash = SHA256:5b6fa14538ed0a7b89bc187da998519fe0650d7b25b9270e419536deff39467a
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.extends = RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.1 = com.ibm.crypto.plus.provider.OpenJCEPlusFIPS [+ \
+    {MessageDigest, MD5, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {MessageDigest, SHA-1, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {MessageDigest, SHA-1, *, ModuleAndFullClassName:java.rmi/sun.rmi.server.Util}]
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.2 = sun.security.provider.Sun [+ \
+    {KeyStore, PKCS12, *, ModuleAndFullClassName:java.base/java.security.KeyStore}]
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.4 = com.sun.crypto.provider.SunJCE [ \
+    {AlgorithmParameters, PBE, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBES2, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA1AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA1AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA384AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA384AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512/256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithHmacSHA512AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithMD5AndDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithMD5AndTripleDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndDESede, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC2_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC2_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC4_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {AlgorithmParameters, PBEWithSHA1AndRC4_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBE, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA1AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA1AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA384AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA384AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512/256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithHmacSHA512AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithMD5AndDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithMD5AndTripleDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndDESede, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC2_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC2_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC4_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Cipher, PBEWithSHA1AndRC4_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA1, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA224, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA384, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA512, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA512/224, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {Mac, HmacPBESHA512/256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBE, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA1AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA1AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA384AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA384AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/224AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/224AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/256AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512/256AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512AndAES_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithHmacSHA512AndAES_256, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithMD5AndDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithMD5AndTripleDES, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndDESede, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC2_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC2_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC4_128, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}, \
+    {SecretKeyFactory, PBEWithSHA1AndRC4_40, *, ModuleAndFullClassName:java.base/sun.security.pkcs12.PKCS12KeyStore}]
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.5 = sun.security.jgss.SunProvider
+RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Strongly-Enforced.jce.provider.6 = com.sun.security.sasl.gsskerb.JdkSASL
 
 # Weakly-Enforced Restricted Security mode profile for FIPS 140-3. This profile allows for all algorithms
 # within the OpenJCEPlusFIPS provider to be callable, even though algorithms may or may not be allowable
@@ -375,7 +476,6 @@ RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.9 = or
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.10 = sun.security.smartcardio.SunPCSC
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.11 = sun.security.provider.certpath.ldap.JdkLDAP
 RestrictedSecurity.OpenJCEPlusFIPS.FIPS140-3-Weakly-Enforced.jce.provider.12 = com.sun.security.sasl.gsskerb.JdkSASL
-#endif
 
 #
 # A list of preferred providers for specific algorithms. These providers will
@@ -800,7 +900,10 @@ sun.security.krb5.maxReferrals=5
 #       denyAfter YYYY-MM-DD
 #
 #   UsageConstraint:
-#       usage [TLSServer] [TLSClient] [SignedJAR]
+#       usage UsageType { UsageType }
+#
+#   UsageType:
+#       TLSServer | TLSClient | SignedJAR
 #
 #   IncludeProperty:
 #       include <security property>
@@ -863,9 +966,9 @@ sun.security.krb5.maxReferrals=5
 #       use the following:  "RSA keySize == 2048 & denyAfter 2020-02-03"
 #
 #   UsageConstraint:
-#     usage [TLSServer] [TLSClient] [SignedJAR]
+#     usage UsageType { UsageType }
 #       This constraint prohibits the specified algorithm for
-#       a specified usage.  This should be used when disabling an algorithm
+#       a specified UsageType.  This should be used when disabling an algorithm
 #       for all usages is not practical. 'TLSServer' restricts the algorithm
 #       in TLS server certificate chains when server authentication is
 #       performed. 'TLSClient' restricts the algorithm in TLS client
@@ -994,11 +1097,30 @@ http.auth.digest.disabledAlgorithms = MD5, SHA-1
 # This is in addition to the jdk.certpath.disabledAlgorithms property above.
 #
 # See the specification of "jdk.certpath.disabledAlgorithms" for the
-# syntax of the disabled algorithm string. Additionally, TLS cipher suites
-# can be disabled with this property using one or more "*" wildcard characters.
-# For example, "TLS_RSA_*" disables all cipher suites that start with
-# "TLS_RSA_". Only cipher suites starting with "TLS_" are allowed to have
-# wildcard characters.
+# syntax of the disabled algorithm string.
+#
+# Additional TLS-specific syntax supported by this property:
+#
+#   - TLS cipher suites can be disabled with this property using one or more
+#     "*" wildcard characters. For example, "TLS_RSA_*" disables all cipher
+#     suites that start with "TLS_RSA_". Only cipher suites starting with
+#     "TLS_" are allowed to have wildcard characters.
+#
+#   - TLS protocol specific usage constraints are supported by this property:
+#
+#     UsageConstraint:
+#         usage UsageType { UsageType }
+#
+#     UsageType:
+#         HandshakeSignature | CertificateSignature
+#
+#     HandshakeSignature restricts the use of the algorithm in TLS handshake
+#     signatures. CertificateSignature restricts the use of the algorithm in
+#     certificate signatures. An algorithm with this constraint cannot include
+#     other usage types defined in the jdk.certpath.disabledAlgorithms
+#     property. The usage type follows the keyword and more than one usage type
+#     can be specified with a whitespace delimiter.
+#     Example: "rsa_pkcs1_sha1 usage HandshakeSignature"
 #
 # Note: The algorithm restrictions do not apply to trust anchors or
 # self-signed certificates.
@@ -1011,7 +1133,8 @@ http.auth.digest.disabledAlgorithms = MD5, SHA-1
 #       rsa_pkcs1_sha1, secp224r1, TLS_RSA_*
 jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, DTLSv1.0, RC4, DES, \
     MD5withRSA, DH keySize < 1024, EC keySize < 224, 3DES_EDE_CBC, anon, NULL, \
-    ECDH, TLS_RSA_*
+    ECDH, TLS_RSA_*, rsa_pkcs1_sha1 usage HandshakeSignature, \
+    ecdsa_sha1 usage HandshakeSignature, dsa_sha1 usage HandshakeSignature
 
 #
 # Legacy algorithms for Secure Socket Layer/Transport Layer Security (SSL/TLS)
@@ -1254,6 +1377,7 @@ jdk.xml.dsig.secureValidationPolicy=\
     disallowAlg http://www.w3.org/2000/09/xmldsig#rsa-sha1,\
     disallowAlg http://www.w3.org/2007/05/xmldsig-more#sha1-rsa-MGF1,\
     disallowAlg http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha1,\
+    disallowAlg http://www.w3.org/TR/1999/REC-xpath-19991116,\
     maxTransforms 5,\
     maxReferences 30,\
     disallowReferenceUriSchemes file http https,\
@@ -1519,8 +1643,13 @@ jceks.key.serialFilter = java.base/java.lang.Enum;java.base/java.security.KeyRep
 #
 # Enhanced exception message information
 #
-# By default, exception messages should not include potentially sensitive
-# information such as file names, host names, or port numbers. This property
+# Exception messages may include potentially sensitive information such as file
+# names, host names, or port numbers. By default, socket related exceptions
+# have this information restricted (meaning the sensitive details are removed).
+# Exception messages relating to JAR files and exceptions containing user
+# identity information are also restricted by default.
+# This property can be used to relax this restriction or to place further
+# restrictions on other categories, defined below. The property
 # accepts one or more comma separated values, each of which represents a
 # category of enhanced exception message information to enable. Values are
 # case-insensitive. Leading and trailing whitespaces, surrounding each value,
@@ -1533,17 +1662,28 @@ jceks.key.serialFilter = java.base/java.lang.Enum;java.base/java.security.KeyRep
 #
 # The categories are:
 #
-#  hostInfo - IOExceptions thrown by java.net.Socket and the socket types in the
-#             java.nio.channels package will contain enhanced exception
-#             message information
+#  hostInfo - All networking related exceptions will contain enhanced
+#             exception message information.
+#
+#  hostInfoExclSocket - The hostInfo category defined above, excluding
+#             IOExceptions thrown by java.net.Socket and the NetworkChannel
+#             types in the java.nio.channels package, will contain enhanced
+#             exception message information
 #
 #  jar      - enables more detailed information in the IOExceptions thrown
 #             by classes in the java.util.jar package
 #
+#  userInfo - enables more detailed information in exceptions which may contain
+#             user identity information
+#
 # The property setting in this file can be overridden by a system property of
 # the same name, with the same syntax and possible values.
 #
-#jdk.includeInExceptions=hostInfo,jar
+# If the property is not set or set to an empty string, then this is the most
+# restricted setting with all categories disabled. The following is the default
+# (out of the box) setting, meaning these categories are not restricted.
+#
+jdk.includeInExceptions=hostInfoExclSocket
 
 #
 # Disabled mechanisms for the Simple Authentication and Security Layer (SASL)
@@ -1791,3 +1931,12 @@ jdk.tls.alpnCharset=ISO_8859_1
 # security property value defined here.
 #
 #jdk.security.krb5.name.case.sensitive=false
+
+#
+# Default algorithm for PEMEncoder Encrypted PKCS#8
+#
+# This property defines the default password-based encryption algorithm for
+# java.security.PEMEncoder when configured for encryption with the
+# withEncryption method.
+#
+jdk.epkcs8.defaultAlgorithm=PBEWithHmacSHA256AndAES_128

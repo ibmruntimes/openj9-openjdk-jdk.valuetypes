@@ -24,17 +24,27 @@ AC_DEFUN_ONCE([CUSTOM_EARLY_HOOK],
   OPENJ9OMR_TOPDIR="$TOPDIR/omr"
   OPENJ9_TOPDIR="$TOPDIR/openj9"
 
+  AC_ARG_WITH(vendor-source, [AS_HELP_STRING([--with-vendor-source], [set the vendor source directory])])
+  if test "x$with_vendor_source" = x || test "x$with_vendor_source" = xno ; then
+    VENDOR_TOPDIR=
+  else
+    VENDOR_TOPDIR="$TOPDIR/$with_vendor_source"
+    if ! test -d "$VENDOR_TOPDIR" ; then
+      AC_MSG_ERROR(["Cannot locate vendor sources: $VENDOR_TOPDIR! Try 'bash get_source.sh' and restart configure."])
+    fi
+  fi
+
   if ! test -d "$OPENJ9_TOPDIR" ; then
-    AC_MSG_ERROR(["Cannot locate the path to OpenJ9 sources: $OPENJ9_TOPDIR! Try 'bash get_source.sh' and restart configure"])
+    AC_MSG_ERROR(["Cannot locate OpenJ9 sources: $OPENJ9_TOPDIR! Try 'bash get_source.sh' and restart configure."])
   fi
 
   if ! test -d "$OPENJ9OMR_TOPDIR" ; then
-    AC_MSG_ERROR(["Cannot locate the path to OMR sources: $OPENJ9OMR_TOPDIR! Try 'bash get_source.sh' and restart configure"])
+    AC_MSG_ERROR(["Cannot locate OMR sources: $OPENJ9OMR_TOPDIR! Try 'bash get_source.sh' and restart configure."])
   fi
 
   AC_SUBST(OPENJ9OMR_TOPDIR)
   AC_SUBST(OPENJ9_TOPDIR)
-  AC_SUBST(CONFIG_SHELL)
+  AC_SUBST(VENDOR_TOPDIR)
 
   OPENJ9_BASIC_SETUP_FUNDAMENTAL_TOOLS
   OPENJ9_PLATFORM_SETUP
@@ -334,12 +344,8 @@ AC_DEFUN([OPENJ9_CONFIGURE_CRAC_AND_CRIU_SUPPORT],
 
   # Compute platform-specific defaults.
   case "$OPENJ9_PLATFORM_CODE" in
-    xa64)
+    xa64|xl64|xr64|xz64)
       default_crac=yes
-      default_criu=yes
-      ;;
-    xl64|xr64|xz64)
-      default_crac=no
       default_criu=yes
       ;;
     *)
@@ -576,11 +582,11 @@ AC_DEFUN([OPENJ9_PLATFORM_SETUP],
 
   OPENJ9_BUILDSPEC="${OPENJ9_BUILD_OS}_${OPENJ9_BUILD_MODE_ARCH}"
 
-  AC_SUBST(OPENJ9_BUILDSPEC)
-  AC_SUBST(OPENJ9_PLATFORM_CODE)
-  AC_SUBST(COMPILER_VERSION_STRING)
-  AC_SUBST(OPENJ9_LIBS_SUBDIR)
+  AC_SUBST(CXX_VERSION_STRING)
   AC_SUBST(OMR_MIXED_REFERENCES_MODE)
+  AC_SUBST(OPENJ9_BUILDSPEC)
+  AC_SUBST(OPENJ9_LIBS_SUBDIR)
+  AC_SUBST(OPENJ9_PLATFORM_CODE)
 ])
 
 AC_DEFUN([OPENJ9_CHECK_NASM_VERSION],
@@ -654,29 +660,27 @@ AC_DEFUN([CONFIGURE_OPENSSL],
     [Use either fetched | system | <path to openssl version 1.0.2 or later>])])
   AC_ARG_ENABLE(openssl-bundling, [AS_HELP_STRING([--enable-openssl-bundling],
     [enable bundling of the openssl crypto library with the jdk build])])
-  WITH_OPENSSL=yes
-  if test "x$with_openssl" = x; then
-    # User doesn't want to build with OpenSSL. No need to build openssl libraries
-    WITH_OPENSSL=no
+  BUILD_OPENSSL=false
+  OPENSSL_BUNDLE_LIB_PATH=
+  WITH_OPENSSL=true
+  if test "x$with_openssl" = x || test "x$with_openssl" = xno ; then
+    # User doesn't want to build with OpenSSL. No need to build openssl libraries.
+    WITH_OPENSSL=false
   else
     AC_MSG_CHECKING([for OPENSSL])
-    BUNDLE_OPENSSL="$enable_openssl_bundling"
-    BUILD_OPENSSL=no
     # If not specified, default is to not bundle openssl
-    if test "x$BUNDLE_OPENSSL" = x; then
-      BUNDLE_OPENSSL=no
+    if test "x$enable_openssl_bundling" != xyes ; then
+      enable_openssl_bundling=no
     fi
     # Process --with-openssl=fetched
     if test "x$with_openssl" = xfetched ; then
       if test -d "$TOPDIR/openssl" ; then
         OPENSSL_DIR="$TOPDIR/openssl"
         OPENSSL_CFLAGS="-I${OPENSSL_DIR}/include"
-        if test "x$BUNDLE_OPENSSL" != x ; then
-          if ! test -s "$OPENSSL_DIR/${LIBRARY_PREFIX}crypto${SHARED_LIBRARY_SUFFIX}" ; then
-            BUILD_OPENSSL=yes
-          fi
+        if ! test -s "$OPENSSL_DIR/${LIBRARY_PREFIX}crypto${SHARED_LIBRARY_SUFFIX}" ; then
+          BUILD_OPENSSL=true
         fi
-        if test "x$BUNDLE_OPENSSL" = xyes ; then
+        if test "x$enable_openssl_bundling" = xyes ; then
           OPENSSL_BUNDLE_LIB_PATH="${OPENSSL_DIR}"
         fi
         AC_MSG_RESULT([yes])
@@ -704,9 +708,9 @@ AC_DEFUN([CONFIGURE_OPENSSL],
         AC_MSG_ERROR([Unable to find openssl 1.0.2(and above) installed on System. Please use other options for '--with-openssl'])
       fi
       # The crypto library bundling option is not available when --with-openssl=system.
-      if test "x$BUNDLE_OPENSSL" = xyes ; then
+      if test "x$enable_openssl_bundling" = xyes ; then
         AC_MSG_RESULT([no])
-        printf "The option --enable_openssl_bundling is not available with --with-openssl=system. Use option fetched or openssl-custom-path to bundle crypto library\n"
+        printf "The option --enable-openssl-bundling is not available with --with-openssl=system. Use option fetched or openssl-custom-path to bundle crypto library\n"
         AC_MSG_ERROR([Cannot continue])
       fi
     # Process --with-openssl=/custom/path/where/openssl/is/present
@@ -718,7 +722,7 @@ AC_DEFUN([CONFIGURE_OPENSSL],
       if test -s "$OPENSSL_DIR/include/openssl/evp.h" ; then
         OPENSSL_CFLAGS="-I${OPENSSL_DIR}/include"
         if test "x$OPENJDK_BUILD_OS_ENV" = xwindows.cygwin ; then
-          if test "x$BUNDLE_OPENSSL" = xyes ; then
+          if test "x$enable_openssl_bundling" = xyes ; then
             if test -d "$OPENSSL_DIR/bin" ; then
               OPENSSL_BUNDLE_LIB_PATH="${OPENSSL_DIR}/bin"
             else
@@ -728,7 +732,7 @@ AC_DEFUN([CONFIGURE_OPENSSL],
         else
           if test -s "$OPENSSL_DIR/lib/${LIBRARY_PREFIX}crypto${SHARED_LIBRARY_SUFFIX}" ; then
             OPENSSL_CFLAGS="-I${OPENSSL_DIR}/include"
-            if test "x$BUNDLE_OPENSSL" = xyes ; then
+            if test "x$enable_openssl_bundling" = xyes ; then
               # On Mac OSX, create local copy of the crypto library to update @rpath
               # as the default is /usr/local/lib.
               if test "x$OPENJDK_BUILD_OS" = xmacosx ; then
@@ -744,7 +748,7 @@ AC_DEFUN([CONFIGURE_OPENSSL],
             fi
           elif test -s "$OPENSSL_DIR/${LIBRARY_PREFIX}crypto${SHARED_LIBRARY_SUFFIX}" ; then
             OPENSSL_CFLAGS="-I${OPENSSL_DIR}/include"
-            if test "x$BUNDLE_OPENSSL" = xyes ; then
+            if test "x$enable_openssl_bundling" = xyes ; then
               # On Mac OSX, create local copy of the crypto library to update @rpath
               # as the default is /usr/local/lib.
               if test "x$OPENJDK_BUILD_OS" = xmacosx ; then
@@ -769,7 +773,7 @@ AC_DEFUN([CONFIGURE_OPENSSL],
     fi
 
     AC_MSG_CHECKING([if we should bundle openssl])
-    AC_MSG_RESULT([$BUNDLE_OPENSSL])
+    AC_MSG_RESULT([$enable_openssl_bundling])
   fi
 
   AC_SUBST(OPENSSL_BUNDLE_LIB_PATH)

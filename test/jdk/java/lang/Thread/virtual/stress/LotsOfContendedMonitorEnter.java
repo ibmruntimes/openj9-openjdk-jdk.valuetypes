@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,16 +24,8 @@
 /*
  * @test id=default
  * @summary Test virtual threads entering a lot of monitors with contention
- * @requires vm.opt.LockingMode != 1
  * @library /test/lib
- * @run main LotsOfContendedMonitorEnter
- */
-
-/*
- * @test id=LM_LIGHTWEIGHT
- * @requires vm.opt.LockingMode != 1
- * @library /test/lib
- * @run main/othervm -XX:LockingMode=2 LotsOfContendedMonitorEnter
+ * @run main/othervm -Xiss32K -XX:ContinuationCache:t1=8,t2=64 LotsOfContendedMonitorEnter
  */
 
 import java.util.concurrent.CountDownLatch;
@@ -46,7 +38,7 @@ public class LotsOfContendedMonitorEnter {
         if (args.length > 0) {
             depth = Integer.parseInt(args[0]);
         } else {
-            depth = 1024;
+            depth = 128;
         }
         VThreadRunner.run(() -> testContendedEnter(depth));
     }

@@ -25,13 +25,17 @@
 
 package java.lang.invoke;
 
+import jdk.internal.vm.annotation.AOTSafeClassInitializer;
 import sun.invoke.util.Wrapper;
 
+import java.lang.classfile.Annotation;
 import java.lang.classfile.ClassFile;
+import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
 import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -67,6 +71,7 @@ class GenerateJLIClassesHelper {
     static final String INVOKERS_HOLDER = "java/lang/invoke/Invokers$Holder";
     static final String INVOKERS_HOLDER_CLASS_NAME = INVOKERS_HOLDER.replace('/', '.');
     static final String BMH_SPECIES_PREFIX = "java.lang.invoke.BoundMethodHandle$Species_";
+    static final Annotation AOT_SAFE_ANNOTATION = Annotation.of(AOTSafeClassInitializer.class.describeConstable().orElseThrow());
 
     static class HolderClassBuilder {
 
@@ -429,26 +434,42 @@ class GenerateJLIClassesHelper {
             forms.add(form);
             names.add(form.kind.defaultLambdaName);
         }
-        for (Wrapper wrapper : Wrapper.values()) {
-            if (wrapper == Wrapper.VOID) {
-                continue;
+        record FieldLfToken(byte formOp, int ftypeKind) {}
+        List<FieldLfToken> tokens = new ArrayList<>();
+        for (int i = 0; i <= DirectMethodHandle.FT_CHECKED_REF; i++) {
+            for (byte formOp = DirectMethodHandle.AF_GETFIELD; formOp < DirectMethodHandle.AF_LIMIT; formOp++) {
+                tokens.add(new FieldLfToken(formOp, i));
             }
-            for (byte b = DirectMethodHandle.AF_GETFIELD; b < DirectMethodHandle.AF_LIMIT; b++) {
-                int ftype = DirectMethodHandle.ftypeKind(wrapper.primitiveType());
-                LambdaForm form = DirectMethodHandle
-                        .makePreparedFieldLambdaForm(b, /*isVolatile*/false, ftype);
-                if (form.kind != LambdaForm.Kind.GENERIC) {
-                    forms.add(form);
-                    names.add(form.kind.defaultLambdaName);
-                }
-                // volatile
-                form = DirectMethodHandle
-                        .makePreparedFieldLambdaForm(b, /*isVolatile*/true, ftype);
-                if (form.kind != LambdaForm.Kind.GENERIC) {
-                    forms.add(form);
-                    names.add(form.kind.defaultLambdaName);
+        }
+        for (int i : new int[] {DirectMethodHandle.FT_UNCHECKED_NR_REF, DirectMethodHandle.FT_CHECKED_NR_REF}) {
+            for (byte formOp = DirectMethodHandle.AF_GETFIELD; formOp < DirectMethodHandle.AF_LIMIT; formOp++) {
+                boolean isGetter = (formOp & 1) == (DirectMethodHandle.AF_GETFIELD & 1);
+                if (!isGetter) {
+                    tokens.add(new FieldLfToken(formOp, i));
                 }
             }
+        }
+        // Only legal flat combinations; no static
+        tokens.add(new FieldLfToken(DirectMethodHandle.AF_GETFIELD, DirectMethodHandle.FT_NULLABLE_FLAT));
+        tokens.add(new FieldLfToken(DirectMethodHandle.AF_PUTFIELD, DirectMethodHandle.FT_NULLABLE_FLAT));
+        tokens.add(new FieldLfToken(DirectMethodHandle.AF_PUTFIELD, DirectMethodHandle.FT_NR_FLAT));
+        // Compile
+        for (var token : tokens) {
+            byte b = token.formOp;
+            int ftype = token.ftypeKind;
+            LambdaForm form = DirectMethodHandle
+                    .makePreparedFieldLambdaForm(b, /*isVolatile*/false, ftype);
+            if (form.kind == GENERIC)
+                throw new InternalError(b + " non-volatile " + ftype);
+            forms.add(form);
+            names.add(form.kind.defaultLambdaName);
+            // volatile
+            form = DirectMethodHandle
+                    .makePreparedFieldLambdaForm(b, /*isVolatile*/true, ftype);
+            if (form.kind == GENERIC)
+                throw new InternalError(b + " volatile " + ftype);
+            forms.add(form);
+            names.add(form.kind.defaultLambdaName);
         }
         return generateCodeBytesForLFs(className,
                 names.toArray(new String[0]),
@@ -565,6 +586,7 @@ class GenerateJLIClassesHelper {
         return ClassFile.of().build(ClassDesc.ofInternalName(className), clb -> {
             clb.withFlags(ACC_PRIVATE | ACC_FINAL | ACC_SUPER)
                .withSuperclass(InvokerBytecodeGenerator.INVOKER_SUPER_DESC)
+               .with(RuntimeVisibleAnnotationsAttribute.of(AOT_SAFE_ANNOTATION))
                .with(SourceFileAttribute.of(className.substring(className.lastIndexOf('/') + 1)));
             for (int i = 0; i < forms.length; i++) {
                 new InvokerBytecodeGenerator(className, names[i], forms[i], forms[i].methodType()).addMethod(clb, false);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@
  *          jdk.jdeps/com.sun.tools.javap
  *          jdk.jshell/jdk.internal.jshell.tool
  * @build KullaTesting TestingInputStream ToolSimpleTest
- * @run testng/othervm ToolLocalSimpleTest
+ * @run testng/othervm/timeout=480 ToolLocalSimpleTest
  */
 
 import java.util.Locale;
@@ -73,7 +73,7 @@ public class ToolLocalSimpleTest extends ToolSimpleTest {
     public void testCompoundStart() {
         test(new String[]{"--startup", "DEFAULT", "--startup", "PRINTING", "--startup", "TOOLING"},
                 (a) -> assertCommandOutputContains(a, "/list -start",
-                        "System.out.println", "import java.util.concurrent", "tools()")
+                        "System.out.println", "import module java.base;", "tools()")
         );
     }
 

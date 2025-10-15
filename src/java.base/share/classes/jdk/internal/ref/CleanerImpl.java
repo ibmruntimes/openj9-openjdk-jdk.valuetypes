@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2025, 2025 All Rights Reserved
+ * ===========================================================================
+ */
+
 package jdk.internal.ref;
 
 import java.lang.ref.Cleaner;
@@ -35,6 +41,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import jdk.internal.misc.InnocuousThread;
+
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT */
 
 /**
  * CleanerImpl manages a set of object references and corresponding cleaning actions.
@@ -135,8 +145,14 @@ public final class CleanerImpl implements Runnable {
                 mlThread.eraseThreadLocals();
             }
             try {
-                // Wait for a Ref, with a timeout to avoid getting hung
-                // due to a race with clear/clean
+                // Wait for a Ref, with a timeout to avoid a potential hang.
+                // The Cleaner may become unreachable and its cleanable run,
+                // while there are registered cleanables for other objects.
+                // If the application explicitly calls clean() on all remaining
+                // Cleanables, there won't be any references enqueued to unblock
+                // this.  Using a timeout is simpler than unblocking this by
+                // having cleaning of the last registered cleanable enqueue a
+                // dummy reference.
                 Cleanable ref = (Cleanable) queue.remove(60 * 1000L);
                 if (ref != null) {
                     ref.clean();
@@ -265,6 +281,9 @@ public final class CleanerImpl implements Runnable {
          *
          * @return true if the list is empty
          */
+        /*[IF CRIU_SUPPORT]*/
+        @NotCheckpointSafe
+        /*[ENDIF] CRIU_SUPPORT */
         public synchronized boolean isEmpty() {
             // Head node size is zero only when the entire list is empty.
             return head.size == 0;
@@ -273,6 +292,9 @@ public final class CleanerImpl implements Runnable {
         /**
          * Insert this PhantomCleanable in the list.
          */
+        /*[IF CRIU_SUPPORT]*/
+        @NotCheckpointSafe
+        /*[ENDIF] CRIU_SUPPORT */
         public synchronized void insert(PhantomCleanable<?> phc) {
             if (head.size == NODE_CAPACITY) {
                 // Head node is full, insert new one.
@@ -303,6 +325,9 @@ public final class CleanerImpl implements Runnable {
          * @return true if Cleanable was removed or false if not because
          * it had already been removed before
          */
+        /*[IF CRIU_SUPPORT]*/
+        @NotCheckpointSafe
+        /*[ENDIF] CRIU_SUPPORT */
         public synchronized boolean remove(PhantomCleanable<?> phc) {
             if (phc.node == null) {
                 // Not in the list.
