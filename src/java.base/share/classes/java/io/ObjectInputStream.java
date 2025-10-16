@@ -2261,7 +2261,7 @@ public class ObjectInputStream
                 desc.hasReadResolveMethod())
             {
                 /* user code is invoked */
-            	cachedLudcl = null;
+                cachedLudcl = null;
                 Object rep = desc.invokeReadResolve(obj);
                 if (unshared && rep.getClass().isArray()) {
                     rep = cloneArray(rep);
