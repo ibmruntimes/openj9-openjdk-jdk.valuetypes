@@ -79,8 +79,16 @@ compiler/c2/TestVerifyConstraintCasts.java 8355574 generic-all
 
 compiler/c2/aarch64/TestStaticCallStub.java 8359963 linux-aarch64,macosx-aarch64
 
-compiler/jvmci/jdk.vm.ci.hotspot.test/src/jdk/vm/ci/hotspot/test/MemoryAccessProviderTest.java 8350208 generic-all
-compiler/jvmci/jdk.vm.ci.hotspot.test/src/jdk/vm/ci/hotspot/test/TestHotSpotResolvedJavaField.java 8350208 generic-all
+compiler/whitebox/DeoptimizeRelocatedNMethod.java#G1 8369147 generic-all
+compiler/whitebox/DeoptimizeRelocatedNMethod.java#Parallel 8369147 generic-all
+compiler/whitebox/DeoptimizeRelocatedNMethod.java#Serial 8369147 generic-all
+compiler/whitebox/DeoptimizeRelocatedNMethod.java#ZGC 8369147 generic-all
+compiler/whitebox/RelocateNMethod.java#G1 8369147 generic-all
+compiler/whitebox/RelocateNMethod.java#Parallel 8369147 generic-all
+compiler/whitebox/RelocateNMethod.java#Serial 8369147 generic-all
+compiler/whitebox/RelocateNMethod.java#ZGC 8369147 generic-all
+compiler/whitebox/StressNMethodRelocation.java 8369147,8369148,8369149 generic-all
+serviceability/jvmti/NMethodRelocation/NMethodRelocationTest.java 8369150,8369151 generic-all
 
 # Valhalla
 compiler/regalloc/TestVerifyRegisterAllocator.java 8365895 windows-x64
@@ -142,7 +150,8 @@ runtime/cds/appcds/methodHandles/MethodHandlesGeneralTest.java#aot              
 
 # :hotspot_serviceability
 
-serviceability/sa/sadebugd/DebugdConnectTest.java 8239062,8270326 macosx-x64,macosx-aarch64
+# 8239062 and 8270326 only affects macosx-x64,macosx-aarch64
+serviceability/sa/sadebugd/DebugdConnectTest.java 8239062,8270326,8344261 generic-all
 serviceability/sa/TestRevPtrsForInvokeDynamic.java 8241235 generic-all
 
 serviceability/jvmti/vthread/GetThreadStateMountedTest/GetThreadStateMountedTest.java 8318090,8318729 generic-all
@@ -164,7 +173,6 @@ serviceability/jvmti/stress/StackTrace/NotSuspended/GetStackTraceNotSuspendedStr
 
 serviceability/sa/JhsdbThreadInfoTest.java              8344261 generic-all
 serviceability/sa/TestJhsdbJstackLock.java              8344261 generic-all
-serviceability/sa/sadebugd/DebugdConnectTest.java       8344261 generic-all
 serviceability/attach/RemovingUnixDomainSocketTest.java 8344261 generic-all
 
 # Valhalla TODO:

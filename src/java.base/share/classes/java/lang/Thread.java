@@ -1546,36 +1546,6 @@ public class Thread implements Runnable {
     }
 
     /**
-     * Throws {@code UnsupportedOperationException}.
-     *
-     * @throws  UnsupportedOperationException always
-     *
-     * @deprecated This method was originally specified to "stop" a victim
-     *       thread by causing the victim thread to throw a {@link ThreadDeath}.
-     *       It was inherently unsafe. Stopping a thread caused it to unlock
-     *       all of the monitors that it had locked (as a natural consequence
-     *       of the {@code ThreadDeath} exception propagating up the stack). If
-     *       any of the objects previously protected by these monitors were in
-     *       an inconsistent state, the damaged objects became visible to
-     *       other threads, potentially resulting in arbitrary behavior.
-     *       Usages of {@code stop} should be replaced by code that simply
-     *       modifies some variable to indicate that the target thread should
-     *       stop running.  The target thread should check this variable
-     *       regularly, and return from its run method in an orderly fashion
-     *       if the variable indicates that it is to stop running.  If the
-     *       target thread waits for long periods (on a condition variable,
-     *       for example), the {@code interrupt} method should be used to
-     *       interrupt the wait.
-     *       For more information, see
-     *       <a href="{@docRoot}/java.base/java/lang/doc-files/threadPrimitiveDeprecation.html">Why
-     *       is Thread.stop deprecated and the ability to stop a thread removed?</a>.
-     */
-    @Deprecated(since="1.2", forRemoval=true)
-    public final void stop() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * Interrupts this thread.
      *
      * <p> If this thread is blocked in an invocation of the {@link
@@ -2460,20 +2430,52 @@ public class Thread implements Runnable {
     }
 
     /**
+     * Returns the translation from a J9VMThread state to a Thread::State.
+     *
+     * @param status thread status value set by VM.
+     * @return this thread's state.
+     *
+     * @see State
+     */
+    private State translateJ9VMThreadStateToThreadState(int status) {
+        switch (status) {
+        case 0x1:   // J9VMTHREAD_STATE_RUNNING
+            return State.RUNNABLE;
+        case 0x2:   // J9VMTHREAD_STATE_BLOCKED
+            return State.BLOCKED;
+        case 0x4:   // J9VMTHREAD_STATE_WAITING
+        case 0x80:  // J9VMTHREAD_STATE_PARKED
+            return State.WAITING;
+        case 0x8:   // J9VMTHREAD_STATE_SLEEPING
+        case 0x40:  // J9VMTHREAD_STATE_WAITING_TIMED
+        case 0x100: // J9VMTHREAD_STATE_PARKED_TIMED
+            return State.TIMED_WAITING;
+        case 0x20:  // J9VMTHREAD_STATE_DEAD
+            return State.TERMINATED;
+        default:
+            synchronized (interruptLock) {
+                if (eetop == NO_REF) {
+                    return State.TERMINATED;
+                }
+                return State.values()[getStateImpl(eetop)];
+            }
+        }
+    }
+
+    /**
      * Returns the state of this thread.
      * This method can be used instead of getState as getState is not final and
      * so can be overridden to run arbitrary code.
      */
     State threadState() {
-        synchronized (interruptLock) {
+        if (started) {
             if (eetop == NO_REF) {
-                if (isDead()) {
-                    return State.TERMINATED;
-                }
-                return State.NEW;
+                return State.TERMINATED;
             }
-            return State.values()[getStateImpl(eetop)];
+            return translateJ9VMThreadStateToThreadState(
+                    (holder != null) ? holder.threadStatus : 0);
         }
+        return State.NEW;
     }
 
     /**
