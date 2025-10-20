@@ -100,11 +100,9 @@ public class IRNode {
 
     private static final String POSTFIX = "#_";
 
-    private static final String START = "(\\d+(\\s){2}(";
-    private static final String MID = ".*)+(\\s){2}===.*";
-    private static final String END = ")";
-    private static final String STORE_OF_CLASS_POSTFIX = "( \\([^\\)]+\\))?(:|\\+)\\S* \\*" + END;
-    private static final String LOAD_OF_CLASS_POSTFIX = "( \\([^\\)]+\\))?(:|\\+)\\S* \\*" + END;
+    public static final String START = "(\\d+(\\s){2}(";
+    public static final String MID = ".*)+(\\s){2}===.*";
+    public static final String END = ")";
 
     public static final String IS_REPLACED = "#IS_REPLACED#"; // Is replaced by an additional user-defined string.
 
@@ -628,6 +626,21 @@ public class IRNode {
     public static final String CMP_N = PREFIX + "CMP_N" + POSTFIX;
     static {
         beforeMatchingNameRegex(CMP_N, "CmpN");
+    }
+
+    public static final String CMP_LT_MASK = PREFIX + "CMP_LT_MASK" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(CMP_LT_MASK, "CmpLTMask");
+    }
+
+    public static final String ROUND_F = PREFIX + "ROUND_F" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(ROUND_F, "RoundF");
+    }
+
+    public static final String ROUND_D = PREFIX + "ROUND_D" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(ROUND_D, "RoundD");
     }
 
     public static final String COMPRESS_BITS = PREFIX + "COMPRESS_BITS" + POSTFIX;
@@ -1449,6 +1462,11 @@ public class IRNode {
     public static final String VECTOR_MASK_TO_LONG = PREFIX + "VECTOR_MASK_TO_LONG" + POSTFIX;
     static {
         beforeMatchingNameRegex(VECTOR_MASK_TO_LONG, "VectorMaskToLong");
+    }
+
+    public static final String VECTOR_MASK_LANE_IS_SET = PREFIX + "VECTOR_MASK_LANE_IS_SET" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(VECTOR_MASK_LANE_IS_SET, "ExtractUB");
     }
 
     // Can only be used if avx512_vnni is available.
@@ -2329,6 +2347,11 @@ public class IRNode {
         vectorNode(VECTOR_MASK_CMP_D, "VectorMaskCmp", TYPE_DOUBLE);
     }
 
+    public static final String VECTOR_MASK_CMP = PREFIX + "VECTOR_MASK_CMP" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(VECTOR_MASK_CMP, "VectorMaskCmp");
+    }
+
     public static final String VECTOR_CAST_B2S = VECTOR_PREFIX + "VECTOR_CAST_B2S" + POSTFIX;
     static {
         vectorNode(VECTOR_CAST_B2S, "VectorCastB2X", TYPE_SHORT);
@@ -2739,6 +2762,11 @@ public class IRNode {
         vectorNode(XOR_VL, "XorV", TYPE_LONG);
     }
 
+    public static final String XOR_V = PREFIX + "XOR_V" + POSTFIX;
+    static {
+        beforeMatchingNameRegex(XOR_V, "XorV");
+    }
+
     public static final String XOR_V_MASK = PREFIX + "XOR_V_MASK" + POSTFIX;
     static {
         beforeMatchingNameRegex(XOR_V_MASK, "XorVMask");
@@ -3071,13 +3099,25 @@ public class IRNode {
                                                                           CompilePhase.AFTER_LOOP_OPTS));
     }
 
+    // Typename in load/store have the structure:
+    // @fully/qualified/package/name/to/TheClass+12 *
+    // And variation:
+    // - after @, we can have "stable:" or other labels, with optional space after ':'
+    // - the class can actually be a subclass, with $ separator (and it must be ok to give only the deepest one
+    // - after the class name, we can have a comma-separated list of implemented interfaces enclosed in parentheses
+    // - before the offset, we can have something like ":NotNull", either way, seeing "+" or ":" means the end of the type
+    // Worst case, it can be something like:
+    // @bla: bli:a/b/c$d$e (f/g,h/i/j):NotNull+24 *
+    private static final String LOAD_STORE_PREFIX = "@(\\w+: ?)*[\\w/\\$]*\\b";
+    private static final String LOAD_STORE_SUFFIX = "( \\([^\\)]+\\))?(:|\\+)\\S* \\*";
+
     private static void loadOfNodes(String irNodePlaceholder, String irNodeRegex, String loadee) {
-        String regex = START + irNodeRegex + MID + "@(\\w+: ?)*[\\w/]*\\b" + loadee + LOAD_OF_CLASS_POSTFIX;
+        String regex = START + irNodeRegex + MID + LOAD_STORE_PREFIX + loadee + LOAD_STORE_SUFFIX + END;
         beforeMatching(irNodePlaceholder, regex);
     }
 
     private static void storeOfNodes(String irNodePlaceholder, String irNodeRegex, String storee) {
-        String regex = START + irNodeRegex + MID + "@(\\w+: ?)*[\\w/]*\\b" + storee + STORE_OF_CLASS_POSTFIX;
+        String regex = START + irNodeRegex + MID + LOAD_STORE_PREFIX + storee + LOAD_STORE_SUFFIX + END;
         beforeMatching(irNodePlaceholder, regex);
     }
 

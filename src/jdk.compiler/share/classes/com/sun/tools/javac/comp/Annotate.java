@@ -97,6 +97,7 @@ public class Annotate {
     private final Symtab syms;
     private final TypeEnvs typeEnvs;
     private final Types types;
+    private final Preview preview;
 
     private final Attribute theUnfinishedDefaultValue;
     private final String sourceName;
@@ -116,6 +117,7 @@ public class Annotate {
         syms = Symtab.instance(context);
         typeEnvs = TypeEnvs.instance(context);
         types = Types.instance(context);
+        preview = Preview.instance(context);
 
         theUnfinishedDefaultValue =  new Attribute.Error(syms.errType);
 
@@ -378,6 +380,7 @@ public class Annotate {
                     && toAnnotate.kind == VAR
                     && toAnnotate.owner.kind == TYP
                     && types.isSameType(c.type, syms.strictType)) {
+                preview.checkSourceLevel(pos.get(c), Feature.VALUE_CLASSES);
                 toAnnotate.flags_field |= Flags.STRICT;
                 // temporary hack to indicate that a class has at least one strict field
                 toAnnotate.owner.flags_field |= Flags.HAS_STRICT;

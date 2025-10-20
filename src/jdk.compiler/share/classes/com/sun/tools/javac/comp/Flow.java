@@ -2515,75 +2515,69 @@ public class Flow {
                 return;
             }
 
-            Lint lintPrev = lint;
-            lint = lint.augment(tree.sym);
+            final Bits initsPrev = new Bits(inits);
+            final Bits uninitsPrev = new Bits(uninits);
+            int nextadrPrev = nextadr;
+            int firstadrPrev = firstadr;
+            int returnadrPrev = returnadr;
+
+            Assert.check(pendingExits.isEmpty());
+            boolean isConstructorPrev = isConstructor;
+            boolean isCompactOrGeneratedRecordConstructorPrev = isCompactOrGeneratedRecordConstructor;
             try {
-                final Bits initsPrev = new Bits(inits);
-                final Bits uninitsPrev = new Bits(uninits);
-                int nextadrPrev = nextadr;
-                int firstadrPrev = firstadr;
-                int returnadrPrev = returnadr;
+                isConstructor = TreeInfo.isConstructor(tree);
+                isCompactOrGeneratedRecordConstructor = isConstructor && ((tree.sym.flags() & Flags.COMPACT_RECORD_CONSTRUCTOR) != 0 ||
+                         (tree.sym.flags() & (GENERATEDCONSTR | RECORD)) == (GENERATEDCONSTR | RECORD));
 
-                Assert.check(pendingExits.isEmpty());
-                boolean isConstructorPrev = isConstructor;
-                boolean isCompactOrGeneratedRecordConstructorPrev = isCompactOrGeneratedRecordConstructor;
-                try {
-                    isConstructor = TreeInfo.isConstructor(tree);
-                    isCompactOrGeneratedRecordConstructor = isConstructor && ((tree.sym.flags() & Flags.COMPACT_RECORD_CONSTRUCTOR) != 0 ||
-                            (tree.sym.flags() & (GENERATEDCONSTR | RECORD)) == (GENERATEDCONSTR | RECORD));
+                // We only track field initialization inside constructors
+                if (!isConstructor) {
+                    firstadr = nextadr;
+                }
 
-                    // We only track field initialization inside constructors
-                    if (!isConstructor) {
-                        firstadr = nextadr;
+                // Mark all method parameters as DA
+                for (List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
+                    JCVariableDecl def = l.head;
+                    scan(def);
+                    Assert.check((def.sym.flags() & PARAMETER) != 0, "Method parameter without PARAMETER flag");
+                    /*  If we are executing the code from Gen, then there can be
+                     *  synthetic or mandated variables, ignore them.
+                     */
+                    initParam(def);
+                }
+                if (isConstructor) {
+                    Set<VarSymbol> unsetFields = findUninitStrictFields();
+                    if (unsetFields != null && !unsetFields.isEmpty()) {
+                        unsetFieldsInfo.addUnsetFieldsInfo(classDef.sym, tree.body, unsetFields);
                     }
+                }
 
-                    // Mark all method parameters as DA
-                    for (List<JCVariableDecl> l = tree.params; l.nonEmpty(); l = l.tail) {
-                        JCVariableDecl def = l.head;
-                        scan(def);
-                        Assert.check((def.sym.flags() & PARAMETER) != 0, "Method parameter without PARAMETER flag");
-                        /*  If we are executing the code from Gen, then there can be
-                         *  synthetic or mandated variables, ignore them.
-                         */
-                        initParam(def);
-                    }
-                    if (isConstructor) {
-                        Set<VarSymbol> unsetFields = findUninitStrictFields();
-                        if (unsetFields != null && !unsetFields.isEmpty()) {
-                            unsetFieldsInfo.addUnsetFieldsInfo(classDef.sym, tree.body, unsetFields);
-                        }
-                    }
+                // else we are in an instance initializer block;
+                // leave caught unchanged.
+                scan(tree.body);
 
-                    // else we are in an instance initializer block;
-                    // leave caught unchanged.
-                    scan(tree.body);
-
-                    if (isConstructor) {
-                        boolean isSynthesized = (tree.sym.flags() &
-                                                 GENERATEDCONSTR) != 0;
-                        for (int i = firstadr; i < nextadr; i++) {
-                            JCVariableDecl vardecl = vardecls[i];
-                            VarSymbol var = vardecl.sym;
-                            if (var.owner == classDef.sym && !var.isStatic()) {
-                                // choose the diagnostic position based on whether
-                                // the ctor is default(synthesized) or not
-                                if (isSynthesized && !isCompactOrGeneratedRecordConstructor) {
-                                    checkInit(TreeInfo.diagnosticPositionFor(var, vardecl),
-                                            var, Errors.VarNotInitializedInDefaultConstructor(var));
-                                } else if (isCompactOrGeneratedRecordConstructor) {
-                                    boolean isInstanceRecordField = var.enclClass().isRecord() &&
-                                            (var.flags_field & (Flags.PRIVATE | Flags.FINAL | Flags.GENERATED_MEMBER | Flags.RECORD)) != 0 &&
-                                            var.owner.kind == TYP;
-                                    if (isInstanceRecordField) {
-                                        boolean notInitialized = !inits.isMember(var.adr);
-                                        if (notInitialized && uninits.isMember(var.adr) && tree.completesNormally) {
-                                        /*  this way we indicate Lower that it should generate an initialization for this field
-                                         *  in the compact constructor
-                                         */
-                                            var.flags_field |= UNINITIALIZED_FIELD;
-                                        } else {
-                                            checkInit(TreeInfo.diagEndPos(tree.body), var);
-                                        }
+                if (isConstructor) {
+                    boolean isSynthesized = (tree.sym.flags() &
+                                             GENERATEDCONSTR) != 0;
+                    for (int i = firstadr; i < nextadr; i++) {
+                        JCVariableDecl vardecl = vardecls[i];
+                        VarSymbol var = vardecl.sym;
+                        if (var.owner == classDef.sym && !var.isStatic()) {
+                            // choose the diagnostic position based on whether
+                            // the ctor is default(synthesized) or not
+                            if (isSynthesized && !isCompactOrGeneratedRecordConstructor) {
+                                checkInit(TreeInfo.diagnosticPositionFor(var, vardecl),
+                                        var, Errors.VarNotInitializedInDefaultConstructor(var));
+                            } else if (isCompactOrGeneratedRecordConstructor) {
+                                boolean isInstanceRecordField = var.enclClass().isRecord() &&
+                                        (var.flags_field & (Flags.PRIVATE | Flags.FINAL | Flags.GENERATED_MEMBER | Flags.RECORD)) != 0 &&
+                                        var.owner.kind == TYP;
+                                if (isInstanceRecordField) {
+                                    boolean notInitialized = !inits.isMember(var.adr);
+                                    if (notInitialized && uninits.isMember(var.adr) && tree.completesNormally) {
+                                    /*  this way we indicate Lower that it should generate an initialization for this field
+                                     *  in the compact constructor
+                                     */
+                                        var.flags_field |= UNINITIALIZED_FIELD;
                                     } else {
                                         checkInit(TreeInfo.diagnosticPositionFor(var, vardecl), var);
                                     }
@@ -2593,18 +2587,15 @@ public class Flow {
                             }
                         }
                     }
-                    clearPendingExits(true);
-                } finally {
-                    inits.assign(initsPrev);
-                    uninits.assign(uninitsPrev);
-                    nextadr = nextadrPrev;
-                    firstadr = firstadrPrev;
-                    returnadr = returnadrPrev;
-                    isConstructor = isConstructorPrev;
-                    isCompactOrGeneratedRecordConstructor = isCompactOrGeneratedRecordConstructorPrev;
                 }
             } finally {
-                lint = lintPrev;
+                inits.assign(initsPrev);
+                uninits.assign(uninitsPrev);
+                nextadr = nextadrPrev;
+                firstadr = firstadrPrev;
+                returnadr = returnadrPrev;
+                isConstructor = isConstructorPrev;
+                isCompactOrGeneratedRecordConstructor = isCompactOrGeneratedRecordConstructorPrev;
             }
         }
 

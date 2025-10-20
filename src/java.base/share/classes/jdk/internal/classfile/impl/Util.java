@@ -62,6 +62,8 @@ import static jdk.internal.constant.PrimitiveClassDescImpl.CD_void;
  */
 public final class Util {
 
+    public static final int VALUE_OBJECTS_MAJOR = ClassFile.latestMajorVersion();
+
     private Util() {
     }
 
@@ -234,7 +236,7 @@ public final class Util {
 
     public static IllegalArgumentException outOfRangeException(int value, String fieldName, String typeName) {
         return new IllegalArgumentException(
-		String.format("%s out of range of %s: %d", fieldName, typeName, value));
+                String.format("%s out of range of %s: %d", fieldName, typeName, value));
     }
 
     /// Ensures the given mask won't be truncated when written as an access flag
