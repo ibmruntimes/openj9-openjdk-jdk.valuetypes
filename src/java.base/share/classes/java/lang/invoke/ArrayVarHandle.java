@@ -123,8 +123,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.getFlatValueVolatile(array,
@@ -142,8 +142,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             UNSAFE.putFlatValueVolatile(array,
@@ -164,8 +164,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.getFlatValueOpaque(array,
@@ -183,8 +183,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             UNSAFE.putFlatValueOpaque(array,
@@ -205,8 +205,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.getFlatValueAcquire(array,
@@ -224,8 +224,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             UNSAFE.putFlatValueRelease(array,
@@ -246,8 +246,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.compareAndSetFlatValue(array,
@@ -269,8 +269,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.compareAndExchangeFlatValue(array,
@@ -292,8 +292,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.compareAndExchangeFlatValueAcquire(array,
@@ -315,8 +315,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.compareAndExchangeFlatValueRelease(array,
@@ -338,8 +338,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.weakCompareAndSetFlatValuePlain(array,
@@ -361,8 +361,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.weakCompareAndSetFlatValue(array,
@@ -384,8 +384,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.weakCompareAndSetFlatValueAcquire(array,
@@ -407,8 +407,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.weakCompareAndSetFlatValueRelease(array,
@@ -430,8 +430,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.getAndSetFlatValue(array,
@@ -451,8 +451,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.getAndSetFlatValueAcquire(array,
@@ -472,8 +472,8 @@ final class ArrayVarHandle extends VarHandle {
         if (ValueClass.isFlatArray(oarray)) {
             // delegate to flat access primitives
             VarHandles.checkAtomicFlatArray(array);
-            int aoffset = (int) UNSAFE.arrayBaseOffset(array.getClass());
-            int ascale = UNSAFE.arrayIndexScale(array.getClass());
+            int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
+            int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
             int layout = UNSAFE.arrayLayout(array.getClass());
             return UNSAFE.getAndSetFlatValueRelease(array,
