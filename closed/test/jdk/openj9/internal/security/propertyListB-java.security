@@ -1,7 +1,6 @@
 # ===========================================================================
-# (c) Copyright IBM Corp. 2019, 2025 All Rights Reserved
+# (c) Copyright IBM Corp. 2025, 2025 All Rights Reserved
 # ===========================================================================
-#
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
 # published by the Free Software Foundation.
@@ -17,12 +16,10 @@
 #
 # You should have received a copy of the GNU General Public License version
 # 2 along with this work; if not, see <http://www.gnu.org/licenses/>.
-#
 # ===========================================================================
 
-# Default settings unless overridden by configure
+RestrictedSecurity.Test-Profile-Property-List.B.desc.name = List B Cryptographic Module
+RestrictedSecurity.Test-Profile-Property-List.B.desc.default = false
+RestrictedSecurity.Test-Profile-Property-List.B.extends = RestrictedSecurity.Test-Profile-Property-List.A
 
-COMPANY_NAME="Eclipse OpenJ9"
-VENDOR_URL="http://eclipse.dev/openj9"
-VENDOR_URL_BUG="https://github.com/eclipse-openj9/openj9/issues/new?labels=userRaised&template=user-problem.md"
-VENDOR_URL_VM_BUG="https://github.com/eclipse-openj9/openj9/issues/new?labels=userRaised&template=user-problem.md"
+RestrictedSecurity.Test-Profile-Property-List.B.jce.provider.5 = com.sun.crypto.provider.SunJCE
