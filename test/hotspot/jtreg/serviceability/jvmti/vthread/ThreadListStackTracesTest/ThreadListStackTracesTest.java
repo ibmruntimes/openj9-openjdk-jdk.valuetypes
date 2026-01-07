@@ -20,11 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2023, 2023 All Rights Reserved
- * ===========================================================================
- */
 
 /**
  * @test
@@ -49,16 +44,15 @@ abstract class TestTask implements Runnable {
         }
     }
 
+    public void ensureReadyAndWaiting(Thread vt, Thread.State expState, ReentrantLock rlock) {
+        // wait while the thread is not ready or thread state is unexpected
+        while (!threadReady || (vt.getState() != expState) || !rlock.hasQueuedThreads()) {
+            sleep(1);
+        }
+    }
+
     public void ensureReady(Thread vt, Thread.State expState) {
-        /*
-         * Sleep for 1 second to allow the thread to reach the expected state.
-         * When the virtual thread is mounted, the virtual thread state,
-         * which is obtained from the carrier thread, can transition between
-         * WAITING and RUNNABLE before the virtual thread is parked on the
-         * lock.
-         */
-        sleep(1000);
-        // Wait while the thread is not ready or thread state is unexpected.
+        // wait while the thread is not ready or thread state is unexpected
         while (!threadReady || (vt.getState() != expState)) {
             sleep(1);
         }
@@ -110,11 +104,7 @@ public class ThreadListStackTracesTest {
         String name = "ReentrantLockTestTask";
         TestTask task = new ReentrantLockTestTask();
         Thread vt = Thread.ofVirtual().name(name).start(task);
-        // Wait until vt is waiting to acquire the lock.
-        while (!reentrantLock.hasQueuedThread(vt)) {
-            TestTask.sleep(1);
-        }
-        task.ensureReady(vt, expState);
+        task.ensureReadyAndWaiting(vt, expState, reentrantLock);
         checkStates(vt, expState);
     }
 
