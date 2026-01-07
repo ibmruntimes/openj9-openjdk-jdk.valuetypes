@@ -38,6 +38,8 @@
  * @since 9
  */
 module jdk.attach {
+    requires jdk.internal.jvmstat;
+
     exports com.sun.tools.attach;
     exports com.sun.tools.attach.spi;
 
