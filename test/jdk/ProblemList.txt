@@ -699,6 +699,7 @@ com/sun/jdi/cds/CDSFieldWatchpoints.java                        8304168 generic-
 
 # jdk_util
 java/util/zip/CloseInflaterDeflaterTest.java  8339216 linux-s390x
+java/util/Collection/MOAT.java 8375086 generic-all
 
 ############################################################################
 
@@ -807,3 +808,4 @@ sun/tools/jhsdb/BasicLauncherTest.java 8366806 generic-all
 sun/tools/jhsdb/HeapDumpTest.java 8366806 generic-all
 sun/tools/jhsdb/HeapDumpTestWithActiveProcess.java 8366806 generic-all
 sun/tools/jhsdb/JShellHeapDumpTest.java 8366806 generic-all
+sun/tools/jhsdb/JStackStressTest.java 8375470 macosx-aarch64
