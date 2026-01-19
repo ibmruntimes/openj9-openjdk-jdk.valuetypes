@@ -273,6 +273,7 @@ java/rmi/server/Unreferenced/marshalledObjectGet/MarshalledObjectGet.java https:
 java/rmi/server/Unreferenced/unreferencedContext/UnreferencedContext.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 java/rmi/server/useCustomRef/UseCustomRef.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 java/rmi/transport/checkFQDN/CheckFQDN.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
+java/rmi/transport/checkLeaseInfoLeak/CheckLeaseLeak.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 java/rmi/transport/closeServerSocket/CloseServerSocket.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 java/rmi/transport/dgcDeadLock/DGCDeadLock.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 java/rmi/transport/pinClientSocketFactory/PinClientSocketFactory.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
@@ -511,6 +512,7 @@ javax/net/ssl/DTLS/DTLSSequenceNumberTest.java https://github.com/eclipse-openj9
 javax/net/ssl/DTLS/DTLSSignatureSchemes.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 javax/net/ssl/DTLS/DTLSUnsupportedCiphersTest.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 javax/net/ssl/DTLS/DTLSWontNegotiateV10.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
+javax/net/ssl/DTLS/FragmentedFinished.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 javax/net/ssl/DTLS/InvalidCookie.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 javax/net/ssl/DTLS/InvalidRecords.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
 javax/net/ssl/DTLS/NoMacInitialClientHello.java https://github.com/eclipse-openj9/openj9/issues/20343 generic-all
