@@ -45,7 +45,7 @@ public class StrictFields {
             throw new Error("VerifyError was not thrown as expected!");
         } catch (VerifyError ve) {
             // Once strict non-final is possible, expect "Illegal use of putfield on a strict field"
-            if (!ve.getMessage().startsWith("All strict final fields must be initialized before super()")) {
+            if (!ve.getMessage().contains("All strict final fields must be initialized before super()")) {
                 throw new Error("Wrong VerifyError thrown", ve);
             } else {
                 System.out.println("Expected VerifyError was thrown");
@@ -58,7 +58,7 @@ public class StrictFields {
             c = Class.forName("BadStrictSubPreInit");
             throw new Error("VerifyError was not thrown as expected!");
         } catch (VerifyError ve) {
-            if (!ve.getMessage().startsWith("Bad type on operand stack")) {
+            if (!ve.getMessage().contains("stack shape inconsistent")) {
                 throw new Error("Wrong VerifyError thrown", ve);
             } else {
                 System.out.println("Expected VerifyError was thrown");
@@ -68,15 +68,14 @@ public class StrictFields {
         // Now a bad class that tries to write to a super class's strict field
         // in the post phase. This is not a verification error but we test it
         // here for completeness.Expected exception:
-        //    java.lang.IllegalAccessError: Update to non-static final field
-        //      BadStrictSubPostInit.x attempted from a different class
-        //       (BadStrictSubPostInit) than the field's declaring class
+        //    java.lang.IllegalAccessError: Class BadStrictSubPostInit illegally accessing "private" member of class StrictBase
+        //      at BadStrictSubPostInit.<init>(strictFields.jasm)
         try {
             c = Class.forName("BadStrictSubPostInit");
             Object o = c.newInstance();
             throw new Error("IllegalAccessErrorError was not thrown as expected!");
         } catch (IllegalAccessError iae) {
-            if (!iae.getMessage().startsWith("Update to non-static final field")) {
+            if (!iae.getMessage().contains("illegally accessing \"private\" member of class")) {
                 throw new Error("Wrong IllegalAccessError thrown", iae);
             } else {
                 System.out.println("Expected IllegalAccessError was thrown");

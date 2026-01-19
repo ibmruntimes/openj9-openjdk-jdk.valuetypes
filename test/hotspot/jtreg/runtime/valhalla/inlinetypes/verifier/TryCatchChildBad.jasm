@@ -47,7 +47,7 @@ identity class TryCatchChildBad extends Parent version 71:65535
   strict Field y:I;
 
   Method       "<init>":"()V"
-    stack 4  locals 2
+    stack 4  locals 3
   {
          try               T0, T1;
          aload_0;
