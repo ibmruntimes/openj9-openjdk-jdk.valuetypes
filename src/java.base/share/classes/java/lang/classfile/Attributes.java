@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,12 @@ public final class Attributes {
     /** LineNumberTable */
     public static final String NAME_LINE_NUMBER_TABLE = "LineNumberTable";
 
-    /** LoadableDescriptors */
+    /**
+     * LoadableDescriptors
+     *
+     * @since Valhalla
+     */
+    @PreviewFeature(feature = PreviewFeature.Feature.VALUE_OBJECTS, reflective = true)
     public static final String NAME_LOADABLE_DESCRIPTORS = "LoadableDescriptors";
 
     /** LocalVariableTable */
@@ -249,10 +254,11 @@ public final class Attributes {
     }
 
     /**
-     * {@return Attribute mapper for the {@code LoadableDescriptors} attribute}
+     * {@return the mapper for the {@code LoadableDescriptors} attribute}
+     *
      * @since Valhalla
      */
-    @PreviewFeature(feature = PreviewFeature.Feature.VALUE_OBJECTS)
+    @PreviewFeature(feature = PreviewFeature.Feature.VALUE_OBJECTS, reflective = true)
     public static AttributeMapper<LoadableDescriptorsAttribute> loadableDescriptors() {
         return LoadableDescriptorsMapper.INSTANCE;
     }

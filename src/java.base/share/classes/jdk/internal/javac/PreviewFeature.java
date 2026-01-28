@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,12 +64,8 @@ public @interface PreviewFeature {
      * Values should be annotated with the feature's {@code JEP}.
      */
     public enum Feature {
-        // while building the interim javac, the ClassReader will produce a warning when loading a class
-        // keeping the constant of a feature that has been integrated or dropped, serves the purpose of muting such warnings.
-
-        //---
-        // not used, but required for interim javac to not warn.
-        VIRTUAL_THREADS,
+        @JEP(number = 8350458, title = "Strict Field Initialization in the JVM", status = "Preview")
+        STRICT_FIELDS,
         @JEP(number=401, title="Value Classes and Objects", status = "Preview")
         VALUE_OBJECTS,
 
