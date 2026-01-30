@@ -25,8 +25,8 @@
  * @test
  * @bug 8280377
  * @build m1/* m2/* Unnamed
- * @run junit/othervm m1/p1.Main
- * @run junit/othervm Unnamed
+ * @run testng/othervm m1/p1.Main
+ * @run main/othervm Unnamed
  * @summary Test MethodHandleProxies::asInterfaceInstance with a default
  *          method with varargs
  */
