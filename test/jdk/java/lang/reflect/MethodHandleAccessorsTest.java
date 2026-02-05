@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2026, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@
  * @bug 8271820 8300924
  * @modules java.base/jdk.internal.reflect
  * @summary Test compliance of ConstructorAccessor, FieldAccessor, MethodAccessor implementations
- * @run junit/othervm -XX:-ShowCodeDetailsInExceptionMessages MethodHandleAccessorsTest
+ * @run testng/othervm --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED -XX:-ShowCodeDetailsInExceptionMessages MethodHandleAccessorsTest
  */
 
 import jdk.internal.reflect.ConstructorAccessor;
@@ -49,11 +49,8 @@ import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 public class MethodHandleAccessorsTest {
     public static void public_static_V() {}
@@ -451,7 +448,9 @@ public class MethodHandleAccessorsTest {
             new InvocationTargetException(new IllegalArgumentException("IAE"))
     };
 
-    private static Object[][] testNoArgMethods() {
+
+    @DataProvider(name = "testNoArgMethods")
+    private Object[][] testNoArgMethods() {
         MethodHandleAccessorsTest inst = new MethodHandleAccessorsTest();
         Object[] emptyArgs = new Object[]{};
         return new Object[][] {
@@ -471,7 +470,8 @@ public class MethodHandleAccessorsTest {
         };
     }
 
-    private static Object[][] testOneArgMethods() {
+    @DataProvider(name = "testOneArgMethods")
+    private Object[][] testOneArgMethods() {
         MethodHandleAccessorsTest inst = new MethodHandleAccessorsTest();
         Object wrongInst = new Object();
         return new Object[][]{
@@ -499,7 +499,8 @@ public class MethodHandleAccessorsTest {
         };
     }
 
-    private static Object[][] testMultiArgMethods() {
+    @DataProvider(name = "testMultiArgMethods")
+    private Object[][] testMultiArgMethods() {
         MethodHandleAccessorsTest inst = new MethodHandleAccessorsTest();
         Class<?>[] params_L3 = new Class<?>[] { Object.class, Object.class, Object.class};
         Class<?>[] params_L4 = new Class<?>[] { Object.class, Object.class, Object.class, Object.class};
@@ -516,7 +517,8 @@ public class MethodHandleAccessorsTest {
         };
     }
 
-    private static Object[][] testMethodsWithVarargs() {
+    @DataProvider(name = "testMethodsWithVarargs")
+    private Object[][] testMethodsWithVarargs() {
         Class<?>[] paramTypes = new Class<?>[] { int[].class };
         Class<?>[] I_paramTypes = new Class<?>[] { int.class, int[].class };
         Class<?>[] L_paramTypes = new Class<?>[] { String.class, String[].class };
@@ -533,35 +535,32 @@ public class MethodHandleAccessorsTest {
         };
     }
 
-    @ParameterizedTest
-    @MethodSource("testNoArgMethods")
+    @Test(dataProvider = "testNoArgMethods")
     public void testNoArgMethod(String methodname, Object target, Object[] args,
                                 Object expectedReturn, Throwable[] expectedExpections) throws Exception {
         doTest(MethodHandleAccessorsTest.class.getDeclaredMethod(methodname), target, args, expectedReturn, expectedExpections);
     }
 
-    @ParameterizedTest
-    @MethodSource("testOneArgMethods")
+    @Test(dataProvider = "testOneArgMethods")
     public void testOneArgMethod(String methodname, Class<?> paramType, Object target, Object[] args,
                                  Object expectedReturn, Throwable[] expectedExpections) throws Exception {
         doTest(MethodHandleAccessorsTest.class.getDeclaredMethod(methodname, paramType), target, args, expectedReturn, expectedExpections);
     }
 
-    @ParameterizedTest
-    @MethodSource("testMultiArgMethods")
+    @Test(dataProvider = "testMultiArgMethods")
     public void testMultiArgMethod(String methodname, Class<?>[] paramTypes, Object target, Object[] args,
                                  Object expectedReturn, Throwable[] expectedExpections) throws Exception {
         doTest(MethodHandleAccessorsTest.class.getDeclaredMethod(methodname, paramTypes), target, args, expectedReturn, expectedExpections);
     }
 
-    @ParameterizedTest
-    @MethodSource("testMethodsWithVarargs")
+    @Test(dataProvider = "testMethodsWithVarargs")
     public void testMethodsWithVarargs(String methodname, Class<?>[] paramTypes, Object target, Object[] args,
                                        Object expectedReturn, Throwable[] expectedExpections) throws Exception {
         doTest(MethodHandleAccessorsTest.class.getDeclaredMethod(methodname, paramTypes), target, args, expectedReturn, expectedExpections);
     }
 
-    private static Object[][] testConstructors() {
+    @DataProvider(name = "testConstructors")
+    private Object[][] testConstructors() {
         return new Object[][]{
                 new Object[]{null, new Object[]{}, new Public(), noException},
                 new Object[]{null, null, new Public(), noException},
@@ -587,13 +586,13 @@ public class MethodHandleAccessorsTest {
         };
     }
 
-    @ParameterizedTest
-    @MethodSource("testConstructors")
+    @Test(dataProvider = "testConstructors")
     public void testPublicConstructors(Class<?>[] paramTypes, Object[] args, Object expectedReturn, Throwable[] expectedExpections) throws Exception {
         doTest(Public.class.getDeclaredConstructor(paramTypes), args, expectedReturn, expectedExpections);
     }
 
-    private static Object[][] testMultiArgConstructors() {
+    @DataProvider(name = "testMultiArgConstructors")
+    private Object[][] testMultiArgConstructors() {
         Class<?>[] params_L3 = new Class<?>[] { Object.class, Object.class, Object.class};
         Class<?>[] params_L4 = new Class<?>[] { Object.class, Object.class, Object.class, Object.class};
         Object o = "arg";
@@ -605,8 +604,7 @@ public class MethodHandleAccessorsTest {
         };
     }
 
-    @ParameterizedTest
-    @MethodSource("testMultiArgConstructors")
+    @Test(dataProvider = "testMultiArgConstructors")
     public void testMultiArgConstructors(Class<?>[] paramTypes, Object[] args, Object expectedReturn, Throwable[] expectedExpections) throws Exception {
         doTest(Public.class.getDeclaredConstructor(paramTypes), args, expectedReturn, expectedExpections);
     }
@@ -620,7 +618,8 @@ public class MethodHandleAccessorsTest {
         doTest(Abstract.class.getDeclaredConstructor(), null, null, new InstantiationException());
     }
 
-    private static Object[][] throwException() {
+    @DataProvider(name = "throwException")
+    private Object[][] throwException() {
         return new Object[][]{
                 new Object[] {new NullPointerException("NPE"), wrapped_npe},
                 new Object[] {new IllegalArgumentException("IAE"), wrapped_iae},
@@ -632,8 +631,7 @@ public class MethodHandleAccessorsTest {
      * Test Method::invoke and Constructor::newInstance to wrap NPE/CCE/IAE
      * thrown by the member
      */
-    @ParameterizedTest
-    @MethodSource("throwException")
+    @Test(dataProvider = "throwException")
     public void testInvocationTargetException(Throwable ex, Throwable[] expectedExpections) throws Exception {
         Object[] args = new Object[] { ex };
         // test static method
@@ -650,7 +648,8 @@ public class MethodHandleAccessorsTest {
         doTest(applyAsIntMethod, intUnaryOp, new Object[]{12}, 12);
     }
 
-    private static Object[][] readAccess() {
+    @DataProvider(name = "readAccess")
+    private Object[][] readAccess() {
         String wrongInst = new String();
         return new Object[][]{
                 new Object[]{"i", new Public(100), 100, noException},
@@ -660,7 +659,8 @@ public class MethodHandleAccessorsTest {
                 new Object[]{"b", wrongInst, 0, cannot_get_field},
         };
     }
-    private static Object[][] writeAccess() {
+    @DataProvider(name = "writeAccess")
+    private Object[][] writeAccess() {
         Object o = new Object();
         byte b = 1;
         return new Object[][]{
@@ -675,16 +675,14 @@ public class MethodHandleAccessorsTest {
         };
     }
 
-    @ParameterizedTest
-    @MethodSource("readAccess")
+    @Test(dataProvider = "readAccess")
     public void testFieldReadAccess(String name, Object target, Object expectedValue, Throwable[] expectedExpections) throws Exception {
         Field f = Public.class.getDeclaredField(name);
         f.setAccessible(true);
         doTest(f, target, expectedValue, expectedExpections);
     }
 
-    @ParameterizedTest
-    @MethodSource("writeAccess")
+    @Test(dataProvider = "writeAccess")
     public void testFieldWriteAccess(String name, Object target, Object oldValue, Object newValue, Throwable[] expectedExpections) throws Exception {
         Field f = Public.class.getDeclaredField(name);
         f.setAccessible(true);
@@ -697,6 +695,8 @@ public class MethodHandleAccessorsTest {
         Field f = Public.class.getDeclaredField("STATIC_FINAL");
         doTest(f, new Public(), 1, noException);
 
-        assertThrows(IllegalAccessException.class, () -> f.setInt(null, 100));
+        try {
+            f.setInt(null, 100);
+        } catch (IllegalAccessException e) { }
     }
 }
