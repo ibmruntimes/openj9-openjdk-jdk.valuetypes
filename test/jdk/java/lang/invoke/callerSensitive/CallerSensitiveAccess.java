@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,18 +50,18 @@ import java.util.stream.Stream;
 
 import jdk.internal.reflect.CallerSensitive;
 
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.NoInjection;
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class CallerSensitiveAccess {
     // Cache the list of Caller Sensitive Methods
     private static List<Method> CALLER_SENSITIVE_METHODS;
 
-    @BeforeClass
-    private void setupCallerSensitiveMethods() {
+    @BeforeAll
+    public static void setupCallerSensitiveMethods() {
         CALLER_SENSITIVE_METHODS = callerSensitiveMethods(Object.class.getModule());
     }
 
@@ -406,7 +406,6 @@ public class CallerSensitiveAccess {
      * Returns a List instead of a stream so the ModuleReader can be closed before returning.
      */
     static List<Method> callerSensitiveMethods(Module module) {
-        assert module.isNamed();
         assertTrue(module.isNamed());
         ModuleReference mref = module.getLayer().configuration()
                 .findModule(module.getName())

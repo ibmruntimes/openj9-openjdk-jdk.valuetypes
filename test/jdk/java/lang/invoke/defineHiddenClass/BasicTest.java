@@ -116,7 +116,7 @@ public class BasicTest {
         assertFalse(c.isPrimitive());
         assertTrue(intfs.length == 1 || intfs.length == 2);
         assertTrue(intfs[0] == HiddenTest.class || (intfs.length == 2 && intfs[1] == HiddenTest.class));
-        assertTrue(c.getCanonicalName() == null);
+        assertNull(c.getCanonicalName());
 
         String hcName = "HiddenClass";
         String hcSuffix = "0x[0-9a-f]+";
@@ -316,7 +316,7 @@ public class BasicTest {
                 throw new IllegalArgumentException("unexpected access flag: " + accessFlags);
         }
         assertTrue(hc.isHidden());
-        assertTrue(hc.getModifiers() == (ACC_PUBLIC|accessFlags));
+        assertEquals(hc.getModifiers(), (ACC_PUBLIC|accessFlags));
         assertFalse(hc.isLocalClass());
         assertFalse(hc.isMemberClass());
         assertFalse(hc.isAnonymousClass());
