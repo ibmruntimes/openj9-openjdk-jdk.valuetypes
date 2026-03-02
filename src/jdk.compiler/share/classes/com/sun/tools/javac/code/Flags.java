@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2026, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -167,11 +167,6 @@ public class Flags {
     @Use({FlagTarget.CLASS})
     public static final int IMPLICIT_CLASS    = 1<<19;
 
-    /** Variable with implicit/inferred type.
-     */
-    @Use(FlagTarget.VARIABLE)
-    public static final int VAR_VARIABLE     = 1<<19;
-
     /** Flag is set for compiler-generated anonymous method symbols
      *  that `own' an initializer block.
      */
@@ -181,11 +176,6 @@ public class Flags {
     /** Marks a type as a value class */
     @Use({FlagTarget.CLASS})
     public static final int VALUE_CLASS      = 1<<20;
-
-    /** A parameter of a lambda function.
-     */
-    @Use(FlagTarget.VARIABLE)
-    public static final int LAMBDA_PARAMETER     = 1<<20;
 
     /** Flag is set for ClassSymbols that are being compiled from source.
      */
