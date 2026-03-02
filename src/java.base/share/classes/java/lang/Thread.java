@@ -2280,7 +2280,7 @@ public class Thread implements Runnable {
         }
     }
 
-    private Object getStackTrace0() {
+    private StackTraceElement[] getStackTrace0() {
         Throwable t;
         synchronized (interruptLock) {
             /* Ensure only live thread is passed to native code. */
@@ -2289,7 +2289,7 @@ public class Thread implements Runnable {
             }
             t = getStackTraceImpl();
         }
-        return (Object)J9VMInternals.getStackTrace(t, false);
+        return J9VMInternals.getStackTrace(t, false);
     }
 
     private native Throwable getStackTraceImpl();
