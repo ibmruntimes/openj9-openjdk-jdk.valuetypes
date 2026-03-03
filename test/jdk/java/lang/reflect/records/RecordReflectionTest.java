@@ -27,8 +27,8 @@
  * @summary reflection test for records
  * @build R10
  * @compile RecordReflectionTest.java
- * @run testng/othervm RecordReflectionTest
- * @run testng/othervm --enable-preview RecordReflectionTest
+ * @run junit/othervm RecordReflectionTest
+ * @run junit/othervm --enable-preview RecordReflectionTest
  */
 
 import java.lang.annotation.*;
