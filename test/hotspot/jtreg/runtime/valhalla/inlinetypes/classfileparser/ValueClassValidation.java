@@ -21,6 +21,13 @@
  * questions.
  *
  */
+
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
 /*
  * @test
  * @summary test validation of value classes
@@ -70,7 +77,7 @@ public class ValueClassValidation {
   public static void main(String[] args) throws Exception {
 
     // Test none of ACC_ABSTRACT, ACC_FINAL or ACC_IDENTITY is illegal.
-    runTest("InvalidClassFlags", "Illegal class modifiers in class InvalidClassFlags", null);
+    runTest("InvalidClassFlags", "A non-interface class must have at least one of ACC_FINAL, ACC_IDENTITY, or ACC_ABSTRACT flags set", null);
 
     // Test ACC_ABSTRACT without ACC_IDENTITY is legal
     runTest("AbstractValue", null, null);
@@ -79,24 +86,24 @@ public class ValueClassValidation {
     runTest("FinalValue", null, null);
 
     // Test a concrete value class extending an abstract identity class
-    runTest("ValueClass", null, "Value type ValueClass has an identity type as supertype");
+    runTest("ValueClass", null, "Value type class ValueClass has an invalid super class AbstractClass");
 
     // Test a concrete identity class without ACC_IDENTITY but with an older class file version, extending an abstract identity class
     // (Test that the VM fixes missing ACC_IDENTITY in old class files)
     runTest("IdentityClass", null, null);
 
     // Test a concrete value class extending a concrete (i.e. final) value class
-    runTest("ValueClass2", null, "class ValueClass2 cannot inherit from final class FinalValue");
+    runTest("ValueClass2", null, "Final superclass FinalValue can't be extended");
 
     // Test an abstract value class extending an abstract identity class
-    runTest("AbstractValueClass2", null, "Value type AbstractValueClass2 has an identity type as supertype");
+    runTest("AbstractValueClass2", null, "Value type class AbstractValueClass2 has an invalid super class AbstractClass");
 
     // Test an abstract identity class without ACC_IDENTITY but with an older class file version, extending an abstract identity class
     // (Test that the VM fixes missing ACC_IDENTITY in old class files)
     runTest("AbstractIdentityClass2", null, null);
 
     // Test an abstract value class extending a concrete (i.e. final) value class
-    runTest("AbstractValueClass3", null, "class AbstractValueClass3 cannot inherit from final class FinalValue");
+    runTest("AbstractValueClass3", null, "Final superclass FinalValue can't be extended");
 
     //Test a concrete class without ACC_IDENTITY but with an older class file version, declaring a field without ACC_STATIC nor ACC_STRICT
     // (Test that the VM fixes missing ACC_IDENTITY in old class files)
@@ -106,13 +113,13 @@ public class ValueClassValidation {
     runTest("StaticSynchMethod", null, null);
 
     // Test a concrete value class with a non-static synchronized method
-    runTest("SynchMethod", "Method m in class SynchMethod (not an identity class) has illegal modifiers: 0x21", null);
+    runTest("SynchMethod", "In value classes a synchronized method must be static", null);
 
     // Test an abstract value class with a static synchronized method
     runTest("StaticSynchMethodInAbstractValue", null, null);
 
     // Test an abstract value class with a non-static synchronized method
-    runTest("SynchMethodInAbstractValue", "Method m in class SynchMethodInAbstractValue (not an identity class) has illegal modifiers: 0x21", null);
+    runTest("SynchMethodInAbstractValue", "In value classes a synchronized method must be static", null);
 
     // Test a class with a primitive descriptor in its LoadableDescriptors attribute:
     runTest("PrimitiveInLoadableDescriptors", null, null);
