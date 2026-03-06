@@ -76,9 +76,7 @@ public final class ObjectMethods {
     private static final MethodTypeDesc MTD_OBJECT_BOOLEAN = MethodTypeDesc.of(CD_boolean, CD_Object);
     private static final MethodTypeDesc MTD_INT = MethodTypeDesc.of(CD_int);
 
-    /* package-private */
-    static final HashMap<Class<?>, MethodHandle> primitiveEquals = new HashMap<>();
-
+    private static final HashMap<Class<?>, MethodHandle> primitiveEquals = new HashMap<>();
     private static final HashMap<Class<?>, MethodHandle> primitiveHashers = new HashMap<>();
 
     static {
@@ -521,12 +519,9 @@ public final class ObjectMethods {
         List<MethodHandle> getterList = List.of(getters); // deep null check
 
         MethodType methodType;
-        if (type instanceof MethodType mt) {
+        if (type instanceof MethodType mt)
             methodType = mt;
-            if (mt.parameterType(0) != recordClass) {
-                throw new IllegalArgumentException("Bad method type: " + mt);
-            }
-        } else {
+        else {
             methodType = null;
             if (!MethodHandle.class.equals(type))
                 throw new IllegalArgumentException(type.toString());

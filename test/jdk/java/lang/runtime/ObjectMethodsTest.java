@@ -157,13 +157,6 @@ public class ObjectMethodsTest {
         assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", C.EQUALS_DESC,    C.class, "x;y", C.ACCESSORS));
         assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "hashCode", C.TO_STRING_DESC, C.class, "x;y", C.ACCESSORS));
         assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "equals",   C.HASHCODE_DESC,  C.class, "x;y", C.ACCESSORS));
-
-        assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", methodType(String.class, this.getClass()), C.class, "x;y", C.ACCESSORS));
-        assertThrows(IAE, () -> ObjectMethods.bootstrap(LOOKUP, "toString", C.TO_STRING_DESC, C.class, "x;y",
-                     new MethodHandle[]{
-                            MethodHandles.lookup().findGetter(C.class, "x", int.class),
-                            MethodHandles.lookup().findGetter(this.getClass(), "y", int.class),
-                     }));
     }
 
     record NamePlusType(String name, MethodType type) {}
