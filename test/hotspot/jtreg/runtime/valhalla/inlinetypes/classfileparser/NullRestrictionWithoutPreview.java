@@ -38,13 +38,13 @@ public class NullRestrictionWithoutPreview {
     public static void main(String[] args) {
         try {
             new NullRestrictionOffender();
-        } catch (ClassFormatError expected) {
-            if (!expected.getMessage().contains("NullRestrictionOffender.barField in non-preview class file")) {
-                throw new RuntimeException("Wrong ClassFormatError: " + expected.getMessage());
+        } catch (ClassFormatError | IncompatibleClassChangeError expected) {
+            if (!expected.getMessage().contains("NullRestricted")) {
+                throw new RuntimeException("Unexpected exception: " + expected.getClass().getSimpleName() + ": " + expected.getMessage());
             }
             return;
         }
-        throw new RuntimeException("ClassFormatError expected");
+        throw new RuntimeException("Exception expected: @NullRestricted cannot be in a non-value class");
     }
 }
 
