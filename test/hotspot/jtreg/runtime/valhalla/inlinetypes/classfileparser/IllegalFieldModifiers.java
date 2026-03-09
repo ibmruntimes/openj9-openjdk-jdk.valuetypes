@@ -21,6 +21,13 @@
  * questions.
  *
  */
+
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
 /*
  * @test
  * @summary test that illegal field modifiers are detected correctly
@@ -53,7 +60,7 @@ public class IllegalFieldModifiers {
   public static void main(String[] args) throws Exception {
 
     // Test that ACC_FINAL with ACC_VOLATILE is illegal.
-    runTest("FinalAndVolatile", "Illegal field modifiers (fields cannot be final and volatile) in class FinalAndVolatile: 0x850");
+    runTest("FinalAndVolatile", "field cannot be both final and volatile");
 
     // Test that ACC_STATIC with ACC_STRICT is illegal.
     // runTest("StrictAndStatic", "Illegal field modifiers (field cannot be strict and static) in class StrictAndStatic: 0x808");
@@ -62,10 +69,10 @@ public class IllegalFieldModifiers {
     // runTest("StrictNotFinal", "Illegal field modifiers (strict field must be final) in class StrictNotFinal: 0x800");
 
     // Test that a concrete value class cannot have field without ACC_STATIC or ACC_STRICT
-    runTest("NotStaticNotStrict", "Illegal field modifiers (value class fields must be either non-static final and strict, or static) in class NotStaticNotStrict: 0x10");
+    runTest("NotStaticNotStrict", "Non-static field declared in a value class does not have its ACC_FINAL and ACC_STRICT_INIT flags set");
 
     // Test that an abstract value class cannot have field without ACC_STATIC or ACC_STRICT
-    runTest("NotStaticNotStrictInAbstract", "Illegal field modifiers (value class fields must be either non-static final and strict, or static) in class NotStaticNotStrictInAbstract: 0x10");
+    runTest("NotStaticNotStrictInAbstract", "Non-static field declared in a value class does not have its ACC_FINAL and ACC_STRICT_INIT flags set");
 
   }
 
