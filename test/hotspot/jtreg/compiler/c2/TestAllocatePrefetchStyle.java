@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026 IBM Corporation. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,39 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.jpackage.test;
 
-import java.nio.file.Path;
-import java.util.Objects;
-import java.util.function.Supplier;
+/*
+ * @test
+ * @bug 8379180
+ * @summary test AllocatePrefetchStyle
+ *
+ * @run main/othervm -Xbatch -XX:AllocatePrefetchStyle=2 compiler.c2.TestAllocatePrefetchStyle
+ * @run main/othervm -Xbatch -XX:AllocatePrefetchStyle=3 compiler.c2.TestAllocatePrefetchStyle
+ */
+package compiler.c2;
 
-@FunctionalInterface
-public interface CannedArgument {
-
-    public String getValue();
-
-    public static CannedArgument create(Supplier<Object> supplier, String label) {
-        Objects.requireNonNull(supplier);
-        Objects.requireNonNull(label);
-        return new CannedArgument() {
-
-            @Override
-            public String getValue() {
-                return supplier.get().toString();
-            }
-
-            @Override
-            public String toString( ) {
-                return label;
-            }
-        };
+public class TestAllocatePrefetchStyle {
+    public static void main(String[] args) {
+        for (int i = 0; i < 20_000; i++) {
+            test();
+        }
     }
 
-    public static Object cannedAbsolutePath(Path v) {
-        return create(v::toAbsolutePath, String.format("AbsolutePath(%s)", v));
-    }
-
-    public static Object cannedAbsolutePath(String v) {
-        return cannedAbsolutePath(Path.of(v));
+    private static int[] test() {
+        return new int[10];
     }
 }
