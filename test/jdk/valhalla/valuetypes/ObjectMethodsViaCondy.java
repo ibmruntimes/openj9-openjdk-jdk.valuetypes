@@ -22,11 +22,17 @@
  */
 
 /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
+/*
  * @test
  * @summary Test ObjectMethods::bootstrap call via condy
  * @modules java.base/jdk.internal.value
  * @enablePreview
- * @run testng/othervm ObjectMethodsViaCondy
+ * @run testng/othervm -Xshareclasses:none ObjectMethodsViaCondy
  */
 
 import java.io.IOException;
