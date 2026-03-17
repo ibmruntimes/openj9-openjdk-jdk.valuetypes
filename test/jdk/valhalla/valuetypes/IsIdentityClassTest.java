@@ -22,14 +22,20 @@
  */
 
 /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
+/*
  * @test
  * @summary Test that IsIdentityClass and modifiers return true for arrays that can be flattened.
  * @library /test/lib
  * @enablePreview false
  * @modules java.base/jdk.internal.misc
  *          java.base/jdk.internal.value
- * @run junit/othervm IsIdentityClassTest
- * @run junit/othervm --enable-preview IsIdentityClassTest
+ * @run junit/othervm -Xshareclasses:none IsIdentityClassTest
+ * @run junit/othervm -Xshareclasses:none --enable-preview IsIdentityClassTest
  */
 
 import org.junit.jupiter.api.Test;

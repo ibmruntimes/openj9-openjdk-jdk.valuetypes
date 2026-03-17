@@ -22,12 +22,18 @@
  */
 
 /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
+/*
  * @test
  * @bug 8238358 8247444
  * @summary Test Lookup::unreflectSetter and Lookup::unreflectVarHandle on
  *          trusted final fields (declared in hidden classes and records)
- * @run junit/othervm --enable-final-field-mutation=ALL-UNNAMED -DwriteAccess=true UnreflectTest
- * @run junit/othervm --illegal-final-field-mutation=deny -DwriteAccess=false UnreflectTest
+ * @run junit/othervm -Xshareclasses:none --enable-final-field-mutation=ALL-UNNAMED -DwriteAccess=true UnreflectTest
+ * @run junit/othervm -Xshareclasses:none --illegal-final-field-mutation=deny -DwriteAccess=false UnreflectTest
  */
 
 import java.io.IOException;
