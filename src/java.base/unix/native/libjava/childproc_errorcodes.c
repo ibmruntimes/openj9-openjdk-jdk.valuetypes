@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2026 SAP SE. All rights reserved.
+ * Copyright (c) 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,43 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-/*
- * Aix' own version of dladdr().
- * This function tries to mimic dladdr(3) on Linux
- * (see http://linux.die.net/man/3/dladdr)
- * dladdr(3) is not POSIX but a GNU extension, and is not available on AIX.
- *
- */
+#include <assert.h>
+#include <stdbool.h>
 
-#include "dl_info.h"
+#include <unistd.h>
+#include "childproc.h"
+#include "childproc_errorcodes.h"
 
-#ifdef __cplusplus
-extern "C"
-#endif
-int dladdr(void *addr, Dl_info *info);
+void buildErrorCode(errcode_t* errcode, int step, int hint, int errno_) {
+    errcode_t e;
+
+    assert(step < (1 << 8));
+    e.step = step;
+
+    assert(errno_ < (1 << 8));
+    e.errno_ = errno_;
+
+    const int maxhint = (1 << 16);
+    e.hint = hint < maxhint ? hint : maxhint;
+
+    (*errcode) = e;
+}
+
+int exitCodeFromErrorCode(errcode_t errcode) {
+    /* We use the fail step number as exit code, but avoid 0 and 1
+     * and try to avoid the [128..256) range since that one is used by
+     * shells to codify abnormal kills by signal. */
+    return 0x10 + errcode.step;
+}
+
+bool sendErrorCode(int fd, errcode_t errcode) {
+    return writeFully(fd, &errcode, sizeof(errcode)) == sizeof(errcode);
+}
+
+bool sendAlivePing(int fd) {
+    errcode_t errcode;
+    buildErrorCode(&errcode, ESTEP_CHILD_ALIVE, getpid(), 0);
+    return sendErrorCode(fd, errcode);
+}
