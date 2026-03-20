@@ -23,44 +23,30 @@
 
 package compiler.valhalla.inlinetypes;
 
+import static compiler.valhalla.inlinetypes.InlineTypes.*;
+
 /*
  * @test
- * @key randomness
- * @summary In CmpLNode::Ideal, we optimize expressions of the form
- *          CmpL(OrL(CastP2X(..), CastP2X(..)), 0L) that are created
- *          by Parse::do_acmp. If one of the operands has a NotNull type,
- *          then it can be folded. This test ensures that this optimization
- *          is not missed.
+ * @bug 8379863
+ * @summary With value classes, scalarization can take place independently
+ *          of escape analysis. When deoptimizing, this implies that
+ *          scalarized objects must be rematerialized even if escape
+ *          analysis is disabled.
  * @library /test/lib /
  * @enablePreview
  * @modules java.base/jdk.internal.value
  *          java.base/jdk.internal.vm.annotation
- * @run main/othervm -Xcomp -XX:-TieredCompilation -XX:+IgnoreUnrecognizedVMOptions
- *                   -XX:VerifyIterativeGVN=1110
- *                   -XX:CompileCommand=compileonly,${test.main.class}::test
+ * @run main/othervm -Xcomp -XX:-TieredCompilation
+ *                   -XX:-DoEscapeAnalysis -XX:-EliminateAutoBox
  *                   ${test.main.class}
  * @run main ${test.main.class}
  */
 
-value class MyValue1MissingOptAcmp {
-    int x;
+public class TestReallocWithoutEA {
+    static void unloaded() {}
 
-    MyValue1MissingOptAcmp(int x) {
-        this.x = x;
-    }
-}
-
-public class TestMissingOptAcmp {
     public static void main(String[] args) {
-        test(new MyValue1MissingOptAcmp(1), new MyValue1MissingOptAcmp(1));
-    }
-
-    public static Object getNotNull(Object u) {
-        // results in a CastPP with NotNull type, which enables the optimization
-        return (u != null) ? u : new Object();
-    }
-
-    public static boolean test(MyValue1MissingOptAcmp v, Object u) {
-        return (Object)v == getNotNull(u);
+        var x = MyValue1.DEFAULT;
+        unloaded();
     }
 }
