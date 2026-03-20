@@ -90,7 +90,7 @@ public final class RestrictedSecurity {
     static {
         final List<String> nssSupportedArch = List.of("amd64", "ppc64le", "s390x");
         final List<String> openjceplusCertifiedArch = List.of("amd64", "ppc64", "s390x");
-        final List<String> openjceplusCertifiedOS = List.of("AIX", "Linux", "Windows");
+        final List<String> openjceplusCertifiedOS = List.of("AIX", "Linux", "Windows", "z/OS");
         String osName = System.getProperty("os.name");
         String osArch = System.getProperty("os.arch");
 
