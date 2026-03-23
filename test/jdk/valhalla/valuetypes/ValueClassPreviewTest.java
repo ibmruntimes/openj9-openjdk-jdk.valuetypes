@@ -22,11 +22,17 @@
  */
 
 /*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
+/*
  * @test
  * @summary Test jdk.internal.value.ValueClass against preview-only things
  * @modules java.base/jdk.internal.value
  * @enablePreview
- * @run junit ValueClassPreviewTest
+ * @run junit/othervm -Xshareclasses:none ValueClassPreviewTest
  */
 
 import java.util.Optional;
