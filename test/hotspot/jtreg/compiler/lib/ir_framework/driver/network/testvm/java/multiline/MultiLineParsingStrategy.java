@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,24 +19,14 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-package gc.stress.gcbasher;
+package compiler.lib.ir_framework.driver.network.testvm.java.multiline;
 
-import java.io.IOException;
-
-/*
- * @test TestGCBasherWithParallel
- * @key stress
- * @library /
- * @requires vm.gc.Parallel
- * @requires vm.flavor == "server"
- * @summary Stress the Parallel GC by trying to make old objects more likely to be garbage than young objects.
- * @run main/othervm/timeout=200 -Xlog:gc*=info -Xmx256m -XX:+UseParallelGC -XX:-UseGCOverheadLimit gc.stress.gcbasher.TestGCBasherWithParallel 120000
+/**
+ * Interface to define a strategy to parse a line in a {@link MultiLineParser}.
  */
-public class TestGCBasherWithParallel {
-    public static void main(String[] args) throws IOException {
-        TestGCBasher.main(args);
-    }
+public interface MultiLineParsingStrategy<Output> {
+    void parseLine(String line);
+    Output output();
 }
