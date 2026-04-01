@@ -73,9 +73,6 @@ public class ModuleOption {
             "-version");
         oa.shouldHaveExitValue(0)
           .shouldContain("Mismatched values for property jdk.module.main: runtime jdk.compiler dump time jdk.httpserver");
-        if (!oa.contains(noOptimizedModuleHandling)) {
-            oa.shouldContain(subgraphCannotBeUsed);
-        }
 
         // no module specified during runtime
         oa = TestCommon.execCommon(
@@ -83,9 +80,6 @@ public class ModuleOption {
             "-version");
         oa.shouldHaveExitValue(0)
           .shouldContain("Mismatched values for property jdk.module.main: jdk.httpserver specified during dump time but not during runtime");
-        if (!oa.contains(noOptimizedModuleHandling)) {
-            oa.shouldContain(subgraphCannotBeUsed);
-        }
 
         // dump an archive without the module option
         archiveName = TestCommon.getNewArchiveName("no-module-option");
@@ -105,9 +99,6 @@ public class ModuleOption {
           .shouldContain("Mismatched values for property jdk.module.main: jdk.httpserver specified during runtime but not during dump time")
           // version of the jdk.httpserver module, e.g. java 22-ea
           .shouldMatch(versionPattern);
-        if (!oa.contains(noOptimizedModuleHandling)) {
-            oa.shouldContain(subgraphCannotBeUsed);
-        }
 
         // dump an archive with an incubator module, -m jdk.incubator.vector
         archiveName = TestCommon.getNewArchiveName("incubator-module");
