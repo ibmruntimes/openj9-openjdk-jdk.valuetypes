@@ -21,6 +21,12 @@
  * questions.
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
 package runtime.valhalla.inlinetypes;
 
 import jdk.test.lib.Asserts;
@@ -30,7 +36,7 @@ import jdk.test.lib.Asserts;
  * @summary Test JNI IsValueObject with inline types
  * @library /test/lib
  * @enablePreview
- * @run main/othervm/native --enable-native-access=ALL-UNNAMED
+ * @run main/othervm/native -Xshareclasses:none --enable-native-access=ALL-UNNAMED
  *                          runtime.valhalla.inlinetypes.TestJNIIsValueObject
  */
 public class TestJNIIsValueObject {
