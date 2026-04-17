@@ -39,7 +39,7 @@ public class TestIllegalLoadableDescriptors {
           Class newClass = Class.forName("LDTest");
       } catch (java.lang.ClassFormatError e) {
           gotException = true;
-          if (!e.getMessage().contains("Descriptor from LoadableDescriptors attribute at index \"33\" in class LDTest has illegal signature \"[V")) {
+          if (!e.getMessage().contains("Invalid field descriptor found in LoadableDescriptors attribute")) {
               throw new RuntimeException( "Wrong ClassFormatError: " + e.getMessage());
           }
       }

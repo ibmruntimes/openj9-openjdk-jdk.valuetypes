@@ -33,6 +33,12 @@
  * @run junit runtime.valhalla.inlinetypes.classloading.PreLoadFailuresDoNotImpactApplicationTest
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
 package runtime.valhalla.inlinetypes.classloading;
 
 import java.io.IOException;
@@ -98,10 +104,10 @@ class PreLoadFailuresDoNotImpactApplicationTest {
             }
             case "InnerValue": {
                 // First access failure: when Outer is preloading Inner via LoadableDescriptor.
-                // Second access failure: when we try to load Inner the first time (LoadableDescriptor).
+                // Second access failure: when we try to load Inner the first time (LoadableDescriptor). (OpenJ9 does not do this.)
                 // Third access failure: when class linking occurs (LoadableDescriptor).
                 // Fourth access and onwards should succeed.
-                if (attempts++ < 3) {
+                if (attempts++ < 2) {
                     throw new ClassNotFoundException("purposeful exception: we can't find this class");
                 }
                 return customLoadSimple(name);
