@@ -23,7 +23,7 @@
 
 /*
  * ===========================================================================
- * (c) Copyright IBM Corp. 2024, 2024 All Rights Reserved
+ * (c) Copyright IBM Corp. 2024, 2026 All Rights Reserved
  * ===========================================================================
  */
 
@@ -64,7 +64,7 @@ final class StdLibTest extends NativeTestHelper {
 
     static final Linker ABI = Linker.nativeLinker();
 
-    final static Charset nativeCharset = Charset.forName(System.getProperty("native.encoding"));
+    static final Charset nativeCharset = Charset.forName(System.getProperty("native.encoding"));
 
     static MemorySegment allocateSegmentForString(Arena arena, String str) {
         // Allocate a memory segment using the native-encoded bytes.
