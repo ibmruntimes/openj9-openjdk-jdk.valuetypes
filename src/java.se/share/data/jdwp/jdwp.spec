@@ -2513,7 +2513,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     )
                     (Alt InstanceOnly=11
                         "Restricts reported events to those whose "
-                        "active 'this' object is the given object. "
+                        "active 'this' object is the given object "
+                        "as determined by applying the Java == operator. "
                         "Match value is the null object for static methods. "
                         "This modifier can be used with any event kind "
                         "except class prepare, class unload, thread start, "
@@ -2605,6 +2606,16 @@ JDWP "Java(tm) Debug Wire Protocol"
         "determine the correct local variable index. (Typically, this "
         "index can be determined for method arguments from the method "
         "signature without access to the local variable table information.) "
+        "<p>"
+        "When preview features are enabled, "
+        "if a local variable is the 'this' object and represents a "
+        "value object under construction, the "
+        "value returned will be for a snapshot of the "
+        "value object, not a reference to the actual value object under "
+        "construction. Therefore the value returned will not reflect "
+        "changes to the value object that happen later on during "
+        "construction."
+        
         (Out
             (threadObject thread "The frame's thread. ")
             (frame frame "The frame ID. ")
@@ -2676,6 +2687,14 @@ JDWP "Java(tm) Debug Wire Protocol"
         "Returns the value of the 'this' reference for this frame. "
         "If the frame's method is static or native, the reply "
         "will contain the null object reference. "
+        "<p>"
+        "When preview features are enabled, "
+        "if 'this' represents a value object under construction, the "
+        "value returned will be for a snapshot of the "
+        "value object, not a reference to the actual value object under "
+        "construction. Therefore the value returned will not reflect "
+        "changes to the value object that happen later on during "
+        "construction."
         (Out
             (threadObject thread "The frame's thread. ")
             (frame frame "The frame ID. ")

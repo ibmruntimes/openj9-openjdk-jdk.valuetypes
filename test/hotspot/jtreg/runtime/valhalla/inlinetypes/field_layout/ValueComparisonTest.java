@@ -35,7 +35,7 @@
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
  * @compile ValueClassGenerator.java ValueComparisonTest.java
- * @run main/othervm -Xshareclasses:none runtime.valhalla.inlinetypes.field_layout.ValueComparisonTest
+ * @run main/othervm -Xshareclasses:none -XX:MaxNodeLimit=100000 runtime.valhalla.inlinetypes.field_layout.ValueComparisonTest
  */
 
 package runtime.valhalla.inlinetypes.field_layout;

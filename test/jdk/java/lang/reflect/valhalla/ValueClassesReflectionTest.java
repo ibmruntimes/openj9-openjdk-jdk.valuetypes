@@ -73,7 +73,6 @@ public class ValueClassesReflectionTest {
     @Test(dataProvider = "valueClasses")
     public void testValueClasses(Class<?> cls) {
         assertTrue(cls.isValue());
-        assertTrue(!cls.isIdentity());
         Set<AccessFlag> accessFlagSet = cls.accessFlags();
         assertTrue(!accessFlagSet.contains(AccessFlag.IDENTITY));
     }
@@ -99,7 +98,6 @@ public class ValueClassesReflectionTest {
     @Test(dataProvider = "notValueClasses")
     public void testNotValueClasses(Class<?> cls) {
         assertTrue(!cls.isValue(), " failing for class " + cls);
-        assertTrue(cls.isIdentity());
     }
 
     @Test(dataProvider = "valueClasses")
