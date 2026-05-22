@@ -22,19 +22,13 @@
  */
 
 /*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
- * ===========================================================================
- */
-
-/*
  * @test
  * @bug 8368799
  * @summary Verify heapwalking API does not report array classes several times.
  * @requires vm.jvmti
  * @modules java.base/jdk.internal.vm.annotation java.base/jdk.internal.value
  * @enablePreview
- * @run main/othervm/native -Xshareclasses:none -agentlib:HeapwalkDupClasses HeapwalkDupClasses
+ * @run main/othervm/native -agentlib:HeapwalkDupClasses HeapwalkDupClasses
  */
 
 import java.lang.ref.Reference;

@@ -22,30 +22,24 @@
  */
 
 /*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
- * ===========================================================================
- */
-
-/*
  * @test
  * @modules java.base/jdk.internal.access.foreign
  * @modules java.base/jdk.internal.foreign.layout
  *
- * @run junit/othervm -Xverify:all -Xshareclasses:none
+ * @run junit/othervm -Xverify:all
  *   -Djdk.internal.foreign.SHOULD_ADAPT_HANDLES=false
  *   VarHandleTestExact
- * @run junit/othervm -Xverify:all -Xshareclasses:none
+ * @run junit/othervm -Xverify:all
  *   -Djdk.internal.foreign.SHOULD_ADAPT_HANDLES=false
  *   -Djava.lang.invoke.VarHandle.VAR_HANDLE_GUARDS=true
  *   -Djava.lang.invoke.VarHandle.VAR_HANDLE_IDENTITY_ADAPT=true
  *   VarHandleTestExact
- * @run junit/othervm -Xverify:all -Xshareclasses:none
+ * @run junit/othervm -Xverify:all
  *   -Djdk.internal.foreign.SHOULD_ADAPT_HANDLES=false
  *   -Djava.lang.invoke.VarHandle.VAR_HANDLE_GUARDS=false
  *   -Djava.lang.invoke.VarHandle.VAR_HANDLE_IDENTITY_ADAPT=false
  *   VarHandleTestExact
- * @run junit/othervm -Xverify:all -Xshareclasses:none
+ * @run junit/othervm -Xverify:all
  *   -Djdk.internal.foreign.SHOULD_ADAPT_HANDLES=false
  *   -Djava.lang.invoke.VarHandle.VAR_HANDLE_GUARDS=false
  *   -Djava.lang.invoke.VarHandle.VAR_HANDLE_IDENTITY_ADAPT=true

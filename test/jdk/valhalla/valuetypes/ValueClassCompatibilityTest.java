@@ -22,19 +22,13 @@
  */
 
 /*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
- * ===========================================================================
- */
-
-/*
  * @test
  * @bug 8377576
  * @summary Test jdk.internal.value.ValueClass with and without preview
  * @modules java.base/jdk.internal.misc
  *          java.base/jdk.internal.value
- * @run junit/othervm -Xshareclasses:none ValueClassCompatibilityTest
- * @run junit/othervm -Xshareclasses:none --enable-preview ValueClassCompatibilityTest
+ * @run junit ValueClassCompatibilityTest
+ * @run junit/othervm --enable-preview ValueClassCompatibilityTest
  */
 
 import java.util.ArrayList;
