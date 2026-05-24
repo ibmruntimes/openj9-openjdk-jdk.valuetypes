@@ -21,12 +21,6 @@
  * questions.
  */
 
-/*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
- * ===========================================================================
- */
-
  /*
  * @test
  * @key randomness
@@ -35,7 +29,7 @@
  * @modules java.base/jdk.internal.vm.annotation
  * @enablePreview
  * @compile ValueClassGenerator.java ValueComparisonTest.java
- * @run main/othervm -Xshareclasses:none -XX:MaxNodeLimit=100000 runtime.valhalla.inlinetypes.field_layout.ValueComparisonTest
+ * @run main/othervm -XX:CompileCommand=exclude,ValueClass*::* runtime.valhalla.inlinetypes.field_layout.ValueComparisonTest
  */
 
 package runtime.valhalla.inlinetypes.field_layout;
