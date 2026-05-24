@@ -21,12 +21,6 @@
  * questions.
  */
 
-/*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
- * ===========================================================================
- */
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
@@ -59,8 +53,8 @@ import java.time.ZonedDateTime;
  * @test
  * @summary Test that classes are value classes or not depending on --enable-preview
  * @modules java.base/jdk.internal.misc
- * @run junit/othervm -Xshareclasses:none --enable-preview UseValueClassTest
- * @run junit/othervm -Xshareclasses:none UseValueClassTest
+ * @run junit/othervm -Xlog --enable-preview UseValueClassTest
+ * @run junit/othervm -Xlog UseValueClassTest
  */
 
 public class UseValueClassTest {

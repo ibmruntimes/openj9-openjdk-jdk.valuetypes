@@ -22,18 +22,12 @@
  */
 
 /*
- * ===========================================================================
- * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
- * ===========================================================================
- */
-
-/*
  * @test
  * @bug 8334334
  * @summary reflection test for value classes
  * @enablePreview
  * @compile ValueClassesReflectionTest.java
- * @run testng/othervm -Xshareclasses:none ValueClassesReflectionTest
+ * @run testng/othervm ValueClassesReflectionTest
  */
 
 import java.lang.annotation.*;
