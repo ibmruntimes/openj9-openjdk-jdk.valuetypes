@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,32 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.runtime.test;
 
-import jdk.vm.ci.meta.ResolvedJavaMethod;
+package jdk.test.lib.valueclass;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 /**
- * Context for method related tests.
+ * A reusable value class helper for Collections tests.
+ * Wraps an int and an int array (x, arr), supports equality, ordering, and hashing.
+ * When compiled with -Xplugin:ValueClassPlugin --enable-preview this class
+ * is treated as a value class; otherwise it is a plain identity class,
+ * allowing the same tests to exercise both modes.
  */
-public class MethodUniverse extends TypeUniverse {
-
-    public static final Map<Method, ResolvedJavaMethod> methods = new HashMap<>();
-    public static final Map<Constructor<?>, ResolvedJavaMethod> constructors = new HashMap<>();
-
-    {
-        for (Class<?> c : classes) {
-            for (Method m : c.getDeclaredMethods()) {
-                ResolvedJavaMethod method = metaAccess.lookupJavaMethod(m);
-                methods.put(m, method);
-            }
-            for (Constructor<?> m : c.getDeclaredConstructors()) {
-                constructors.put(m, metaAccess.lookupJavaMethod(m));
-            }
-        }
+@AsValueClass
+public final class VClass implements Comparable<VClass> {
+    public int x;
+    public int[] arr;
+    public VClass(int x, int[] arr) { this.x = x; this.arr = arr; }
+    public int compareTo(VClass other) {
+        int cmp = Integer.compare(x, other.x);
+        return cmp != 0 ? cmp : Arrays.compare(arr, other.arr);
     }
+    public boolean equals(Object o) { return o instanceof VClass t && x == t.x && Arrays.equals(arr, t.arr); }
+    public int hashCode() { return 31 * x + Arrays.hashCode(arr); }
 }
