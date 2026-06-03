@@ -36,6 +36,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.tree.JCTree.JCAssign;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
@@ -90,7 +91,6 @@ public class LocalProxyVarsGen extends TreeTranslator {
     private final Symtab syms;
     private final Target target;
     private TreeMaker make;
-    private final UnsetFieldsInfo unsetFieldsInfo;
     private ClassSymbol currentClass = null;
     private java.util.List<JCVariableDecl> instanceFields;
     private Map<JCMethodDecl, Set<Symbol>> fieldsReadInPrologue = new HashMap<>();
@@ -106,7 +106,6 @@ public class LocalProxyVarsGen extends TreeTranslator {
         names = Names.instance(context);
         syms = Symtab.instance(context);
         target = Target.instance(context);
-        unsetFieldsInfo = UnsetFieldsInfo.instance(context);
         Options options = Options.instance(context);
         noLocalProxyVars = options.isSet("noLocalProxyVars");
     }
@@ -215,12 +214,16 @@ public class LocalProxyVarsGen extends TreeTranslator {
             // assign the proxy locals to the fields and finally invoke the super with the fresh local variables
             int argPosition = 0;
             ListBuffer<JCStatement> superArgsProxies = new ListBuffer<>();
+            Symbol.MethodSymbol constructorCallSymbol = (Symbol.MethodSymbol) TreeInfo.symbolFor(constructorCall.meth);
+            List<Type> allDeclaredArgs = constructorCallSymbol.externalType(types).getParameterTypes();
             for (JCExpression arg : constructorCall.args) {
+                Type declaredType = allDeclaredArgs.head;
                 long flags = SYNTHETIC | FINAL;
-                VarSymbol proxyForArgSym = new VarSymbol(flags, newLocalName("" + argPosition), types.erasure(arg.type), constructor.sym);
+                VarSymbol proxyForArgSym = new VarSymbol(flags, newLocalName("" + argPosition), types.erasure(declaredType), constructor.sym);
                 JCVariableDecl proxyForArgDecl = make.at(constructor.pos).VarDef(proxyForArgSym, arg);
                 superArgsProxies = superArgsProxies.append(proxyForArgDecl);
                 argPosition++;
+                allDeclaredArgs = allDeclaredArgs.tail;
             }
             List<JCStatement> superArgsProxiesList = superArgsProxies.toList();
             ListBuffer<JCExpression> newArgs = new ListBuffer<>();
@@ -263,15 +266,6 @@ public class LocalProxyVarsGen extends TreeTranslator {
                 result = make.at(md).Ident(fieldToLocalMap.get(tree.sym));
             } else {
                 result = tree;
-            }
-        }
-
-        @Override
-        public void visitAssign(JCAssign tree) {
-            JCExpression previousLHS = tree.lhs;
-            super.visitAssign(tree);
-            if (ctorPrologue && previousLHS != tree.lhs) {
-                unsetFieldsInfo.removeUnsetFieldInfo(currentClass, tree);
             }
         }
 
