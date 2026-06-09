@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,13 +21,27 @@
  * questions.
  */
 
-// key: compiler.err.super.class.method.cannot.be.synchronized
-// key: compiler.note.preview.filename
-// key: compiler.note.preview.recompile
-// options: --enable-preview -source ${jdk.version}
+package jdk.jfr.startupargs;
 
-public abstract class SuperClassMethodCannotBeSynchronized {
-    synchronized void foo() {}
+import jdk.test.lib.Asserts;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
+
+/**
+ * @test
+ * @requires vm.flagless
+ * @requires vm.hasJFR
+ * @library /test/lib /test/jdk
+ * @run main jdk.jfr.startupargs.TestOptionsHelp
+ */
+public class TestOptionsHelp {
+
+    public static void main(String... args) throws Exception {
+        ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder("-XX:FlightRecorderOptions:help");
+        OutputAnalyzer out = ProcessTools.executeProcess(pb);
+        out.shouldContain("Syntax : -XX:FlightRecorderOptions:[options]");
+        out.shouldContain("numglobalbuffers");
+        out.shouldContain("Multiple options are separated");
+        out.shouldHaveExitValue(0);
+    }
 }
-
-value class V extends SuperClassMethodCannotBeSynchronized {}
