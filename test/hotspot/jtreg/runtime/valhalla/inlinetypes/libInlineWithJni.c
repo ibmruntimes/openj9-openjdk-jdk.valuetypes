@@ -25,9 +25,9 @@
 
 JNIEXPORT void JNICALL
 Java_runtime_valhalla_inlinetypes_InlineWithJni_doJniMonitorEnter(JNIEnv *env, jobject obj) {
-    int ret = (*env)->MonitorEnter(env, obj);
     jclass class = (*env)->GetObjectClass(env, obj);
     jfieldID fieldId = (*env)->GetStaticFieldID(env, class, "returnValue", "I");
+    int ret = (*env)->MonitorEnter(env, obj);
     (*env)->SetStaticIntField(env, class, fieldId, ret);
 }
 
