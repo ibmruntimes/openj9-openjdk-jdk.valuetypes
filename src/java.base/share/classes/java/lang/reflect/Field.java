@@ -288,11 +288,17 @@ class Field extends AccessibleObject implements Member {
     }
 
     /**
-     * Returns {@code true} if this field is a strictly
-     * initialized field; returns {@code false} otherwise.
+     * Returns {@code true} if this field is a strictly-initialized field;
+     * returns {@code false} otherwise.
      *
-     * @return true if and only if this field is a strictly
-     * initialized field as defined by the Java Virtual Machine Specification
+     * <p>This method returns {@code true} if and only if preview features are
+     * enabled and this field is a strictly-initialized field. The
+     * {@link AccessFlag#STRICT_INIT ACC_STRICT_INIT} flag is considered not set
+     * when preview features are disabled; consequently, this method always
+     * returns {@code false} when preview features are disabled.
+     *
+     * @return {@code true} if and only if this field is a strictly-initialized
+     *         field, as defined by the Java Virtual Machine Specification
      * @jvms strict-fields-4.5 Field access and property flags
      * @since 28
      */
@@ -490,6 +496,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      */
     @CallerSensitive
     @ForceInline // to ensure Reflection.getCallerClass optimization
@@ -525,6 +535,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see       Field#get
      */
     @CallerSensitive
@@ -561,6 +575,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see       Field#get
      */
     @CallerSensitive
@@ -599,6 +617,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see Field#get
      */
     @CallerSensitive
@@ -637,6 +659,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see       Field#get
      */
     @CallerSensitive
@@ -675,6 +701,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see       Field#get
      */
     @CallerSensitive
@@ -713,6 +743,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see       Field#get
      */
     @CallerSensitive
@@ -751,6 +785,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see Field#get
      */
     @CallerSensitive
@@ -789,6 +827,10 @@ class Field extends AccessibleObject implements Member {
      *              and the field is an instance field.
      * @throws    ExceptionInInitializerError if the initialization provoked
      *              by this method fails.
+     * @throws    IllegalStateException if the current thread is initializing the
+     *              field's {@linkplain #getDeclaringClass() declaring class} and
+     *              the field is a {@linkplain #isStrictInit() strictly-initialized}
+     *              static field that has not been initialized.
      * @see       Field#get
      */
     @CallerSensitive
