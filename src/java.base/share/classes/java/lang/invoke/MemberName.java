@@ -31,6 +31,7 @@
 
 package java.lang.invoke;
 
+import jdk.internal.misc.Unsafe;
 import sun.invoke.util.VerifyAccess;
 
 import java.lang.classfile.ClassFile;
@@ -439,7 +440,7 @@ final class MemberName implements Member, Cloneable {
     }
 
     /** Query whether this member is a flat field */
-    public boolean isFlat() { return getLayout() != 0; }
+    public boolean isFlat() { return getLayout() != Unsafe.NON_FLAT_LAYOUT; }
 
     /** Query whether this member is a null-restricted field */
     public boolean isNullRestricted() { return (flags & MN_NULL_RESTRICTED) == MN_NULL_RESTRICTED; }
