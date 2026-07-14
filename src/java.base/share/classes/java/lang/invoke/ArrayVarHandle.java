@@ -133,7 +133,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.getFlatValueVolatile(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType());
         }
@@ -152,7 +152,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             UNSAFE.putFlatValueVolatile(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     storeCheck(handle, array, value));
@@ -174,7 +174,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.getFlatValueOpaque(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType());
         }
@@ -193,7 +193,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             UNSAFE.putFlatValueOpaque(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     storeCheck(handle, array, value));
@@ -215,7 +215,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.getFlatValueAcquire(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType());
         }
@@ -234,7 +234,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             UNSAFE.putFlatValueRelease(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     storeCheck(handle, array, value));
@@ -256,7 +256,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.compareAndSetFlatValue(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -279,7 +279,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.compareAndExchangeFlatValue(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -302,7 +302,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.compareAndExchangeFlatValueAcquire(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -325,7 +325,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.compareAndExchangeFlatValueRelease(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -348,7 +348,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.weakCompareAndSetFlatValuePlain(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -371,7 +371,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.weakCompareAndSetFlatValue(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -394,7 +394,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.weakCompareAndSetFlatValueAcquire(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -417,7 +417,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.weakCompareAndSetFlatValueRelease(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     arrayType.componentType().cast(expected),
@@ -440,7 +440,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.getAndSetFlatValue(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     storeCheck(handle, array, value));
@@ -461,7 +461,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.getAndSetFlatValueAcquire(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     storeCheck(handle, array, value));
@@ -482,7 +482,7 @@ final class ArrayVarHandle extends VarHandle {
             int aoffset = (int) UNSAFE.arrayInstanceBaseOffset(array);
             int ascale = UNSAFE.arrayInstanceIndexScale(array);
             int ashift = Integer.numberOfTrailingZeros(ascale);
-            int layout = UNSAFE.arrayLayout(array.getClass());
+            int layout = UNSAFE.arrayLayout(array);
             return UNSAFE.getAndSetFlatValueRelease(array,
                     (((long) Preconditions.checkIndex(index, array.length, Preconditions.AIOOBE_FORMATTER)) << ashift) + aoffset, layout, arrayType.componentType(),
                     storeCheck(handle, array, value));
