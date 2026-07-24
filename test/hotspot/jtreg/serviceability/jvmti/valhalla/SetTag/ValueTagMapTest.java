@@ -115,34 +115,45 @@ public class ValueTagMapTest {
     public static void main(String[] args) {
         System.loadLibrary("ValueTagMapTest");
         List<ValueHolder2> items = new ArrayList<>();
+        List<ValueHolder> nullRestrictedItems = new ArrayList<>();
 
         for (int i = 0; i < 20; i++) {
-            items.add(new ValueHolder2(i % 4, i % 8));
+            ValueHolder2 item = new ValueHolder2(i % 4, i % 8);
+            items.add(item);
+            nullRestrictedItems.add(item.f2);
         }
 
         long startTime = System.nanoTime();
         long tag = 1;
-        for (ValueHolder2 item : items) {
+        for (int i = 0; i < items.size(); i++) {
+            ValueHolder2 item = items.get(i);
             setTag(item, tag++);
             setTag(item.f1, tag++);
-            setTag(item.f2, tag++);
+            setTag(nullRestrictedItems.get(i), tag++);
         }
 
-        for (ValueHolder2 item: items) {
+        for (int i = 0; i < items.size(); i++) {
+            ValueHolder2 item = items.get(i);
             long tag0 = getTag(item);
             long tag1 = getTag(item.f1);
-            long tag2 = getTag(item.f2);
+            long tag2 = getTag(nullRestrictedItems.get(i));
             System.out.println("getTag (" + item + "): " + tag0 + ", f1: " + tag1 + ", f2:" + tag2);
         }
 
         startTime = System.nanoTime();
-        for (ValueHolder2 item1: items) {
-            for (ValueHolder2 item2 : items) {
+        for (int i = 0; i < items.size(); i++) {
+            ValueHolder2 item1 = items.get(i);
+            ValueHolder holder1 = nullRestrictedItems.get(i);
+
+            for (int j = 0; j < items.size(); j++) {
+                ValueHolder2 item2 = items.get(j);
+                ValueHolder holder2 = nullRestrictedItems.get(j);
+
                 testGetTag(item1, item2);
                 testGetTag(item1.f1, item2.f1);
-                testGetTag(item1.f2, item2.f2);
-                testGetTag(item1.f1, item2.f2);
-                testGetTag(item1.f2, item2.f1);
+                testGetTag(holder1, holder2);
+                testGetTag(item1.f1, holder2);
+                testGetTag(holder1, item2.f1);
             }
         }
     }
