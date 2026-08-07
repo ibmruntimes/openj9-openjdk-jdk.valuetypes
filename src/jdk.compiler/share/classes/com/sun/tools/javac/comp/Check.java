@@ -1197,9 +1197,6 @@ public class Check {
             if ((flags & STRICTFP) != 0) {
                 log.warning(tree.pos(), LintWarnings.Strictfp);
             }
-            if ((flags & STRICTFP) != 0) {
-                log.warning(tree.pos(), LintWarnings.Strictfp);
-            }
             // Imply STRICTFP if owner has STRICTFP set.
             if (((flags|implicit) & Flags.ABSTRACT) == 0 ||
                 ((flags) & Flags.DEFAULT) != 0)

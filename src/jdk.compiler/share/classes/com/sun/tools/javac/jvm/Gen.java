@@ -981,6 +981,7 @@ public class Gen extends JCTree.Visitor {
             int extras = 0;
             // Count up extra parameters
             if (meth.isConstructor()) {
+                localProxyVarsGen.patchConstructor(tree, make);
                 extras++;
                 if (meth.enclClass().isInner() &&
                     !meth.enclClass().isStatic()) {
@@ -1051,6 +1052,9 @@ public class Gen extends JCTree.Visitor {
 
                 // Fill in type annotation positions for exception parameters
                 code.fillExceptionParameterPositions();
+            }
+            if (meth.isConstructor()) {
+                localProxyVarsGen.unpatchConstructor(tree, make);
             }
         }
 
@@ -2567,6 +2571,7 @@ public class Gen extends JCTree.Visitor {
                 }
             }
             cdef.defs = List.nil(); // discard trees
+            localProxyVarsGen.classGenerated(c);
             return nerrs == 0;
         } finally {
             // note: this method does NOT support recursion.

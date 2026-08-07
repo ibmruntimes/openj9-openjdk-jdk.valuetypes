@@ -89,6 +89,7 @@ public class GenericStringTest {
                                      LocalMap.class,
                                      AnEnum.class,
                                      AnotherEnum.class,
+                                     AValueClass.class,
 
                                      SealedRootClass.class,
                                      SealedRootClass.ChildA.class,

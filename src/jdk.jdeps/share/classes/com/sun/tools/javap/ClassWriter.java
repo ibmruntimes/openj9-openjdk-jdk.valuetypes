@@ -168,7 +168,7 @@ public class ClassWriter extends BasicWriter {
             indent(-1);
         }
 
-        writeModifiers(getClassModifiers(cm.flags()));
+        writeModifiers(getClassModifiers(cm.flags(), classModel.majorVersion(), classModel.minorVersion()));
 
         if ((classModel.flags().flagsMask() & ACC_MODULE) != 0) {
             var attr = classModel.findAttribute(Attributes.module());

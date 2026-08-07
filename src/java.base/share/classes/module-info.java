@@ -246,6 +246,7 @@ module java.base {
     exports jdk.internal.ref to
         java.desktop,
         java.net.http,
+        java.smartcardio,
         jdk.naming.dns;
     exports jdk.internal.reflect to
         java.logging,
@@ -271,6 +272,8 @@ module java.base {
         jdk.jfr;
     exports jdk.internal.util.xml.impl to
         jdk.jfr;
+    exports jdk.internal.value to  // Needed by Unsafe
+        jdk.unsupported;
     exports jdk.internal.util to
         java.desktop,
         java.prefs,
