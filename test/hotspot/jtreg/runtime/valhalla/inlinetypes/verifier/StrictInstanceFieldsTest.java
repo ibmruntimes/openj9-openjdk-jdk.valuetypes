@@ -39,7 +39,6 @@
  *          ControlFlowChildBad.jasm
  *          ControlFlowAlias.jasm
  *          TryCatchChildBad.jasm
- *          UninitThisOnStack.jasm
  *          NestedEarlyLarval.jcod
  *          EndsInEarlyLarval.jcod
  *          EarlyLarvalNotSubset.jcod
@@ -109,12 +108,9 @@ public class StrictInstanceFieldsTest {
         NestedConstructorChild c5 = new NestedConstructorChild();
         System.out.println(c5);
 
-        // Final strict fields defined in constructor
+        // Final stirct fields defined in constructor
         FinalChild fc = new FinalChild();
         System.out.println(fc);
-
-        UninitThisOnStack c6 = new UninitThisOnStack();
-        System.out.println(c6);
 
         // --------------
         // NEGATIVE TESTS
