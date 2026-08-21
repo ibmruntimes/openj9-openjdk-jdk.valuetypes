@@ -22,6 +22,12 @@
  *
  */
 
+/*
+ * ===========================================================================
+ * (c) Copyright IBM Corp. 2026, 2026 All Rights Reserved
+ * ===========================================================================
+ */
+
  /*
  * @test
  * @summary Sanity test for BigClassTreeClassLoader
@@ -76,7 +82,7 @@ public class BigClassTreeClassLoader extends ClassLoader {
         if (!registerAsParallelCapable()) {
             throw new IllegalStateException("could not register parallel classloader");
         }
-    }   
+    }
     // Sanity test, this should never fail.
     public static void main(String[] args) throws ClassNotFoundException {
         var fields = new FieldGeneration(1, Optional.empty(), Optional.empty());
