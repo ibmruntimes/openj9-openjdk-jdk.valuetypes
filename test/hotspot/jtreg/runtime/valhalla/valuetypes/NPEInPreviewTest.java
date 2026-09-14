@@ -76,7 +76,7 @@ public class NPEInPreviewTest {
     static MyValue nullStaticVal;
 
     static void testNullRestrictedFieldError() {
-        String expectedMessage = "Cannot assign field \"val\" because \"test\" is null";
+        String expectedMessage = "Cannot assign field \"val\" because \"test\" is null or \"val\" is a null restricted field and there's an attempt to store null in it";
         try {
             var test = new NPEInPreviewTest();
             test.val = null;
@@ -88,7 +88,7 @@ public class NPEInPreviewTest {
     }
 
     static void testNullRestrictedFieldStoredInNullError() {
-        String expectedMessage = "Cannot assign field \"val\" because \"test\" is null";
+        String expectedMessage = "Cannot assign field \"val\" because \"test\" is null or \"val\" is a null restricted field and there's an attempt to store null in it";
         try {
             NPEInPreviewTest test = null;
             test.val = new MyValue();
@@ -125,28 +125,32 @@ public class NPEInPreviewTest {
     // Should not get the message:
     // There cannot be a NullPointerException at bci 4 of method void NPEInPreviewTest.testNullRestrictedStaticFieldError()
     static void testNullRestrictedStaticFieldError() {
+        String expectedMessage = "Cannot assign field \"staticVal\" because \"null\" cannot be stored into a null restricted field";
+
         try {
             staticVal = null;
         } catch (NullPointerException npe) {
             String message = npe.getMessage();
             System.out.println("*** " + message);
-            Asserts.assertNull(message);
+            Asserts.assertEquals(expectedMessage, message);
         }
     }
 
     static void testNullRestrictedStaticFieldError2() {
+        String expectedMessage = "Cannot assign field \"staticVal\" because \"null\" cannot be stored into a null restricted field";
+
         try {
             staticVal = nullStaticVal;
         } catch (NullPointerException npe) {
             String message = npe.getMessage();
             System.out.println("*** " + message);
-            Asserts.assertNull(message);
+            Asserts.assertEquals(expectedMessage, message);
         }
     }
 
     static void testNullRestrictedArrayError() {
         // This message comes from the interpreter/runtime code so is not processed by Helpful NPE.
-        String expectedMessage = "Cannot store to object array because \"a\" is null";
+        String expectedMessage = "Cannot store null in a null-restricted array";
         // This message comes from the c1 null check, so is processed by Helpful NPE.
         String c1ExpectedMessage = "Cannot store to object array because \"a\" is null or is a null-free array and there's an attempt to store null in it";
 
@@ -161,15 +165,11 @@ public class NPEInPreviewTest {
             } else {
                 Asserts.assertEquals(expectedMessage, message);
             }
-        } catch (ArrayStoreException ase) {
-            String message = ase.getMessage();
-            System.out.println("*** " + message);
-            Asserts.assertNull(message);
         }
     }
 
     static void testNullRestrictedNotFlatArrayError() {
-        String expectedMessage = "Cannot store to object array because \"a\" is null";
+        String expectedMessage = "Cannot store to object array because \"a\" is null or is a null-free array and there's an attempt to store null in it";
         try {
             var a = ValueClass.newNullRestrictedAtomicArray(NotFlatValue.class, 10, new NotFlatValue());
             a[4] = null;
@@ -177,10 +177,6 @@ public class NPEInPreviewTest {
             String message = npe.getMessage();
             System.out.println("*** " + message);
             Asserts.assertEquals(expectedMessage, message);
-        } catch (ArrayStoreException ase) {
-            String message = ase.getMessage();
-            System.out.println("*** " + message);
-            Asserts.assertNull(message);
         }
     }
 
