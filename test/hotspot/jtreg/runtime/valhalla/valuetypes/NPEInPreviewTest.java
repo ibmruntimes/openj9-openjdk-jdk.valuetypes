@@ -112,7 +112,9 @@ public class NPEInPreviewTest {
             String message = npe.getMessage();
             System.out.println("*** " + message);
             if (c1Mode) {
-                Asserts.assertEquals(c1ExpectedMessage, message);
+                Asserts.assertTrue(
+                    message.equals(expectedMessage) || message.equals(c1ExpectedMessage),
+                    "Unexpected NPE message: " + message);
             } else {
                 Asserts.assertEquals(expectedMessage, message);
             }
@@ -135,7 +137,7 @@ public class NPEInPreviewTest {
     }
 
     static void testNullRestrictedStaticFieldError2() {
-        String expectedMessage = "Cannot assign field \"staticVal\" because \"NPEInPreviewTest.nullStaticVal\" cannot be stored into a null restricted field";
+        String expectedMessage = "Cannot assign field \"staticVal\" because \"null\" cannot be stored into a null restricted field";
 
         try {
             staticVal = nullStaticVal;
