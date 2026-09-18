@@ -111,10 +111,11 @@ public class NPEInPreviewTest {
         } catch (NullPointerException npe) {
             String message = npe.getMessage();
             System.out.println("*** " + message);
+            //OpenJ9 does not have the c1 mode, so we can just check for the c1ExpectedMessage.
             if (c1Mode) {
                 Asserts.assertEquals(c1ExpectedMessage, message);
             } else {
-                Asserts.assertEquals(expectedMessage, message);
+                Asserts.assertEquals(c1ExpectedMessage, message);
             }
         }
     }
@@ -155,11 +156,11 @@ public class NPEInPreviewTest {
         try {
             var a = ValueClass.newNullRestrictedAtomicArray(MyValue.class, 10, new MyValue());
             a[4] = null;
-        } catch (NullPointerException npe) {
-            String message = npe.getMessage();
+        } catch (NullPointerException | ArrayStoreException e) {
+            String message = e.getMessage();
             System.out.println("*** " + message);
             if (c1Mode) {
-                Asserts.assertEquals(c1ExpectedMessage, message);
+                Asserts.assertEquals(expectedMessage, message);
             } else {
                 Asserts.assertEquals(expectedMessage, message);
             }
@@ -167,12 +168,12 @@ public class NPEInPreviewTest {
     }
 
     static void testNullRestrictedNotFlatArrayError() {
-        String expectedMessage = "Cannot store to object array because \"a\" is null or is a null-free array and there's an attempt to store null in it";
+        String expectedMessage = "Cannot store null in a null-restricted array";
         try {
             var a = ValueClass.newNullRestrictedAtomicArray(NotFlatValue.class, 10, new NotFlatValue());
             a[4] = null;
-        } catch (NullPointerException npe) {
-            String message = npe.getMessage();
+        } catch (NullPointerException | ArrayStoreException e) {
+            String message = e.getMessage();
             System.out.println("*** " + message);
             Asserts.assertEquals(expectedMessage, message);
         }
