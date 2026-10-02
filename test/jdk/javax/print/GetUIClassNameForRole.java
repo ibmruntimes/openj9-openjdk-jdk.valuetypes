@@ -21,38 +21,30 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug 8389130
- * @summary With Valhalla, frame::sender became a bit too big and is not as spontaneously inlined as before.
- *          This causes some measurable performance regressions in cases where walking the stack is frequent.
- * @requires vm.debug == false
- * @run main/othervm -Xbatch
- *                   -XX:-TieredCompilation
- *                   -XX:CompileCommand=dontinline,${test.main.class}::fillInStackTrace
- *                   ${test.main.class}
- * @run main ${test.main.class}
+ * @bug 8392783
+ * @summary Win32PrintService.getUIClassNamesForRole
+ *          throws ArrayIndexOutOfBoundsException
+ * @run main GetUIClassNameForRole
  */
 
-package compiler.exceptions;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import javax.print.ServiceUIFactory;
 
-public class TestStackWalkPerf extends Throwable {
-    private static final TestStackWalkPerf PROBE = new TestStackWalkPerf();
-
-    private static void fillInStackTrace(int depth, int fills) {
-        if (depth == 0) {
-            for (int i = 0; i < fills; i++) {
-                PROBE.fillInStackTrace();
-            }
-            return;
-        }
-        fillInStackTrace(depth - 1, fills);
-    }
+public class GetUIClassNameForRole {
+    private static final int DOCUMENT_PROPERTIES_ROLE =
+            ServiceUIFactory.RESERVED_UIROLE + 100;
 
     public static void main(String[] args) {
-        for (int i = 0; i < 10_000; i++) {
-            fillInStackTrace(512, 1);
+
+        for (PrintService service :
+                PrintServiceLookup.lookupPrintServices(null, null)) {
+            ServiceUIFactory factory = service.getServiceUIFactory();
+            if (factory != null) {
+                factory.getUIClassNamesForRole(DOCUMENT_PROPERTIES_ROLE);
+            }
         }
-        fillInStackTrace(512, 1_000_000);
     }
 }
