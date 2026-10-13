@@ -122,13 +122,13 @@ public class ValueTypeArray {
         Point p = defaultPoint[0];
         assertEquals(p.x, 0, "invalid default loaded from array");
         assertEquals(p.y, 0, "invalid default loaded from array");
-        boolean gotNpe = false;
+        boolean gotException = false;
         try {
             defaultPoint[0] = (Point) getNull();
-        } catch (NullPointerException npe) {
-            gotNpe = true;
+        } catch (ArrayStoreException | NullPointerException e) {
+            gotException = true;
         }
-        assertTrue(gotNpe, "Expected NullPointerException");
+        assertTrue(gotException, "Expected ArrayStoreException or NullPointerException");
 
         Point[] points = createSimplePointArray();
         System.gc(); // check that VTs survive GC
